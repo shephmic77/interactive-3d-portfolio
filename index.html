@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070c1a" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="description" content="Explore Michael Shepherd's data science, sports analytics, AI, and engineering projects in an interactive 3D portfolio." />
+  <title>Michael Shepherd — Interactive Portfolio</title>
+</head>
+<body>
+  <div id="app">
+    <div id="scene" aria-label="Interactive three-dimensional portfolio building"></div>
+    <div class="ambient-sheen" aria-hidden="true"></div>
+    <header class="topbar">
+      <a href="#home" class="wordmark" id="logo-home" aria-label="Return to home view">
+        <span class="mark">MS<span class="mark-dot">.</span></span>
+        <span class="mark-name">MICHAEL SHEPHERD</span>
+      </a>
+      <div class="topbar-right">
+        <span class="status-light" aria-hidden="true"></span>
+        <span class="status-text">INTERACTIVE PORTFOLIO</span>
+        <button type="button" class="icon-btn" id="reset-view" title="Return to title view" aria-label="Return to title view">⌂</button>
+      </div>
+    </header>
+
+    <div class="intro" id="intro">
+      <div class="eyebrow"><span class="eyebrow-dash"></span> WELCOME TO MY LITTLE CORNER OF THE INTERNET</div>
+      <h1>Michael<br/><em>Shepherd<span class="dot">.</span></em></h1>
+      <p>Data Science <span>·</span> Sports Analytics <span>·</span> Building Things</p>
+      <button type="button" class="explore-btn" id="explore-btn">EXPLORE THE SPACE <span aria-hidden="true">↗</span></button>
+    </div>
+
+    <nav id="quick-nav" class="quick-nav" aria-label="Portfolio navigation">
+      <button type="button" class="nav-item" data-section="projects"><span class="nav-indicator cyan"></span><span>Projects</span><span class="nav-arrow">↗</span></button>
+      <button type="button" class="nav-item" data-section="about"><span class="nav-indicator amber"></span><span>About me</span><span class="nav-arrow">↗</span></button>
+      <button type="button" class="nav-item" data-section="contact"><span class="nav-indicator rose"></span><span>Contacts</span><span class="nav-arrow">↗</span></button>
+      <button type="button" class="nav-item" data-section="resume"><span class="nav-indicator coral"></span><span>Resume</span><span class="nav-arrow">↗</span></button>
+      <button type="button" class="nav-item" data-section="credits"><span class="nav-indicator violet"></span><span>Credits</span><span class="nav-arrow">↗</span></button>
+    </nav>
+
+    <div class="control-hint" id="control-hint"><span class="mouse-icon" aria-hidden="true">◎</span> DRAG TO ORBIT <span class="hint-divider">/</span> SCROLL TO ZOOM <span class="hint-divider">/</span> SELECT AN OBJECT <span class="hint-divider">/</span> ESC TO RETURN</div>
+    <button type="button" id="mobile-explore" class="mobile-explore" aria-label="Toggle navigation" aria-expanded="false">EXPLORE <span>↑</span></button>
+    <div class="footer-note">AN INTERACTIVE WORLD OF WORK <span>© 2026</span></div>
+
+    <div id="tooltip" class="tooltip" role="status"></div>
+    <div class="panel-scrim" id="panel-scrim" hidden></div>
+    <aside class="content-panel" id="content-panel" aria-label="Portfolio section" aria-hidden="true" tabindex="-1">
+      <div class="panel-bar"><div class="panel-tag" id="panel-tag">PORTFOLIO / 01</div><button class="panel-close" id="panel-close" type="button" aria-label="Close panel">✕ <span>CLOSE</span></button></div>
+      <div id="panel-body"></div>
+    </aside>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
