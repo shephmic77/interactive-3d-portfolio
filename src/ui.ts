@@ -1,4 +1,5 @@
 import { categories, engineeringWorks, profile, projects, type Category, type Project } from './content';
+import { bookTabbables, closeBook, openBook } from './book';
 export type Section = 'projects' | 'about' | 'contact' | 'resume' | 'credits';
 type NavHandler = (section:Section | 'home', projectId?:string) => void;
 
@@ -110,6 +111,7 @@ export function showPanel(section:Section, projectId?:string){
   if(!panel.classList.contains('open'))lastFocus=(document.activeElement as HTMLElement)||null;
   renderSection(section);
   if(section==='projects' && projectId){const p=projects.find(p=>p.id===projectId);if(p) detail(p);}
+  if(section==='projects')openBook(projectId);else closeBook();
   panel.classList.add('open');panel.setAttribute('aria-hidden','false');
   scrim.hidden=false;requestAnimationFrame(()=>scrim.classList.add('visible'));
   document.body.classList.add('panel-open');
@@ -118,7 +120,7 @@ export function showPanel(section:Section, projectId?:string){
   panel.focus();
 }
 export function closePanel(){
-  activeSection=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
+  closeBook();activeSection=null;panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
   scrim.classList.remove('visible');window.setTimeout(()=>{if(!scrim.classList.contains('visible'))scrim.hidden=true;},280);
   document.body.classList.remove('panel-open');document.querySelector('#intro')?.classList.remove('subdued');
   document.querySelectorAll<HTMLButtonElement>('[data-section]').forEach(b=>b.classList.remove('active'));
@@ -133,12 +135,12 @@ export function initUI(nav:NavHandler){
     const filter=t.closest<HTMLButtonElement>('[data-category]');
     if(filter&&activeSection==='projects'){currentCategory=filter.dataset.category as typeof currentCategory;applyFilter();return;}
     const book=t.closest<HTMLButtonElement>('[data-project]');
-    if(book&&activeSection==='projects'){const p=projects.find(p=>p.id===book.dataset.project);if(p)detail(p);}
+    if(book&&activeSection==='projects'){const p=projects.find(p=>p.id===book.dataset.project);if(p){detail(p);openBook(p.id);}}
   });
   document.addEventListener('keydown',(event)=>{
     if(event.key==='Escape' && activeSection){event.preventDefault();navigate('home');}
     if(event.key==='Tab'&&activeSection){
-      const tabbable=[...panel.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input')];
+      const tabbable=[...bookTabbables(),...panel.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input')];
       if(!tabbable.length)return;
       if(event.shiftKey&&document.activeElement===tabbable[0]){event.preventDefault();tabbable[tabbable.length-1].focus();}
       else if(!event.shiftKey&&document.activeElement===tabbable[tabbable.length-1]){event.preventDefault();tabbable[0].focus();}
