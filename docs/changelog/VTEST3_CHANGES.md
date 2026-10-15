@@ -32,7 +32,7 @@ a waiting chair, two wooden crates, door pots, doormat.
 **Bouldering side:** wall to the roof with coloured holds and two volumes, monkey, crash pad, red climbing shoes, grab bar on the roof.
 **Terraces and roof:** bistro table with lantern, two chairs, the cat, lounge bench, side table and chair, string bulbs on two poles,
 window-box planters, pots, ivy, water tank, antenna, HVAC units, vents, electrical boxes, downspouts, roof table with lantern and tea set,
-roof chairs, quetzal on the front rail,.
+roof chairs, quetzal on the front rail.
 **Inside, ground floor:** shop counter with copper pot and spoon, snare drum and sticks, red stapler; bookshelf; table and stools; plant;
 pendant lamps; red toy seaplane on cords.
 **Inside, upper floor:** sofa, bookshelf, floor lamp, rug, low table with playing cards, candle and two paperbacks; turntable with two
