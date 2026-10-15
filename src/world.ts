@@ -437,7 +437,7 @@ function facadeServiceDetail(scene:THREE.Object3D){
 /** Bouldering wall that climbs the whole back of the building, from the pavement to the roof terrace, like a ladder.
  *  One tall plywood panel (four stacked sections with seams) stands just clear of every ledge and slab edge, held to the
  *  walls by steel standoffs, with a bolt-hole grid, a coral route to a finish jug on the roof, a cyan problem down the
- *  right edge, foot chips, two volumes, height ticks, chalk, a lamp either side, a crash pad, a bench with a chalk bag, and
+ *  right edge, foot chips, two volumes, height ticks, chalk, a lamp either side, a crash pad with shoes, and
  *  a monkey who has stopped halfway up. At the top, the roof's back rail is open and a grab bar marks the exit. */
 const BW={cx:-3.55,w:.70,zf:-3.40,t:.07,bottom:.04,top:8.12};
 const hash1=(n:number)=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
@@ -540,11 +540,6 @@ function boulderRoute(scene:THREE.Object3D){
     const sh=new THREE.Group();sh.position.set(padX+.30+sx,GROUND+.16,padZ+.12);sh.rotation.y=sr;scene.add(sh);
     box(sh,0,.014,0,.09,.028,.28,color('#1d2029'));box(sh,0,.06,-.02,.085,.07,.17,color('#c9402f'));box(sh,0,.04,.09,.08,.05,.1,color('#c9402f'));box(sh,0,.062,-.115,.07,.07,.05,color('#1d2029'));
   }
-  // Bench facing the panel, with a chalk bag on it.
-  const benchZ=padZ-.86;
-  bench(scene,-3.55,GROUND,benchZ,-3.55,zf,1.1);
-  const bag=cyl(scene,-3.28,GROUND+.485+.075,benchZ,.08,.095,.15,color('#3b6fb6',0,.9),9);
-  cyl(scene,-3.28,GROUND+.485+.158,benchZ,.045,.075,.03,color('#efeae0',0,.9),9);bag.castShadow=true;
 }
 function utilityExterior(scene:THREE.Object3D){
   // Everything here is mounted on a wall face: ground-floor walls are at x=+-4.25 / z=+-3.075, the upper block's
@@ -641,8 +636,6 @@ function terraceFurnishings(scene:THREE.Object3D){
   railingPlanter(scene,-.70,3.23,'x',ARCH.groundRoof);
   railingPlanter(scene,4.31,-1.54,'z',ARCH.groundRoof);
   railingPlanter(scene,4.31,.60,'z',ARCH.groundRoof);
-  // Exterior wall sconce beside the actual terrace doorway.
-  wallLight(scene,ARCH.upper.x+ARCH.upper.width/2+.057,6.13,.90,Math.PI/2,1.42);
   // Soft practical lantern on the terrace table (table top is h+.765).
   tableLantern(scene,bt.x,h+.765,bt.z);
   glowPatch(scene,bt.x,4.455,bt.z,4.2,3.6,'#ffbf7a',.12,0,true);
@@ -744,9 +737,6 @@ function terraceFloor(scene:THREE.Object3D){
  for(const [x,z,r] of [[3.64,2.53,.56],[3.88,-2.52,.47],[1.86,2.46,.46],[-3.50,2.70,.50]] as const){
   pot(scene,x,ARCH.groundRoof+.13,z,r,true);   // base sits on the tile top (4.455)
  }
- // Single decorative wall lantern by the terrace door.
- hangingLamp(scene,1.99,5.66,.79,1.10);
- box(scene,1.85,6.02,.79,.32,.05,.05,iron);   // bracket from the upper wall (x=1.70) to the lantern cord
 }
 
 function upperRoofTerrace(scene:THREE.Object3D){
@@ -1617,21 +1607,10 @@ function wreath(parent:THREE.Object3D,x:number,topY:number,zFace:number){
 
 /** A world-level cluster of props on the plaza. */
 function endgameWorld(scene:THREE.Object3D){
-  hoop(scene,5.9,4.25,Math.PI);                           // front-right corner, shooting toward the building; clear of the About Me board and the goal
-  pingPong(scene,-5.7,-3.55,.3);
+  // Round three: the plaza was cleared back to two pieces. Everything else that used to stand here (hoop, ping-pong table, mini goal,
+  // soccer ball and cones, poster column, display table with its figures, record crate, treasure chest) is parked below, unplaced.
   wagon(scene,-6.2,-1.2,2.7);
-  miniGoal(scene,6.4,2.75,-Math.PI/2);
-  soccerBall(scene,5.7,PAVE+.11,2.45);
-  cone(scene,5.0,1.9);cone(scene,5.0,3.5);
   heron(scene,-6.5,1.2,.7);
-  posterColumn(scene,6.0,-3.0,.9);                         // back-right corner: clear of the cart, the resume stand, every hit target and the lamps
-  // Sidewalk display table in front of the left window: toy vehicles, a fox, a beetle, books and a baseball, a toque, headphones, dice.
-  const table=displayTable(scene,-1.45,4.2,0),top=TABLE_H+.006;
-  toyRoadster(table,-.55,top,.12,Math.PI/2);toyKeiTruck(table,-.55,top,-.12,Math.PI/2);toyKart(table,-.18,top,.12,Math.PI/2);
-  foxFigure(table,-.18,top,-.12,.3);bookStack(table,.2,top,-.1,.1);beetleFigure(table,.2,top,.14,.5);
-  chefHat(table,.5,top,-.1);headphones(table,.52,top,.13,.4);diceAndChips(table,.7,top,0);
-  recordCrate(scene,-2.85,3.95,.15);
-  treasureChest(scene,-2.95,4.75,.5);
 }
 /** A small red toy seaplane (generic biplane on floats) hung from the ceiling by two cords. */
 function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,ceilingY:number){
@@ -1676,36 +1655,9 @@ function endgameInteriors(scene:THREE.Object3D){
   cyl(scene,-3.15,counter+.05,-2.35,.135,.135,.02,color('#9aa3ad',.6,.4),12);
   for(const [sz,sr] of [[-.03,.12],[.03,-.1]] as const)box(scene,-3.15,counter+.1,-2.35+sz,.28,.014,.014,wood,sr);
   box(scene,-.9,counter+.0125,-2.28,.17,.025,.05,color('#b8312b'));box(scene,-.9,counter+.037,-2.28,.17,.02,.045,color('#c23a31'));
-  // Retro gaming corner in the right-hand shop window: a CRT on a proper shop-display cabinet. The cabinet is counter height so the
-  // set sits above the window sill and shows from the street; the TV stands wholly inside the cabinet top, screen toward the glass.
-  const cabX=2.75,cabZ=2.5,cabTop=gf+1.18;
-  box(scene,cabX,gf+.05,cabZ,1.24,.1,.44,dark);                                         // recessed plinth
-  box(scene,cabX,gf+.1+(cabTop-.04-(gf+.1))/2,cabZ,1.28,cabTop-.04-(gf+.1),.48,wood);  // carcass
-  for(const dx of [-.31,.31]){box(scene,cabX+dx,gf+.62,cabZ+.2425,.56,.80,.012,color('#5a4640'));box(scene,cabX+dx*.2,gf+.62,cabZ+.254,.02,.2,.012,brass);}   // two doors with pulls
-  box(scene,cabX,cabTop-.02,cabZ,1.36,.04,.54,color('#b88d62',0,.7));                  // top board, 2 cm overhang
-  const tvX=cabX-.30,tvZ=cabZ+.12;
-  box(scene,tvX,cabTop+.22,tvZ,.5,.44,.24,color('#3a3f4b'));                           // CRT body, z 2.50 to 2.74
-  box(scene,tvX,cabTop+.15,tvZ-.22,.30,.30,.20,color('#2a2f3a'));                       // tapered tube housing behind it
-  box(scene,tvX,cabTop+.22,tvZ+.125,.46,.38,.02,color('#1d2029'));                    // bezel
-  const pong=texture((c,W,H)=>{c.fillStyle='#0b1a24';c.fillRect(0,0,W,H);c.fillStyle='#bff7e8';for(let y=0;y<H;y+=24)c.fillRect(W/2-2,y,4,12);c.fillRect(24,H*.3,10,48);c.fillRect(W-34,H*.52,10,48);c.fillRect(W*.62,H*.5,10,10);},256,192);
-  plane(scene,tvX,cabTop+.22,tvZ+.1365,.34,.26,pong);
-  cyl(scene,tvX,cabTop+.45,tvZ-.02,.05,.06,.02,color('#1d2029'),8);                    // antenna base on the top of the set
-  for(const sr of [-.55,.55]){const rod=new THREE.Group();rod.position.set(tvX,cabTop+.46,tvZ-.02);rod.rotation.z=sr;scene.add(rod);cyl(rod,0,.15,0,.005,.005,.3,zinc,5);}   // rabbit ears
-  halo(scene,tvX,cabTop+.22,tvZ+.33,1.2,'#8fe8ff',.35);
-  // Two generic consoles, a clamshell handheld and a gamepad on the same top board.
-  box(scene,3.08,cabTop+.025,cabZ-.03,.24,.05,.30,color('#1d2029'));box(scene,3.08,cabTop+.0475,cabZ-.03,.2,.005,.26,color('#2a2f3a'));
-  box(scene,3.08,cabTop+.03,cabZ-.03+.151,.14,.008,.004,color('#6bd0ff',0,.4,'#35b6ff',1.2));
-  box(scene,3.31,cabTop+.06,cabZ+.0,.16,.12,.20,color('#e8e6df'));box(scene,3.31,cabTop+.06,cabZ+.101,.02,.07,.004,color('#8a929c'));
-  box(scene,3.0,cabTop+.007,cabZ+.2,.15,.014,.09,color('#cfd4dc'));                       // handheld, base
-  const lid=new THREE.Group();lid.position.set(3.0,cabTop+.014,cabZ+.2-.045);lid.rotation.x=-1.75;scene.add(lid);   // hinged along its back edge, opened past 90 degrees
-  box(lid,0,0,.045,.15,.012,.09,color('#cfd4dc'));box(lid,0,-.0066,.045,.12,.002,.07,color('#7be0ff',0,.4,'#35b6ff',1));
-  box(scene,3.2,cabTop+.0125,cabZ+.2,.13,.025,.07,color('#2a2f3a'));                    // gamepad
-  for(const gx of [-.035,.035])cyl(scene,3.2+gx,cabTop+.0375,cabZ+.2,.012,.012,.025,color('#14171f'),8);
+  // Retro gaming corner (CRT, display cabinet, consoles, handheld, gamepad) removed in round three; the code is parked in git history.
   // ---- Upper floor ----------------------------------------------------------------------------------------
-  const wallZ=-2.78;
-  framedShirt(scene,-3.2,uf+1.75,wallZ+.0125,'tank','1');
-  framedShirt(scene,-2.4,uf+1.75,wallZ+.0125,'jersey','2');
-  framedShirt(scene,-1.6,uf+1.75,wallZ+.0125,'kit','10');
+  // The three framed shirts were removed in round three.
   // Turntable on a sideboard against the right wall, flanked by two small speakers.
   const sx=1.26,sz=-2.0;
   box(scene,sx,uf+.4,sz,.4,.8,1.2,wood);
@@ -1737,17 +1689,9 @@ function endgameExterior(scene:THREE.Object3D){
   const bt={x:2.95,z:1.45};
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
   quetzal(scene,-1.75,ARCH.upperRoof+.25+.81+.0325,ARCH.upper.z+ARCH.upper.depth/2+.08);   // on the roof's front rail
-  flag(scene,1.40,ARCH.upperRoof+.165,.2,Math.PI);
-  surfboard(scene,-ARCH.ground.width/2,1.45);
   baseballSet(scene,2.15,4.0);
-  // Front terrace rail (z 3.23, top bar centre y 5.13): club-coloured scarves, a swag of pennants, three round shields, like a ship's rail.
-  const railZ=3.23,railY=ARCH.groundRoof+.81;
-  scarf(scene,-3.95,railY,railZ,'#14171f','#f1efe8');scarf(scene,-3.65,railY,railZ,'#c9302c','#14171f');scarf(scene,-3.35,railY,railZ,'#2b4a8c','#8a2f3f');
-  bunting(scene,-2.75,-1.05,railY+.0325,railZ+.0325,['#c9302c','#f1efe8','#1d2c55','#e8c26a','#2f9aa1']);
-  roundShield(scene,.45,ARCH.groundRoof+.58,railZ+.035,'#b8312b','#efe3c8');roundShield(scene,1.1,ARCH.groundRoof+.58,railZ+.035,'#2b4a8c','#efe3c8');roundShield(scene,1.75,ARCH.groundRoof+.58,railZ+.035,'#2f7d4a','#e8c26a');
-  wreath(scene,.06,3.18,3.20);                                                           // on the shop door's top rail
   teaSet(scene,-1.17+.19,8.695,-.30+.10);                                                // roof table
-  latticeBoard(scene,2.85,4.893,-1.9,.4);                                                // terrace side table
+  // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board.
 }
 export function buildWorld():World{
  keyLights.length=0;openings.length=0;
