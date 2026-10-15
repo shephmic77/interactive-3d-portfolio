@@ -2020,23 +2020,30 @@ function baggioPoster(parent:THREE.Object3D,x:number,y:number,z:number){
   return g;
 }
 
-/** A plain framed record sleeve: neutral stand-in with the album title, ready for the owner's own artwork. Hangs facing local +Z. */
-function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,title:string,artist:string,bg:string,fg:string){
+/** A framed record sleeve hanging facing local +Z. It starts as a plain titled sleeve (drawn instantly, and the fallback if the file is missing),
+ *  then swaps in the owner-supplied image from public/albums/<img> as soon as it has loaded. */
+function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,title:string,artist:string,bg:string,fg:string,img?:string){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
   const fr=color('#1b1714',0,.7);
   for(const sy of [-1,1])box(g,0,sy*.1675,.0175,.36,.025,.035,fr);
   for(const sx of [-1,1])box(g,sx*.1675,0,.0175,.025,.31,.035,fr);
   box(g,0,0,.006,.335,.335,.012,color('#101114',0,.9));
   const tex=texture((c,W,H)=>{
+    const k=W/256;
     c.fillStyle=bg;c.fillRect(0,0,W,H);
-    c.strokeStyle=fg;c.globalAlpha=.35;c.lineWidth=3;c.strokeRect(14,14,W-28,H-28);
+    c.strokeStyle=fg;c.globalAlpha=.35;c.lineWidth=3*k;c.strokeRect(14*k,14*k,W-28*k,H-28*k);
     c.beginPath();c.arc(W/2,H/2,W*.36,0,Math.PI*2);c.stroke();c.beginPath();c.arc(W/2,H/2,W*.05,0,Math.PI*2);c.stroke();c.globalAlpha=1;
     c.fillStyle=fg;c.textAlign='center';c.textBaseline='middle';
-    let fs=72;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
-    while(c.measureText(title).width>W*.78&&fs>20){fs-=3;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
-    c.fillText(title,W/2,H/2-10);
-    c.globalAlpha=.8;c.font=`bold 22px Arial, Helvetica, sans-serif`;c.fillText(artist.toUpperCase(),W/2,H/2+34);c.globalAlpha=1;
-  },256,256);
+    let fs=72*k;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
+    while(c.measureText(title).width>W*.78&&fs>20*k){fs-=3*k;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
+    c.fillText(title,W/2,H/2-10*k);
+    c.globalAlpha=.8;c.font=`bold ${22*k}px Arial, Helvetica, sans-serif`;c.fillText(artist.toUpperCase(),W/2,H/2+34*k);c.globalAlpha=1;
+  },512,512);
+  if(img&&typeof Image!=='undefined'){
+    const im=new Image();
+    im.onload=()=>{const cv=tex.image as HTMLCanvasElement;const c=cv.getContext('2d');if(!c)return;c.drawImage(im,0,0,cv.width,cv.height);tex.needsUpdate=true;};
+    im.src=`${import.meta.env.BASE_URL}albums/${img}`;
+  }
   litPlane(g,0,0,.0135,.31,.31,tex,0,.28);
   return g;
 }
@@ -2108,7 +2115,7 @@ function endgameInteriors(scene:THREE.Object3D){
   box(scene,-1.55,tt+.012,-.72,.17,.024,.25,color('#965857'),-.3);
   soccerBall(scene,-.7,uf+.11,-2.5);
   // Four framed record sleeves in a 2 x 2 grid on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
-  ([['RAM','Daft Punk','#2c2f36','#eae6dc'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1'],['Graduation','Kanye West','#e6dcc6','#2b2f38']] as const).forEach(([t,a,bg,fg],i)=>albumFrame(scene,1.46,i<2?6.2:5.8,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg));
+  ([['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,i<2?6.2:5.8,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
   // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
   baggioPoster(scene,1.5,2.2,-2.835);
 }

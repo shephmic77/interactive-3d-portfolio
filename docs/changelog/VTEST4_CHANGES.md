@@ -46,6 +46,13 @@ Team colours, surname and number only. No crests, logos, sponsor marks or brand 
 ## Follow-up pass (same day)
 - **Middle jersey** corrected to Derrick Rose (red tank, number 1), not Pete Rose.
 - **Baggio poster** redrawn: narrower frame, natural proportions (about 7.5 heads tall), shaded shirt, skin and hair, mown pitch stripes, a crowd band, floodlights and film grain.
-- **Album frames** are now a 2 x 2 grid (RAM / Luv(sic) Hexology on top, Mm..Food / Graduation below). Each carries the title and artist in plain text on a neutral sleeve. The real cover art is still not drawn.
+- **Album frames** are now a 2 x 2 grid (RAM / Luv(sic) Hexology on top, Mm..Food / Graduation below). They first showed plain titled sleeves; see "Album images" below for what they show now.
 - **Red motorbike** left as the generic roadster: I do not recreate the film bike's design, even with reference images.
 - Checks repeated: stub-typed `tsc` clean, 0 unsupported parts, clip audit identical to round three, 0 interior meshes out of bounds, close-up renders of the poster, album grid and Rose frame. No real Vite build.
+
+## Album images (supplied by the owner)
+- The four frames now show the four images the owner supplied (RAM, Luv(sic) Hexology, Mm..Food, Graduation), stored as 512 x 512 JPGs in `public/albums/` (about 190 KB total).
+- Each frame draws the plain titled sleeve first and swaps in the image once it has loaded, so a missing file falls back to the titled sleeve instead of a blank frame.
+- I did not draw or alter these images. The site is public, so the owner is responsible for having the right to display them.
+- The red motorbike is unchanged (generic roadster). A bike model file (.glb/.gltf) supplied by the owner could be loaded in its place.
+- Checks: stub-typed `tsc` clean; close-up and wide renders (real Three.js, software GL, served over http) show all four images on the correct frames. No real Vite build; Vercel result not seen.
