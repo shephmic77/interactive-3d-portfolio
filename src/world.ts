@@ -438,7 +438,7 @@ function facadeServiceDetail(scene:THREE.Object3D){
  *  One tall plywood panel (four stacked sections with seams) stands just clear of every ledge and slab edge, held to the
  *  walls by steel standoffs, with a bolt-hole grid, a coral route to a finish jug on the roof, a cyan problem down the
  *  right edge, foot chips, two volumes, height ticks, chalk, a lamp either side, a crash pad with shoes, and
- *  a monkey who has stopped halfway up. At the top, the roof's back rail is open and a grab bar marks the exit. */
+ *  a monkey hanging by his tail from a grab bar. At the top, the roof's back rail is open and a grab bar marks the exit. */
 const BW={cx:-3.55,w:.70,zf:-3.40,t:.07,bottom:.04,top:8.12};
 const hash1=(n:number)=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
 function boulderRoute(scene:THREE.Object3D){
@@ -479,7 +479,7 @@ function boulderRoute(scene:THREE.Object3D){
     chalk.position.set(x,y,.004);chalk.renderOrder=2;g.add(chalk);
     return m;
   };
-  const MONKEY={lo:3.70,hi:5.02};                                           // the monkey occupies this band; routes pass either side of it
+  const MONKEY={lo:4.12,hi:5.14};                                           // the hanging monkey and his bar occupy this band; routes pass either side of it
   const blocked=(y:number)=>y>MONKEY.lo&&y<MONKEY.hi;
   // Coral route: two taped start holds, a zig-zag all the way up, and a big finish jug just under the roof edge.
   hold(-.14,1.0,'jug',coral);hold(.12,1.08,'jug',coral,.2);
@@ -491,42 +491,39 @@ function boulderRoute(scene:THREE.Object3D){
   // Cyan problem down the right edge.
   n=0;for(let y=.95;y<7.4;y+=.6,n++){const yy=y+(n%2)*.07;if(blocked(yy)||blocked(yy+.2))continue;hold(.27+(n%3)*.015,yy,(['jug','crimp','sloper'] as Kind[])[n%3],cyan2,(n%2?-.2:.15));}
   hold(.2,7.62,'jug',cyan2);
-  // The monkey's holds: two sun-yellow jugs for the hands, two slopers for the feet.
-  hold(-.2,4.72,'jug',sun);hold(.19,4.80,'jug',sun);hold(-.13,3.98,'sloper',sun);hold(.15,4.06,'sloper',sun);
   // Volumes: a violet prism low down and an amber one near the top.
   for(const [vy,vm] of [[2.5,violet2],[6.2,amber2]] as const){const vol=cyl(g,0,vy,.03,.2,.2,.46,vm,3);vol.rotation.z=Math.PI/2;placed.push({x:0,y:vy});}
-  placed.push({x:0,y:4.35},{x:0,y:4.58});                                     // keeps foot chips from poking into the monkey's back
   // Neutral foot chips scattered over the whole board, kept clear of the other holds.
   for(let y=.45;y<7.9;y+=.31){
     const x=(hash1(y)-.5)*.56;
-    if(placed.some(p=>Math.hypot(p.x-x,p.y-y)<.2))continue;
+    if(blocked(y)||blocked(y+.1)||placed.some(p=>Math.hypot(p.x-x,p.y-y)<.2))continue;
     hold(x,y,'chip',chip);
   }
-  // ---- The monkey: belly to the wall, one hand and one foot on each side, tail hanging. Every limb starts INSIDE the torso
-  // (shoulder and hip balls overlap it) and ends INSIDE a hold (hands and feet are pressed into the yellow holds), so
-  // the whole animal is one connected body.
-  const fur=color('#6b4a2f',0,.95),belly=color('#b58b62',0,.95),skin=color('#caa57d',0,.9),eye=color('#1a1410',0,.5);
-  const my=4.40,bz=.15;                                                              // body centre; the back sits ~4 cm off the panel
-  const torso=sphere(g,0,my,bz,.125,fur,1);torso.scale.set(.86,1.15,.86);            // x +-.107, y +-.144, z .043 to .257
-  const tummy=sphere(g,0,my-.02,bz+.075,.085,belly,1);tummy.scale.set(.85,1.1,.55);
-  sphere(g,0,my+.14,bz+.02,.07,fur,1);                                                // neck, overlaps torso and head
-  sphere(g,0,my+.225,bz+.02,.09,fur,1);                                               // head
-  const muzzle=sphere(g,0,my+.205,bz+.085,.05,skin,1);muzzle.scale.set(1,.85,.7);
+  // ---- The monkey: hangs upside down from a yellow grab bar by his tail, facing the street, arms and legs dangling. Every limb starts
+  // INSIDE the torso (shoulder and hip balls overlap it), and the tail wraps the bar, so the animal is one connected body that is
+  // held by the bar, the bar by two steel brackets, and the brackets by the panel. Nothing floats and nothing pokes into the wall.
+  const fur=color('#835a37',0,.95),belly=color('#d1a674',0,.95),skin=color('#d8b48c',0,.9),eye=color('#1a1410',0,.5);
+  const BAR_Y=5.02,BAR_Z=.15,my=BAR_Y-.50,bz=.21;                                    // body centre 4.52 m up, ~11 cm off the panel
+  cyl(g,0,BAR_Y,BAR_Z,.022,.022,.40,sun,8).rotation.z=Math.PI/2;                        // the bar
+  for(const sx of [-1,1])box(g,sx*.17,BAR_Y,.08,.04,.05,.18,iron);                       // brackets: panel face (z 0, a little inside it) to the bar
+  const torso=sphere(g,0,my,bz,.125,fur,1);torso.scale.set(.86,1.15,.86);              // y +-.144
+  const tummy=sphere(g,0,my+.02,bz+.075,.085,belly,1);tummy.scale.set(.85,1.1,.55);
+  sphere(g,0,my+.13,bz-.005,.05,fur,1);                                                // rump, where the tail starts
+  sphere(g,0,my-.14,bz+.02,.07,fur,1);                                                 // neck, overlaps torso and head
+  sphere(g,0,my-.225,bz+.02,.09,fur,1);                                                // head, hanging below the shoulders
+  const muzzle=sphere(g,0,my-.205,bz+.085,.05,skin,1);muzzle.scale.set(1,.85,.7);      // upside down, so the muzzle is above the eyes
   for(const sx of [-1,1]){
-    sphere(g,sx*.034,my+.245,bz+.1,.013,eye,0);                                       // eyes sit on the face
-    sphere(g,sx*.093,my+.235,bz+.02,.033,skin,0);                                     // ears on the head's sides
-    const hx=sx>0?.19:-.2,hy=sx>0?4.80:4.72;                                          // the yellow jug this hand holds
-    sphere(g,sx*.085,my+.075,bz,.058,fur,1);                                          // shoulder ball
-    line(g,[V(sx*.085,my+.075,bz),V(sx*.165,my+.2,.125),V(hx,hy-.01,.1)],.037,fur);   // arm: shoulder, elbow, hand
-    sphere(g,sx*.165,my+.2,.125,.04,fur,1);                                            // elbow ball hides the bend
-    sphere(g,hx,hy-.01,.1,.046,fur,1);                                                 // hand, pressed into the jug
-    const fx=sx>0?.15:-.13,fy=sx>0?4.06:3.98;                                          // the sloper this foot stands on
-    sphere(g,sx*.065,my-.1,bz,.062,fur,1);                                             // hip ball
-    line(g,[V(sx*.065,my-.1,bz),V(sx*.165,my-.2,.14),V(fx,fy+.02,.105)],.042,fur);     // leg: hip, knee, foot
-    sphere(g,sx*.165,my-.2,.14,.046,fur,1);                                            // knee ball
-    sphere(g,fx,fy+.02,.105,.046,fur,1);                                               // foot, pressed onto the sloper
+    sphere(g,sx*.034,my-.245,bz+.1,.013,eye,0);
+    sphere(g,sx*.093,my-.235,bz+.02,.033,skin,0);                                      // ears
+    sphere(g,sx*.085,my-.075,bz,.058,fur,1);                                           // shoulder ball
+    line(g,[V(sx*.085,my-.075,bz),V(sx*.14,my-.20,bz+.03),V(sx*.15,my-.33,bz+.03)],.037,fur);   // arm hangs: shoulder, elbow, hand
+    sphere(g,sx*.14,my-.20,bz+.03,.04,fur,1);sphere(g,sx*.15,my-.33,bz+.03,.046,fur,1);
+    sphere(g,sx*.065,my+.10,bz,.062,fur,1);                                            // hip ball
+    line(g,[V(sx*.065,my+.10,bz),V(sx*.19,my+.01,bz+.02),V(sx*.19,my-.10,bz+.03)],.042,fur);    // leg dangles outside the torso
+    sphere(g,sx*.19,my+.01,bz+.02,.046,fur,1);sphere(g,sx*.19,my-.10,bz+.03,.046,fur,1);
   }
-  line(g,[V(0,my-.14,bz-.02),V(.03,my-.3,.12),V(.11,my-.48,.12),V(.19,my-.6,.11),V(.2,my-.62,.11)],.024,fur);   // tail starts inside the torso
+  // Tail: up from the rump, round the front of the bar, over the top and back down behind it (about three quarters of a turn).
+  line(g,[V(0,my+.13,bz-.01),V(0,my+.26,bz+.005),V(0,my+.38,bz+.005),V(0,4.994,.195),V(0,5.02,.202),V(0,5.057,.187),V(0,5.072,.15),V(0,5.057,.113),V(0,5.02,.098),V(0,4.983,.113)],.024,fur);
   // Light on the panel: warm washes at the two lamp heights (the lamps stand either side, see utilityExterior).
   for(const [ly,lw] of [[3.2,2.4],[6.7,2.4]] as const)glowPatch(g,0,ly,.01,lw,lw*1.2,'#ffc27a',.11);
   // Crash pad on the pavement below the panel, with fold seams and a strap.
@@ -883,7 +880,7 @@ function storefront(scene:THREE.Object3D){
  // Upper-floor sconces sit on the wall piers between and beside the windows (not across a window).
  wallLight(scene,-1.265,6.3,u.z+u.depth/2+.057,0,1.0);
  wallLight(scene,1.32,6.3,u.z+u.depth/2+.057,0,1.0);
- lampPost(scene,-6.4,-.6,1.18);
+ // (The left-side lamp post by the old wagon spot was removed in round four: the kei truck parks there now.)
  lampPost(scene,6.4,-1.6,1.12);
  lampPost(scene,5.4,-4.4,.92);
  // Side utility conduits emphasize compact, lived-in construction.
@@ -1605,12 +1602,419 @@ function wreath(parent:THREE.Object3D,x:number,topY:number,zFace:number){
   for(const s of [-1,1])box(parent,x+s*.03,cy-R-t-.05,zFace+.04+t,.025,.12,.012,red).rotation.z=s*.25;
 }
 
+// ---------------------------------------------------------------------------------------------
+// ROUND FOUR. Everything below is original, generic low-poly work: no team crests, brand marks, sponsor logos,
+// album artwork or copyrighted characters. See docs/VTEST4_CHANGES.md for what each piece stands in for.
+// ---------------------------------------------------------------------------------------------
+/** A cylinder between two points that lie in the plane x = const (rotation about X only). */
+function rod(parent:THREE.Object3D,x:number,y1:number,z1:number,y2:number,z2:number,r:number,mat:THREE.Material,segments=6){
+  const dy=y2-y1,dz=z2-z1,m=cyl(parent,x,(y1+y2)/2,(z1+z2)/2,r,r,Math.hypot(dy,dz),mat,segments);
+  m.rotation.x=Math.atan2(dz,dy);return m;
+}
+/** A cylinder between two points that lie in the plane z = const (rotation about Z only). */
+function rodX(parent:THREE.Object3D,z:number,x1:number,y1:number,x2:number,y2:number,r:number,mat:THREE.Material,segments=6){
+  const dx=x2-x1,dy=y2-y1,m=cyl(parent,(x1+x2)/2,(y1+y2)/2,z,r,r,Math.hypot(dx,dy),mat,segments);
+  m.rotation.z=Math.atan2(-dx,dy);return m;
+}
+
+/** White kei (mini) pickup, cab-over layout, drawn at real size: about 3.45 m long, 1.48 m wide, 1.77 m to the roof, 1.9 m wheelbase,
+ *  12-inch wheels, flat bed 1.94 m long. Nose toward local +Z. The cab is one extruded side profile with wheel-arch cut-outs, so the
+ *  wheels sit in real recesses instead of poking through the body. No badges, no lettering. */
+function keiTruck(scene:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;scene.add(g);
+  const paint=color('#eceff4',.08,.42),shade=color('#d3d8e1',.08,.5),black=color('#171a22',.1,.7),glassDark=color('#1c2c40',.3,.2),steel=color('#2b3340',.5,.5),rubber=color('#12151c',0,.9),capGrey=color('#aab3bf',.6,.4),floorMat=color('#59616f',.2,.7),plateWhite=color('#f1f1ec',0,.6);
+  const lamp=color('#fff1cf',0,.3,'#ffe2a0',.7),amberLamp=color('#ffb347',0,.4,'#ff9a1f',.6),tailLamp=color('#c4252d',0,.4,'#ff2a2a',.5);
+  // Wheels (r .27 m) and axles; front axle under the cab, rear axle under the bed.
+  for(const az of [1.15,-.755]){
+    cyl(g,0,.27,az,.03,.03,1.3,steel,8).rotation.z=Math.PI/2;
+    for(const sx of [-1,1]){
+      cyl(g,sx*.65,.27,az,.27,.27,.15,rubber,16).rotation.z=Math.PI/2;                // tyre
+      cyl(g,sx*.728,.27,az,.155,.155,.016,capGrey,12).rotation.z=Math.PI/2;           // wheel face
+      cyl(g,sx*.737,.27,az,.045,.045,.012,black,8).rotation.z=Math.PI/2;              // centre cap
+    }
+  }
+  // Chassis: two rails from the rear bumper to the cab floor, and a dark block that fills the cab's wheel-well so the arches read as recesses.
+  for(const sx of [-1,1])box(g,sx*.46,.34,-.43,.10,.14,2.54,steel);
+  box(g,0,.42,1.15,1.0,.32,.62,black);
+  // Cab: side profile (shape x = truck z, shape y = height), extruded across the full 1.46 m width.
+  const prof=new THREE.Shape();
+  prof.moveTo(.28,.26);prof.lineTo(.84,.26);prof.lineTo(.84,.40);prof.lineTo(.92,.52);prof.lineTo(1.03,.575);prof.lineTo(1.15,.59);prof.lineTo(1.27,.575);prof.lineTo(1.38,.52);prof.lineTo(1.46,.40);prof.lineTo(1.46,.26);
+  prof.lineTo(1.62,.26);prof.lineTo(1.62,.80);prof.lineTo(1.58,.95);prof.lineTo(1.40,1.74);prof.lineTo(1.33,1.77);prof.lineTo(.30,1.77);prof.lineTo(.28,1.70);prof.closePath();
+  const cab=new THREE.Mesh(new THREE.ExtrudeGeometry(prof,{depth:1.46,bevelEnabled:false}),paint);
+  cab.rotation.y=-Math.PI/2;cab.position.set(.73,0,0);cab.castShadow=true;g.add(cab);
+  // Windscreen (leans back about 13 degrees), wipers, side glass, rear glass.
+  const ws=box(g,0,1.346,1.496,1.24,.66,.02,glassDark);ws.rotation.x=-.224;
+  for(const wx of [-.22,.2]){const wp=box(g,wx,1.075,1.566,.40,.012,.012,black);wp.rotation.x=-.224;wp.rotation.z=.06;}
+  box(g,0,1.36,.285,.90,.34,.02,glassDark);
+  for(const sx of [-1,1]){
+    box(g,sx*.735,1.385,.88,.02,.47,.84,glassDark);                                // side window
+    box(g,sx*.733,1.10,1.32,.006,1.0,.012,black);                                  // front door shut line
+    box(g,sx*.733,.95,.42,.006,1.3,.012,black);                                    // rear door shut line
+    box(g,sx*.74,1.0,.50,.02,.03,.12,black);                                       // door handle
+    box(g,sx*.735,.31,.56,.012,.08,.52,black);                                     // sill moulding behind the wheel arch
+    box(g,sx*.78,1.30,1.37,.10,.02,.02,black);box(g,sx*.845,1.33,1.37,.05,.16,.11,black);   // mirror stalk and mirror
+  }
+  // Front: headlamps, indicators, a plain grille, bumper and a blank plate.
+  for(const sx of [-1,1]){box(g,sx*.46,.70,1.62,.24,.13,.04,lamp);box(g,sx*.665,.69,1.62,.10,.08,.04,amberLamp);}
+  box(g,0,.63,1.62,.50,.20,.03,black);
+  for(const gy of [.58,.63,.68])box(g,0,gy,1.636,.44,.014,.01,steel);
+  box(g,0,.37,1.67,1.48,.17,.10,black);
+  box(g,0,.40,1.735,.34,.17,.008,black);box(g,0,.40,1.741,.31,.14,.006,plateWhite);
+  // Bed: floor, subframe, drop sides with pressed ribs, tailgate, latches.
+  const bedBack=-1.66;
+  box(g,0,.72,(.28+bedBack)/2,1.46,.04,.28-bedBack,floorMat);
+  for(const sx of [-1,1])box(g,sx*.5,.55,-.69,.08,.30,1.94,black);
+  for(const sx of [-1,1]){
+    box(g,sx*.72,.89,-.69,.04,.30,1.94,paint);
+    box(g,sx*.72,1.055,-.69,.06,.03,1.94,paint);
+    for(const rz of [-.15,-.65,-1.15])box(g,sx*.745,.89,rz,.012,.22,.06,shade);
+  }
+  box(g,0,.89,bedBack+.02,1.40,.30,.04,paint);box(g,0,1.055,bedBack+.02,1.46,.03,.06,paint);
+  for(const sx of [-1,1])box(g,sx*.60,.94,bedBack-.005,.05,.07,.015,black);
+  // Rear: bumper, tail lamps, plate, exhaust.
+  box(g,0,.40,-1.715,1.30,.14,.10,black);
+  for(const sx of [-1,1])box(g,sx*.60,.535,-1.705,.16,.13,.05,tailLamp);
+  box(g,0,.405,-1.775,.36,.19,.008,black);box(g,0,.405,-1.781,.33,.16,.006,plateWhite);
+  cyl(g,.385,.33,-1.27,.035,.035,.79,steel,8).rotation.x=Math.PI/2;
+  return g;
+}
+
+/** A basketball backboard bolted to an outside wall (building-local `wallX`, hoop facing -X). The group is scaled back up so every
+ *  number inside is in metres: backboard 1.05 x .70, rim .38 across at 2.40 m, kid-and-driveway height that keeps the cornice clear. */
+function wallHoop(parent:THREE.Object3D,wallX:number,z:number){
+  const g=new THREE.Group();g.position.set(wallX,0,z);g.rotation.y=-Math.PI/2;g.scale.setScalar(1/BUILDING_SCALE);parent.add(g);
+  const metal=color('#2a3342',.5,.5),board=color('#e8ecf4',0,.5),orange=color('#e8662a',.2,.5),navy=color('#2d4a8a',0,.6);
+  const BY=2.62;
+  box(g,0,BY,.30,1.05,.70,.045,board);
+  for(const [bx,by,bw,bh] of [[0,BY+.335,1.05,.03],[0,BY-.335,1.05,.03],[-.51,BY,.03,.70],[.51,BY,.03,.70]] as const)box(g,bx,by,.3248,bw,bh,.004,navy);   // border
+  for(const [bx,by,bw,bh] of [[0,BY+.06,.50,.012],[0,BY-.30,.50,.012],[-.25,BY-.12,.012,.36],[.25,BY-.12,.012,.36]] as const)box(g,bx,by,.3248,bw,bh,.004,orange); // target square
+  for(const sx of [-1,1]){
+    box(g,sx*.30,2.42,.15,.06,.08,.30,metal);                  // arm from the wall to the back of the board
+    rod(g,sx*.30,2.0,.02,2.40,.27,.018,metal);                 // diagonal brace
+    box(g,sx*.30,2.42,.012,.14,.18,.024,metal);                // wall plates
+    box(g,sx*.30,2.0,.012,.10,.10,.024,metal);
+  }
+  box(g,0,BY-.22,.3475,.08,.03,.05,orange);                    // rim bracket
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.19,.013,5,18),orange);rim.rotation.x=Math.PI/2;rim.position.set(0,BY-.22,.516);g.add(rim);
+  const net=new THREE.Mesh(new THREE.CylinderGeometry(.19,.11,.34,10,3,true),netMat);net.position.set(0,BY-.22-.17,.516);g.add(net);
+  basketball(g,.35,PAVE+.12,.75);
+  return g;
+}
+
+/** A generic red standard motorbike at real size (about 2.1 m long, 1.15 m to the bars, .78 m seat, 1.45 m wheelbase), resting on its side stand.
+ *  It is a plain roadster, not any particular film or brand design. Local +Z is the front; the stand is on the +X side. */
+function redBike(scene:THREE.Object3D,x:number,z:number,rotY:number){
+  const root=new THREE.Group();root.position.set(x,PAVE,z);root.rotation.y=rotY;scene.add(root);
+  const g=new THREE.Group();g.rotation.z=-.14;root.add(g);                      // leans onto the side stand, pivoting on the tyre contact line
+  const red=color('#d72a31',.12,.4),black=color('#14161d',.2,.6),chrome=color('#b9c2cc',.85,.28),seat=color('#1a1b21',0,.9),engine=color('#5b6471',.5,.45),rubber=color('#0f1117',0,.9);
+  const lens=color('#fff1cf',0,.3,'#ffe2a0',.5),tailLens=color('#c4252d',0,.4,'#ff2a2a',.6);
+  // Wheels: tyre ring, rim ring, hub and four crossing spokes, in the YZ plane.
+  for(const [wz,wy] of [[.74,.325],[-.72,.33]] as const){
+    const tyre=new THREE.Mesh(new THREE.TorusGeometry(.27,.055,6,20),rubber);tyre.rotation.y=Math.PI/2;tyre.position.set(0,wy,wz);tyre.castShadow=true;g.add(tyre);
+    const rimRing=new THREE.Mesh(new THREE.TorusGeometry(.215,.011,4,18),chrome);rimRing.rotation.y=Math.PI/2;rimRing.position.set(0,wy,wz);g.add(rimRing);
+    cyl(g,0,wy,wz,.045,.045,.12,chrome,8).rotation.z=Math.PI/2;
+    for(let k=0;k<4;k++)box(g,0,wy,wz,.012,.44,.012,chrome).rotation.x=k*Math.PI/4;
+  }
+  // Front end: fork legs, axle, clamp, bars, grips, mirrors, headlamp, fender.
+  for(const sx of [-1,1])rod(g,sx*.075,.95,.45,.33,.74,.018,chrome,7);
+  cyl(g,0,.325,.74,.02,.02,.17,chrome,6).rotation.z=Math.PI/2;
+  box(g,0,.96,.44,.20,.05,.07,black);
+  box(g,0,1.03,.41,.74,.022,.022,chrome);
+  for(const sx of [-1,1]){
+    box(g,sx*.07,1.0,.43,.03,.07,.03,black);                                      // bar risers
+    cyl(g,sx*.37,1.03,.41,.017,.017,.12,black,6).rotation.z=Math.PI/2;            // grips
+    rod(g,sx*.33,1.03,.41,1.15,.40,.008,black);box(g,sx*.33,1.17,.40,.09,.055,.012,black);   // mirror stalk and glass
+    box(g,sx*.075,.93,.50,.03,.03,.08,chrome);                                    // headlamp brackets
+    box(g,sx*.075,.68,.60,.025,.025,.09,chrome);                                  // fender stays
+  }
+  const headlamp=sphere(g,0,.93,.56,.08,black,1);headlamp.scale.set(.8,1,.8);
+  sphere(g,0,.93,.625,.05,lens,1);
+  box(g,0,1.05,.38,.08,.05,.05,black);                                            // instrument pod
+  box(g,0,.69,.70,.11,.018,.26,red);                                              // front fender: a flat top and two angled ends that follow the tyre
+  box(g,0,.655,.855,.11,.018,.14,red).rotation.x=.55;box(g,0,.655,.545,.11,.018,.14,red).rotation.x=-.55;
+  // Frame, tank, seat, tail.
+  rod(g,0,.93,.43,.80,-.20,.025,black,7);
+  for(const sx of [-1,1])rod(g,sx*.06,.90,.42,.55,.18,.022,black,7);
+  const tank=sphere(g,0,.89,.12,.19,red,1);tank.scale.set(.85,.72,1.6);
+  cyl(g,0,1.025,.14,.03,.03,.015,chrome,8);
+  for(const sx of [-1,1])box(g,sx*.10,.70,-.22,.02,.16,.34,red);                  // side covers under the seat
+  box(g,0,.80,-.24,.30,.07,.64,seat);
+  box(g,0,.84,-.62,.17,.07,.28,red);
+  box(g,0,.86,-.77,.12,.045,.03,tailLens);
+  box(g,0,.69,-.75,.12,.02,.40,black);                                            // rear fender
+  box(g,0,.78,-.70,.05,.20,.04,black);                                            // fender stay
+  // Engine, swingarm, shocks, exhaust, pegs.
+  box(g,0,.45,.02,.26,.30,.36,engine);
+  box(g,0,.63,.06,.22,.06,.22,engine);
+  box(g,0,.70,.06,.20,.08,.20,engine);
+  for(let i=0;i<4;i++)box(g,0,.665+i*.024,.06,.26,.008,.25,engine);                  // cooling fins
+  cyl(g,0,.33,-.72,.02,.02,.24,chrome,6).rotation.z=Math.PI/2;
+  for(const sx of [-1,1]){
+    rod(g,sx*.095,.42,-.18,.335,-.72,.022,black,6);                               // swingarm
+    rod(g,sx*.14,.38,-.62,.78,-.46,.015,chrome,6);                                // shock
+    box(g,sx*.20,.32,-.12,.12,.02,.03,chrome);                                    // footpeg
+  }
+  rod(g,-.16,.38,.12,.45,-.85,.032,chrome,8);                                     // exhaust on the wall side
+  rod(g,-.16,.45,-.55,.47,-.88,.05,chrome,8);                                     // silencer
+  box(g,-.15,.38,.12,.07,.05,.05,chrome);                                         // header joint
+  // Side stand: its foot lands flat on the pavement once the bike is leaned (foot at x +.28 m in world terms).
+  rodX(g,-.10,.04,.26,.277,.039,.014,black,6);
+  box(g,.2762,.046,-.10,.08,.014,.08,black).rotation.z=.14;
+  return root;
+}
+
+/** Soft plush teddy sitting upright on a seat (y = seat surface), facing local +Z. A plain brown bear: no character, no outfit. */
+function plushBear(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  const fur=color('#a9764a',0,.98),light=color('#d9b88a',0,.98),dk=color('#2a1d16',0,.6);
+  const body=sphere(g,0,.115,0,.105,fur,1);body.scale.set(1,1.1,.95);
+  const tum=sphere(g,0,.105,.06,.07,light,1);tum.scale.set(1,1.1,.7);
+  sphere(g,0,.27,.015,.08,fur,1);
+  const mz=sphere(g,0,.255,.085,.037,light,1);mz.scale.set(1,.8,.8);
+  sphere(g,0,.268,.112,.012,dk,0);
+  for(const sx of [-1,1]){
+    sphere(g,sx*.03,.29,.082,.009,dk,0);                                          // eyes
+    sphere(g,sx*.06,.335,0,.03,fur,1);sphere(g,sx*.06,.335,.012,.016,light,0);    // ears with a pale inner
+    const arm=sphere(g,sx*.125,.15,.03,.04,fur,1);arm.scale.set(.9,1.5,.9);arm.rotation.z=-sx*.3;
+    const leg=sphere(g,sx*.07,.045,.09,.055,fur,1);leg.scale.set(1,.8,1.4);
+    const pad=sphere(g,sx*.07,.04,.15,.03,light,1);pad.scale.set(1,.8,1);
+  }
+  sphere(g,0,.06,-.1,.03,fur,0);
+  return g;
+}
+
+/** A tabletop chess board (size = side of the playing surface) with a middlegame position. White starts on local +Z. Surface at y + .012. */
+function chessBoard(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,size=.32){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  box(g,0,.006,0,size+.02,.012,size+.02,color('#3b2a20',0,.7));
+  const tex=texture((c,W,H)=>{
+    for(let r=0;r<8;r++)for(let f=0;f<8;f++){c.fillStyle=(r+f)%2?'#8a5a3c':'#e7d9b8';c.fillRect(f*W/8,r*H/8,W/8,H/8);}
+  },256,256);
+  const top=new THREE.Mesh(new THREE.PlaneGeometry(size,size),litMaterial(tex,.2));top.rotation.x=-Math.PI/2;top.position.y=.0125;g.add(top);
+  const s=size/8,white=color('#efe6d0',0,.55),blackP=color('#2a2523',0,.55);
+  const heights:Record<string,number>={p:.03,r:.036,n:.04,b:.044,q:.05,k:.056};
+  const piece=(kind:string,file:number,rank:number,mat:THREE.Material,rot:number)=>{
+    const h=heights[kind];
+    const p=new THREE.Group();p.position.set((file-3.5)*s,.012,(3.5-rank)*s);p.rotation.y=rot;g.add(p);
+    cyl(p,0,.004,0,.012,.012,.008,mat,8);
+    if(kind==='p'){cyl(p,0,.008+(h-.016)/2,0,.006,.0045,h-.016,mat,8);sphere(p,0,h-.007,0,.0075,mat,0);}
+    else if(kind==='r'){cyl(p,0,.008+(h-.016)/2,0,.0085,.0065,h-.016,mat,8);cyl(p,0,h-.005,0,.0105,.0095,.01,mat,8);}
+    else if(kind==='n'){cyl(p,0,.008+.008,0,.008,.006,.016,mat,8);box(p,0,h-.012,.002,.010,.022,.016,mat).rotation.x=-.3;box(p,0,h-.018,.011,.008,.01,.012,mat);}
+    else if(kind==='b'){cyl(p,0,.008+(h-.016)/2,0,.007,.0045,h-.016,mat,8);const bh=sphere(p,0,h-.012,0,.0085,mat,1);bh.scale.set(1,1.4,1);sphere(p,0,h-.002,0,.003,mat,0);}
+    else{cyl(p,0,.008+(h-.016)/2,0,.0085,.005,h-.016,mat,8);cyl(p,0,h-.008,0,.0115,.006,.012,mat,8);
+      if(kind==='q')sphere(p,0,h-.001,0,.004,mat,0);
+      else{box(p,0,h+.002,0,.003,.012,.003,mat);box(p,0,h+.004,0,.009,.003,.003,mat);}}
+  };
+  const whites:[string,number,number][]=[['k',6,0],['q',4,1],['r',5,0],['r',0,0],['b',2,3],['n',5,2],['p',0,1],['p',1,1],['p',3,2],['p',4,3],['p',6,1],['p',7,1]];
+  const blacks:[string,number,number][]=[['k',6,7],['q',3,6],['r',5,7],['r',0,7],['b',2,4],['n',2,5],['n',5,5],['p',0,6],['p',1,6],['p',3,5],['p',4,4],['p',6,6],['p',7,6]];
+  for(const [k,f,r] of whites)piece(k,f,r,white,Math.PI);
+  for(const [k,f,r] of blacks)piece(k,f,r,blackP,0);
+  return g;
+}
+
+// ---- Framed jerseys ---------------------------------------------------------------------------------------
+type JCmd=['m',number,number]|['l',number,number]|['q',number,number,number,number];
+/** Back-view silhouettes in 0..1 sheet coordinates (y down). The same outline drives the canvas artwork and the extruded cloth. */
+const JERSEY_PATH:Record<'tee'|'tank',JCmd[]>={
+  tee:[['m',.36,.05],['q',.50,.10,.64,.05],['l',.80,.10],['l',.93,.21],['l',.99,.40],['l',.82,.47],['l',.76,.39],['l',.76,.95],['l',.24,.95],['l',.24,.39],['l',.18,.47],['l',.01,.40],['l',.07,.21],['l',.20,.10]],
+  tank:[['m',.30,.03],['l',.40,.03],['q',.50,.10,.60,.03],['l',.70,.03],['q',.73,.30,.84,.46],['l',.84,.95],['l',.16,.95],['l',.16,.46],['q',.27,.30,.30,.03]]
+};
+type JerseySpec={kind:'tee'|'tank';base:string;stripe?:{style:'pin'|'bands';color:string;alt?:string;width?:number};centerPanel?:string;trim?:string;hem?:boolean;mesh?:boolean;
+  label?:string;num:string;numColor:string;outline?:string;labelColor?:string;plaque:string};
+function traceJersey(c:CanvasRenderingContext2D,W:number,H:number,kind:'tee'|'tank'){
+  c.beginPath();
+  for(const s of JERSEY_PATH[kind]){
+    if(s[0]==='m')c.moveTo(s[1]*W,s[2]*H);
+    else if(s[0]==='l')c.lineTo(s[1]*W,s[2]*H);
+    else c.quadraticCurveTo(s[1]*W,s[2]*H,s[3]*W,s[4]*H);
+  }
+  c.closePath();
+}
+function jerseyShape(kind:'tee'|'tank',w:number,h:number){
+  const sh=new THREE.Shape();const X=(n:number)=>(n-.5)*w,Y=(n:number)=>(.5-n)*h;
+  for(const s of JERSEY_PATH[kind]){
+    if(s[0]==='m')sh.moveTo(X(s[1]),Y(s[2]));
+    else if(s[0]==='l')sh.lineTo(X(s[1]),Y(s[2]));
+    else sh.quadraticCurveTo(X(s[1]),Y(s[2]),X(s[3]),Y(s[4]));
+  }
+  sh.closePath();return sh;
+}
+function jerseyTexture(s:JerseySpec){
+  return texture((c,W,H)=>{
+    c.clearRect(0,0,W,H);
+    traceJersey(c,W,H,s.kind);c.save();c.clip();
+    c.fillStyle=s.base;c.fillRect(0,0,W,H);
+    if(s.stripe){
+      if(s.stripe.style==='pin'){c.fillStyle=s.stripe.color;for(let px=10;px<W;px+=15)c.fillRect(px,0,2.6,H);}
+      else{
+        const bw=s.stripe.width??40,k=Math.ceil((W/2-bw/2)/bw),x0=W/2-bw/2-k*bw;
+        for(let i=0;i<=2*k+1;i++){c.fillStyle=(i-k)%2===0?s.stripe.color:(s.stripe.alt??s.base);c.fillRect(x0+i*bw,0,bw,H);}
+      }
+    }
+    if(s.centerPanel){c.fillStyle=s.centerPanel;c.fillRect(W*.36,H*.08,W*.28,H*.9);}
+    if(s.mesh){c.strokeStyle='rgba(0,0,0,.07)';c.lineWidth=1;for(let i=-H;i<W;i+=9){c.beginPath();c.moveTo(i,0);c.lineTo(i+H,H);c.stroke();c.beginPath();c.moveTo(i+H,0);c.lineTo(i,H);c.stroke();}}
+    // Cloth shading: darker toward the edges, a light top, a heavier hem, and a few soft vertical folds.
+    const sh=c.createLinearGradient(0,0,W,0);sh.addColorStop(0,'rgba(0,0,0,.34)');sh.addColorStop(.18,'rgba(0,0,0,0)');sh.addColorStop(.82,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.34)');c.fillStyle=sh;c.fillRect(0,0,W,H);
+    const sv=c.createLinearGradient(0,0,0,H);sv.addColorStop(0,'rgba(255,255,255,.10)');sv.addColorStop(.5,'rgba(0,0,0,0)');sv.addColorStop(1,'rgba(0,0,0,.22)');c.fillStyle=sv;c.fillRect(0,0,W,H);
+    for(const [fx,fw,fa] of [[.30,26,.07],[.47,34,.05],[.63,24,.07],[.40,18,.04]] as const){
+      const fg=c.createLinearGradient(W*fx-fw,0,W*fx+fw,0);fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(.5,`rgba(0,0,0,${fa})`);fg.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=fg;c.fillRect(W*fx-fw,H*.18,fw*2,H*.8);
+    }
+    // Binding: collar, sleeve openings (tee) or armholes and hem (tank). Half of each stroke falls outside the clip, so these read as edge bands.
+    c.lineCap='butt';c.strokeStyle=s.trim??'rgba(0,0,0,.28)';
+    c.lineWidth=16;c.beginPath();
+    if(s.kind==='tee'){c.moveTo(.36*W,.05*H);c.quadraticCurveTo(.50*W,.10*H,.64*W,.05*H);}
+    else{c.moveTo(.40*W,.03*H);c.quadraticCurveTo(.50*W,.10*H,.60*W,.03*H);}
+    c.stroke();
+    if(s.trim){
+      if(s.kind==='tee'){
+        c.lineWidth=24;
+        c.beginPath();c.moveTo(.01*W,.40*H);c.lineTo(.18*W,.47*H);c.stroke();
+        c.beginPath();c.moveTo(.99*W,.40*H);c.lineTo(.82*W,.47*H);c.stroke();
+      }else{
+        c.lineWidth=16;
+        c.beginPath();c.moveTo(.30*W,.03*H);c.quadraticCurveTo(.27*W,.30*H,.16*W,.46*H);c.stroke();
+        c.beginPath();c.moveTo(.70*W,.03*H);c.quadraticCurveTo(.73*W,.30*H,.84*W,.46*H);c.stroke();
+      }
+      if(s.hem){c.lineWidth=22;c.beginPath();c.moveTo(.16*W,.95*H);c.lineTo(.84*W,.95*H);c.stroke();}
+    }
+    // Stitching: side seams, armscyes, hem.
+    c.setLineDash([7,6]);c.strokeStyle='rgba(0,0,0,.26)';c.lineWidth=2;
+    const seam=(x1:number,y1:number,x2:number,y2:number)=>{c.beginPath();c.moveTo(x1*W,y1*H);c.lineTo(x2*W,y2*H);c.stroke();};
+    if(s.kind==='tee'){seam(.745,.41,.745,.92);seam(.255,.41,.255,.92);seam(.80,.12,.745,.40);seam(.20,.12,.255,.40);seam(.27,.915,.73,.915);}
+    else{seam(.185,.50,.185,.92);seam(.815,.50,.815,.92);seam(.20,.915,.80,.915);}
+    c.setLineDash([]);
+    c.restore();
+    // Lettering sits on top of the cloth, slightly muted so it reads as print rather than light.
+    c.textAlign='center';c.textBaseline='middle';c.globalAlpha=.96;
+    let numY=H*.50;
+    if(s.label){
+      let fs=64;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
+      while(c.measureText(s.label).width>W*.40&&fs>22){fs-=3;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
+      if(s.outline){c.lineWidth=fs*.14;c.strokeStyle=s.outline;c.lineJoin='round';c.strokeText(s.label,W/2,H*.215);}
+      c.fillStyle=s.labelColor??s.numColor;c.fillText(s.label,W/2,H*.215);
+      numY=H*.52;
+    }
+    let ns=290;c.font=`bold ${ns}px Impact, "Arial Black", Arial, sans-serif`;
+    while(c.measureText(s.num).width>W*.40&&ns>120){ns-=8;c.font=`bold ${ns}px Impact, "Arial Black", Arial, sans-serif`;}
+    if(s.outline){c.lineWidth=ns*.07;c.strokeStyle=s.outline;c.lineJoin='round';c.strokeText(s.num,W/2,numY);}
+    c.fillStyle=s.numColor;c.fillText(s.num,W/2,numY);
+    c.globalAlpha=1;
+    // Crisp outline of the garment so the silhouette reads against the felt.
+    traceJersey(c,W,H,s.kind);c.strokeStyle='rgba(0,0,0,.45)';c.lineWidth=3;c.stroke();
+  },512,640);
+}
+function plaqueTexture(text:string){
+  return texture((c,W,H)=>{
+    c.fillStyle='#c9a45c';c.fillRect(0,0,W,H);
+    c.strokeStyle='#8f7134';c.lineWidth=4;c.strokeRect(6,6,W-12,H-12);
+    c.fillStyle='#2b2113';c.textAlign='center';c.textBaseline='middle';
+    let fs=54;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
+    while(c.measureText(text).width>W-60&&fs>18){fs-=2;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
+    c.fillText(text,W/2,H/2+2);
+  },620,92);
+}
+/** A shadow-box frame holding one jersey (extruded cloth with a printed face), with a brass name plate underneath. Hangs on a wall facing local +Z. */
+function jerseyFrame(parent:THREE.Object3D,x:number,y:number,z:number,s:JerseySpec){
+  const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
+  const felt=color('#1d2432',0,.95),brassM=color('#c9a45c',.6,.4);
+  for(const sy of [-1,1])box(g,0,sy*.385,.045,.66,.05,.09,wood);
+  for(const sx of [-1,1])box(g,sx*.305,0,.045,.05,.72,.09,wood);
+  box(g,0,0,.012,.58,.74,.024,felt);
+  const w=.50,h=.625;
+  const cloth=new THREE.Mesh(new THREE.ExtrudeGeometry(jerseyShape(s.kind,w,h),{depth:.018,bevelEnabled:true,bevelThickness:.005,bevelSize:.005,bevelSegments:2,curveSegments:6}),color(s.base,0,.9));
+  cloth.position.set(0,-.01,.03);g.add(cloth);
+  const tex=jerseyTexture(s);
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tex,emissiveMap:tex,emissive:'#ffffff',emissiveIntensity:.3,roughness:.92,alphaTest:.5,side:THREE.DoubleSide}));
+  face.position.set(0,-.01,.0555);g.add(face);
+  box(g,0,-.455,.02,.34,.07,.014,brassM);
+  litPlane(g,0,-.455,.0275,.31,.045,plaqueTexture(s.plaque),0,.15);
+  return g;
+}
+/** The six jerseys: team colours, surname and number only. No crests, logos or sponsor marks. */
+const JERSEYS:JerseySpec[]=[
+  {kind:'tee',base:'#f4f2ec',stripe:{style:'pin',color:'#1b2a4a'},num:'2',numColor:'#1b2a4a',plaque:'JETER  ·  NO. 2'},
+  {kind:'tee',base:'#f3f1ea',trim:'#c6011f',num:'14',numColor:'#c6011f',plaque:'ROSE  ·  NO. 14'},
+  {kind:'tee',base:'#f1efe8',trim:'#1d6f9c',label:'ICHIRO',num:'51',numColor:'#0e2b4d',outline:'#aeb7c2',plaque:'ICHIRO  ·  NO. 51'},
+  {kind:'tee',base:'#f4f2ec',stripe:{style:'bands',color:'#14161b',alt:'#f4f2ec',width:44},centerPanel:'#14161b',trim:'#14161b',label:'DYBALA',num:'10',numColor:'#f4f2ec',plaque:'DYBALA  ·  NO. 10'},
+  {kind:'tee',base:'#f4f6f8',stripe:{style:'bands',color:'#74acdf',alt:'#f4f6f8',width:40},trim:'#1c2b4a',label:'MESSI',num:'10',numColor:'#14161b',plaque:'MESSI  ·  NO. 10'},
+  {kind:'tank',base:'#f4f6f8',trim:'#0b2a5b',hem:true,mesh:true,label:'NOWITZKI',num:'41',numColor:'#0b4f9c',outline:'#b3bcc8',plaque:'NOWITZKI  ·  NO. 41'}
+];
+
+/** Original stylised poster: a lone figure in blue seen from behind, head bowed, hands on hips, on a night pitch beside the penalty spot. */
+function baggioPoster(parent:THREE.Object3D,x:number,y:number,z:number){
+  const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
+  box(g,0,0,.02,.96,1.34,.04,color('#15171d',0,.7));
+  const tex=texture((c,W,H)=>{
+    const bg=c.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1331');bg.addColorStop(.52,'#27407e');bg.addColorStop(.60,'#2a6a46');bg.addColorStop(1,'#0e2a1c');
+    c.fillStyle=bg;c.fillRect(0,0,W,H);
+    // floodlight bloom
+    const fl=c.createRadialGradient(W*.82,H*.10,2,W*.82,H*.10,W*.5);fl.addColorStop(0,'rgba(255,244,214,.55)');fl.addColorStop(1,'rgba(255,244,214,0)');c.fillStyle=fl;c.fillRect(0,0,W,H);
+    // distant goal
+    c.strokeStyle='rgba(240,244,250,.85)';c.lineWidth=5;c.beginPath();c.moveTo(W*.32,H*.585);c.lineTo(W*.32,H*.47);c.lineTo(W*.68,H*.47);c.lineTo(W*.68,H*.585);c.stroke();
+    c.strokeStyle='rgba(240,244,250,.28)';c.lineWidth=1.5;for(let i=1;i<9;i++){c.beginPath();c.moveTo(W*(.32+i*.04),H*.47);c.lineTo(W*(.32+i*.04),H*.585);c.stroke();}for(let j=1;j<4;j++){c.beginPath();c.moveTo(W*.32,H*(.47+j*.029));c.lineTo(W*.68,H*(.47+j*.029));c.stroke();}
+    // pitch markings and the spot
+    c.strokeStyle='rgba(240,244,250,.5)';c.lineWidth=3;c.beginPath();c.ellipse(W*.5,H*.80,W*.30,H*.075,0,0,Math.PI*2);c.stroke();
+    c.beginPath();c.moveTo(W*.05,H*.66);c.lineTo(W*.95,H*.66);c.stroke();
+    c.fillStyle='#f1f3f7';c.beginPath();c.ellipse(W*.5,H*.815,W*.016,H*.007,0,0,Math.PI*2);c.fill();
+    // the figure, from behind (enlarged about his feet)
+    c.save();c.translate(W*.5,H*.79);c.scale(1.3,1.3);c.translate(-W*.5,-H*.79);
+    const skin='#c99a76',blue='#2a63c4',blueDark='#1c458d',white='#eef1f6',hair='#1b1310';
+    c.lineCap='round';c.lineJoin='round';
+    c.strokeStyle=skin;c.lineWidth=W*.024;c.beginPath();c.moveTo(W*.43,H*.665);c.lineTo(W*.43,H*.745);c.moveTo(W*.57,H*.665);c.lineTo(W*.57,H*.745);c.stroke();   // legs
+    c.strokeStyle=blueDark;c.lineWidth=W*.03;c.beginPath();c.moveTo(W*.43,H*.725);c.lineTo(W*.43,H*.775);c.moveTo(W*.57,H*.725);c.lineTo(W*.57,H*.775);c.stroke();   // socks
+    c.fillStyle='#14161b';c.fillRect(W*.405,H*.775,W*.05,H*.012);c.fillRect(W*.545,H*.775,W*.05,H*.012);                          // boots
+    c.fillStyle=white;c.beginPath();c.moveTo(W*.42,H*.60);c.lineTo(W*.58,H*.60);c.lineTo(W*.60,H*.675);c.lineTo(W*.515,H*.675);c.lineTo(W*.5,H*.64);c.lineTo(W*.485,H*.675);c.lineTo(W*.40,H*.675);c.closePath();c.fill();   // shorts
+    c.fillStyle=blue;c.beginPath();c.moveTo(W*.385,H*.465);c.lineTo(W*.615,H*.465);c.lineTo(W*.585,H*.605);c.lineTo(W*.415,H*.605);c.closePath();c.fill();            // shirt
+    c.fillStyle=blueDark;c.fillRect(W*.40,H*.465,W*.04,H*.14);
+    c.strokeStyle=blue;c.lineWidth=W*.036;c.beginPath();c.moveTo(W*.392,H*.478);c.lineTo(W*.345,H*.545);c.lineTo(W*.415,H*.595);c.moveTo(W*.608,H*.478);c.lineTo(W*.655,H*.545);c.lineTo(W*.585,H*.595);c.stroke();   // arms, hands on hips
+    c.strokeStyle=skin;c.lineWidth=W*.024;c.beginPath();c.moveTo(W*.349,H*.54);c.lineTo(W*.352,H*.552);c.moveTo(W*.651,H*.54);c.lineTo(W*.648,H*.552);c.stroke();
+    c.fillStyle=skin;c.fillRect(W*.485,H*.435,W*.03,H*.035);                                                                        // neck
+    c.fillStyle=hair;c.beginPath();c.arc(W*.5,H*.415,W*.05,0,Math.PI*2);c.fill();                                               // head bowed, hair
+    c.strokeStyle=hair;c.lineWidth=W*.012;c.beginPath();c.moveTo(W*.5,H*.44);c.quadraticCurveTo(W*.515,H*.49,W*.505,H*.515);c.stroke();   // tied-back hair
+    c.fillStyle=white;c.textAlign='center';c.textBaseline='middle';
+    c.font=`bold ${W*.055}px Arial, Helvetica, sans-serif`;c.fillText('BAGGIO',W*.5,H*.495);
+    c.font=`bold ${W*.12}px Impact, "Arial Black", Arial, sans-serif`;c.fillText('10',W*.5,H*.552);
+    c.restore();
+    // headline and caption (textAlign was part of the saved state, so set it again)
+    c.textAlign='center';c.textBaseline='middle';
+    c.fillStyle='#f1f3f7';c.font=`bold ${W*.092}px Impact, "Arial Black", Arial, sans-serif`;c.fillText('THE LONG WALK',W*.5,H*.105);
+    c.fillStyle='#bcd0f0';c.font=`bold ${W*.045}px Arial, Helvetica, sans-serif`;c.fillText('PASADENA  ·  17 JULY 1994',W*.5,H*.935);
+    // vignette
+    const vg=c.createRadialGradient(W/2,H/2,W*.35,W/2,H/2,H*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');c.fillStyle=vg;c.fillRect(0,0,W,H);
+    c.strokeStyle='rgba(241,243,247,.8)';c.lineWidth=5;c.strokeRect(10,10,W-20,H-20);
+  },432,624);
+  litPlane(g,0,0,.0415,.88,1.272,tex,0,.34);
+  return g;
+}
+
+/** A plain framed record sleeve: neutral stand-in with the album title, ready for the owner's own artwork. Hangs facing local +Z. */
+function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,title:string,bg:string,fg:string){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  const fr=color('#1b1714',0,.7);
+  for(const sy of [-1,1])box(g,0,sy*.1675,.0175,.36,.025,.035,fr);
+  for(const sx of [-1,1])box(g,sx*.1675,0,.0175,.025,.31,.035,fr);
+  box(g,0,0,.006,.335,.335,.012,color('#101114',0,.9));
+  const tex=texture((c,W,H)=>{
+    c.fillStyle=bg;c.fillRect(0,0,W,H);
+    c.strokeStyle=fg;c.globalAlpha=.35;c.lineWidth=3;c.strokeRect(14,14,W-28,H-28);
+    c.beginPath();c.arc(W/2,H/2,W*.36,0,Math.PI*2);c.stroke();c.beginPath();c.arc(W/2,H/2,W*.05,0,Math.PI*2);c.stroke();c.globalAlpha=1;
+    c.fillStyle=fg;c.textAlign='center';c.textBaseline='middle';
+    let fs=72;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
+    while(c.measureText(title).width>W*.78&&fs>20){fs-=3;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
+    c.fillText(title,W/2,H/2);
+  },256,256);
+  litPlane(g,0,0,.0135,.31,.31,tex,0,.28);
+  return g;
+}
+
 /** A world-level cluster of props on the plaza. */
 function endgameWorld(scene:THREE.Object3D){
-  // Round three: the plaza was cleared back to two pieces. Everything else that used to stand here (hoop, ping-pong table, mini goal,
-  // soccer ball and cones, poster column, display table with its figures, record crate, treasure chest) is parked below, unplaced.
-  wagon(scene,-6.2,-1.2,2.7);
-  heron(scene,-6.5,1.2,.7);
+  // Round four: the wagon and its lamp are gone; a white kei pickup parks on the left, the heron moved forward to give it room,
+  // and a red motorbike stands on its side stand beside the corkboard.
+  keiTruck(scene,-5.25,-.8,.04);
+  heron(scene,-6.4,2.25,.7);
+  redBike(scene,4.6,.25,.12);
 }
 /** A small red toy seaplane (generic biplane on floats) hung from the ceiling by two cords. */
 function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,ceilingY:number){
@@ -1623,23 +2027,6 @@ function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,c
   for(const sx of [-.12,.12]){box(g,sx,-.13,.04,.05,.04,.32,cream);box(g,sx,-.085,.04,.012,.09,.012,metal);}   // floats on struts
   box(g,0,0,.2,.012,.18,.012,metal);box(g,0,0,.2,.18,.012,.012,metal);          // propeller
   for(const sx of [-.15,.15]){const top=.09,len=ceilingY-y-top;box(g,sx,top+len/2,.02,.014,len,.014,color('#d9cfb9',0,.9));}   // twine up to the ceiling, thick and pale enough to read from the street
-}
-/** Framed plain shirt: a painted garment on a cream mat in a thin wood frame, hung flat on a wall facing local +Z of `parent`. */
-function framedShirt(parent:THREE.Object3D,x:number,y:number,z:number,kind:'tank'|'jersey'|'kit',num:string){
-  box(parent,x,y,z,.52,.64,.025,wood);
-  const tex=texture((c,W,H)=>{
-    c.fillStyle='#e9dfcc';c.fillRect(0,0,W,H);
-    c.beginPath();
-    if(kind==='tank'){c.moveTo(W*.3,H*.1);c.lineTo(W*.4,H*.1);c.quadraticCurveTo(W*.5,H*.3,W*.6,H*.1);c.lineTo(W*.7,H*.1);c.lineTo(W*.78,H*.9);c.lineTo(W*.22,H*.9);c.closePath();}
-    else{c.moveTo(W*.36,H*.1);c.quadraticCurveTo(W*.5,H*.2,W*.64,H*.1);c.lineTo(W*.92,H*.28);c.lineTo(W*.8,H*.42);c.lineTo(W*.74,H*.36);c.lineTo(W*.74,H*.9);c.lineTo(W*.26,H*.9);c.lineTo(W*.26,H*.36);c.lineTo(W*.2,H*.42);c.lineTo(W*.08,H*.28);c.closePath();}
-    c.save();c.clip();
-    if(kind==='tank'){c.fillStyle='#c9302c';c.fillRect(0,0,W,H);c.fillStyle='#f3efe6';c.fillRect(W*.2,H*.84,W*.6,H*.06);}
-    else if(kind==='jersey'){c.fillStyle='#f3f1ea';c.fillRect(0,0,W,H);c.fillStyle='#1d2c55';for(let i=0;i<W;i+=18)c.fillRect(i,0,4,H);}
-    else{c.fillStyle='#f1efe8';c.fillRect(0,0,W,H);c.fillStyle='#15171c';for(let i=0;i<W;i+=56)c.fillRect(i,0,28,H);}
-    c.restore();
-    c.fillStyle=kind==='kit'?'#c9302c':'#1d2029';c.font=`bold ${H*.28}px Arial`;c.textAlign='center';c.textBaseline='middle';c.fillText(num,W/2,H*.56);
-  },220,270);
-  litPlane(parent,x,y,z+.014,.44,.56,tex,0,.3);
 }
 function endgameInteriors(scene:THREE.Object3D){
   const gf=.07,uf=4.425,counter=gf+1.15;   // counter top
@@ -1657,7 +2044,11 @@ function endgameInteriors(scene:THREE.Object3D){
   box(scene,-.9,counter+.0125,-2.28,.17,.025,.05,color('#b8312b'));box(scene,-.9,counter+.037,-2.28,.17,.02,.045,color('#c23a31'));
   // Retro gaming corner (CRT, display cabinet, consoles, handheld, gamepad) removed in round three; the code is parked in git history.
   // ---- Upper floor ----------------------------------------------------------------------------------------
-  // The three framed shirts were removed in round three.
+  // Six framed jerseys in two rows above the sofa (inner face of the back wall is z = -2.78).
+  const wallZ=-2.78;
+  JERSEYS.forEach((spec,i)=>jerseyFrame(scene,-3.1+(i%3)*.8,i<3?7.0:6.0,wallZ,spec));
+  // Plush bear on the sofa, leaning against the backrest between the two cushions.
+  plushBear(scene,-2.3,uf+.4,-2.45,0);
   // Turntable on a sideboard against the right wall, flanked by two small speakers.
   const sx=1.26,sz=-2.0;
   box(scene,sx,uf+.4,sz,.4,.8,1.2,wood);
@@ -1683,6 +2074,10 @@ function endgameInteriors(scene:THREE.Object3D){
   box(scene,-1.02,tt+.015,-1.05,.2,.03,.28,color('#425e6c'),.2);box(scene,-1.02,tt+.04,-1.05,.19,.02,.27,color('#d9cfb9'),.15);
   box(scene,-1.55,tt+.012,-.72,.17,.024,.25,color('#965857'),-.3);
   soccerBall(scene,-.7,uf+.11,-2.5);
+  // Four framed record sleeves on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
+  [['RAM','#2c2f36','#eae6dc'],['Luv(sic)','#a98a64','#2b2113'],['Graduation','#e6dcc6','#2b2f38'],['Mm..Food','#4a5b66','#e9eef1']].forEach(([t,bg,fg],i)=>albumFrame(scene,1.46,5.85,-2.54+i*.41,-Math.PI/2,t,bg,fg));
+  // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
+  baggioPoster(scene,1.5,2.2,-2.835);
 }
 /** Building-level end-game pieces outside the walls (building-local units): the cat, the quetzal, the flag, the surfboard and the baseball kit. */
 function endgameExterior(scene:THREE.Object3D){
@@ -1690,8 +2085,10 @@ function endgameExterior(scene:THREE.Object3D){
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
   quetzal(scene,-1.75,ARCH.upperRoof+.25+.81+.0325,ARCH.upper.z+ARCH.upper.depth/2+.08);   // on the roof's front rail
   baseballSet(scene,2.15,4.0);
+  wallHoop(scene,-ARCH.ground.width/2,.85);                                               // left wall, in front of the parked truck
+  chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
   teaSet(scene,-1.17+.19,8.695,-.30+.10);                                                // roof table
-  // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board.
+  // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
 export function buildWorld():World{
  keyLights.length=0;openings.length=0;
