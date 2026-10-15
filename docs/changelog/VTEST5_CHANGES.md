@@ -37,3 +37,6 @@ Corrections made while reading the READMEs:
 - On short laptop screens (about 850 px tall) the type shrinks to fit; a few pages may still scroll a little, and the GitHub button in the bar is always reachable.
 - Fonts load from Google Fonts; offline it falls back to Georgia.
 - The 3D book on the cart still opens the same book; the books on the cart are not themselves animated open.
+
+## Up next
+About board, Contacts, Resume and Credits presentation; remaining knick-knacks; remove the "Explore the space" button; general polish.
