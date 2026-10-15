@@ -1701,68 +1701,6 @@ function wallHoop(parent:THREE.Object3D,wallX:number,z:number){
   return g;
 }
 
-/** A generic red standard motorbike at real size (about 2.1 m long, 1.15 m to the bars, .78 m seat, 1.45 m wheelbase), resting on its side stand.
- *  It is a plain roadster, not any particular film or brand design. Local +Z is the front; the stand is on the +X side. */
-function redBike(scene:THREE.Object3D,x:number,z:number,rotY:number){
-  const root=new THREE.Group();root.position.set(x,PAVE,z);root.rotation.y=rotY;scene.add(root);
-  const g=new THREE.Group();g.rotation.z=-.14;root.add(g);                      // leans onto the side stand, pivoting on the tyre contact line
-  const red=color('#d72a31',.12,.4),black=color('#14161d',.2,.6),chrome=color('#b9c2cc',.85,.28),seat=color('#1a1b21',0,.9),engine=color('#5b6471',.5,.45),rubber=color('#0f1117',0,.9);
-  const lens=color('#fff1cf',0,.3,'#ffe2a0',.5),tailLens=color('#c4252d',0,.4,'#ff2a2a',.6);
-  // Wheels: tyre ring, rim ring, hub and four crossing spokes, in the YZ plane.
-  for(const [wz,wy] of [[.74,.325],[-.72,.33]] as const){
-    const tyre=new THREE.Mesh(new THREE.TorusGeometry(.27,.055,6,20),rubber);tyre.rotation.y=Math.PI/2;tyre.position.set(0,wy,wz);tyre.castShadow=true;g.add(tyre);
-    const rimRing=new THREE.Mesh(new THREE.TorusGeometry(.215,.011,4,18),chrome);rimRing.rotation.y=Math.PI/2;rimRing.position.set(0,wy,wz);g.add(rimRing);
-    cyl(g,0,wy,wz,.045,.045,.12,chrome,8).rotation.z=Math.PI/2;
-    for(let k=0;k<4;k++)box(g,0,wy,wz,.012,.44,.012,chrome).rotation.x=k*Math.PI/4;
-  }
-  // Front end: fork legs, axle, clamp, bars, grips, mirrors, headlamp, fender.
-  for(const sx of [-1,1])rod(g,sx*.075,.95,.45,.33,.74,.018,chrome,7);
-  cyl(g,0,.325,.74,.02,.02,.17,chrome,6).rotation.z=Math.PI/2;
-  box(g,0,.96,.44,.20,.05,.07,black);
-  box(g,0,1.03,.41,.74,.022,.022,chrome);
-  for(const sx of [-1,1]){
-    box(g,sx*.07,1.0,.43,.03,.07,.03,black);                                      // bar risers
-    cyl(g,sx*.37,1.03,.41,.017,.017,.12,black,6).rotation.z=Math.PI/2;            // grips
-    rod(g,sx*.33,1.03,.41,1.15,.40,.008,black);box(g,sx*.33,1.17,.40,.09,.055,.012,black);   // mirror stalk and glass
-    box(g,sx*.075,.93,.50,.03,.03,.08,chrome);                                    // headlamp brackets
-    box(g,sx*.075,.68,.60,.025,.025,.09,chrome);                                  // fender stays
-  }
-  const headlamp=sphere(g,0,.93,.56,.08,black,1);headlamp.scale.set(.8,1,.8);
-  sphere(g,0,.93,.625,.05,lens,1);
-  box(g,0,1.05,.38,.08,.05,.05,black);                                            // instrument pod
-  box(g,0,.69,.70,.11,.018,.26,red);                                              // front fender: a flat top and two angled ends that follow the tyre
-  box(g,0,.655,.855,.11,.018,.14,red).rotation.x=.55;box(g,0,.655,.545,.11,.018,.14,red).rotation.x=-.55;
-  // Frame, tank, seat, tail.
-  rod(g,0,.93,.43,.80,-.20,.025,black,7);
-  for(const sx of [-1,1])rod(g,sx*.06,.90,.42,.55,.18,.022,black,7);
-  const tank=sphere(g,0,.89,.12,.19,red,1);tank.scale.set(.85,.72,1.6);
-  cyl(g,0,1.025,.14,.03,.03,.015,chrome,8);
-  for(const sx of [-1,1])box(g,sx*.10,.70,-.22,.02,.16,.34,red);                  // side covers under the seat
-  box(g,0,.80,-.24,.30,.07,.64,seat);
-  box(g,0,.84,-.62,.17,.07,.28,red);
-  box(g,0,.86,-.77,.12,.045,.03,tailLens);
-  box(g,0,.69,-.75,.12,.02,.40,black);                                            // rear fender
-  box(g,0,.78,-.70,.05,.20,.04,black);                                            // fender stay
-  // Engine, swingarm, shocks, exhaust, pegs.
-  box(g,0,.45,.02,.26,.30,.36,engine);
-  box(g,0,.63,.06,.22,.06,.22,engine);
-  box(g,0,.70,.06,.20,.08,.20,engine);
-  for(let i=0;i<4;i++)box(g,0,.665+i*.024,.06,.26,.008,.25,engine);                  // cooling fins
-  cyl(g,0,.33,-.72,.02,.02,.24,chrome,6).rotation.z=Math.PI/2;
-  for(const sx of [-1,1]){
-    rod(g,sx*.095,.42,-.18,.335,-.72,.022,black,6);                               // swingarm
-    rod(g,sx*.14,.38,-.62,.78,-.46,.015,chrome,6);                                // shock
-    box(g,sx*.20,.32,-.12,.12,.02,.03,chrome);                                    // footpeg
-  }
-  rod(g,-.16,.38,.12,.45,-.85,.032,chrome,8);                                     // exhaust on the wall side
-  rod(g,-.16,.45,-.55,.47,-.88,.05,chrome,8);                                     // silencer
-  box(g,-.15,.38,.12,.07,.05,.05,chrome);                                         // header joint
-  // Side stand: its foot lands flat on the pavement once the bike is leaned (foot at x +.28 m in world terms).
-  rodX(g,-.10,.04,.26,.277,.039,.014,black,6);
-  box(g,.2762,.046,-.10,.08,.014,.08,black).rotation.z=.14;
-  return root;
-}
-
 /** Soft plush teddy sitting upright on a seat (y = seat surface), facing local +Z. A plain brown bear: no character, no outfit. */
 function plushBear(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
@@ -2050,11 +1988,9 @@ function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number
 
 /** A world-level cluster of props on the plaza. */
 function endgameWorld(scene:THREE.Object3D){
-  // Round four: the wagon and its lamp are gone; a white kei pickup parks on the left, the heron moved forward to give it room,
-  // and a red motorbike stands on its side stand beside the corkboard.
+  // Round four: the wagon and its lamp are gone; a white kei pickup parks on the left and the heron moved forward to give it room.
   keiTruck(scene,-5.25,-.8,.04);
   heron(scene,-6.4,2.25,.7);
-  redBike(scene,4.6,.25,.12);
 }
 /** A small red toy seaplane (generic biplane on floats) hung from the ceiling by two cords. */
 function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,ceilingY:number){

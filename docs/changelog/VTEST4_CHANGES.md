@@ -13,13 +13,13 @@ Changed file: `src/world.ts` only.
 | 6 | Hobbes plushie on the couch | A plain brown teddy bear sits on the sofa between the cushions. **Not Hobbes** (see "Substitutions"). |
 | 7 | Chess board where the Pai Sho table was | Terrace side table now holds a chess board with a middlegame position (25 pieces: kings, queens, rooks, bishops, knights, pawns). |
 | 8 | Basketball hoop on an outside wall | Backboard bolted to the left outer wall with two steel arms and braces, orange rim and net, a ball on the pavement below. Rim at 2.40 m. |
-| 9 | Akira red motorbike by the corkboard | A generic red standard motorbike at real size (about 2.1 m long, 1.45 m wheelbase, 0.8 m seat), leaning on its side stand next to the corkboard. **Not the Akira bike** (see "Substitutions"). |
+| 9 | Akira red motorbike by the corkboard | **Removed** (dropped at the owner's request; see "Bike removed" below). |
 
 ## Substitutions (and why)
 I do not draw known characters, logos, album or book covers, or branded product designs, so three requests got stand-ins:
 - **Album covers:** the frames carry the titles on plain neutral sleeves. If you give me your own images of the covers (e.g. photos of your records), I can wire them into the frames.
 - **Hobbes:** a plain teddy bear. A striped orange tiger would just be the character, so I stopped short of that.
-- **Akira bike:** a plain red roadster. The film's bike is a specific design.
+- **Akira bike:** a plain red roadster was tried first and has since been removed entirely.
 
 ## Jersey notes
 Team colours, surname and number only. No crests, logos, sponsor marks or brand marks.
@@ -56,3 +56,7 @@ Team colours, surname and number only. No crests, logos, sponsor marks or brand 
 - I did not draw or alter these images. The site is public, so the owner is responsible for having the right to display them.
 - The red motorbike is unchanged (generic roadster). A bike model file (.glb/.gltf) supplied by the owner could be loaded in its place.
 - Checks: stub-typed `tsc` clean; close-up and wide renders (real Three.js, software GL, served over http) show all four images on the correct frames. No real Vite build; Vercel result not seen.
+
+## Bike removed
+- The motorbike by the corkboard is gone: the `redBike` function and its call were deleted from `src/world.ts`. The pavement beside the corkboard is clear.
+- Checks: stub-typed `tsc` clean; floating-part audit 0 unsupported parts (2,224 solid nodes, down from 2,292 with the bike); a render of the corkboard and pavement shows nothing left behind. No real Vite build; Vercel result not seen.
