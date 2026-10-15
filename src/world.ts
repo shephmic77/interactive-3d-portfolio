@@ -1934,62 +1934,94 @@ function jerseyFrame(parent:THREE.Object3D,x:number,y:number,z:number,s:JerseySp
 /** The six jerseys: team colours, surname and number only. No crests, logos or sponsor marks. */
 const JERSEYS:JerseySpec[]=[
   {kind:'tee',base:'#f4f2ec',stripe:{style:'pin',color:'#1b2a4a'},num:'2',numColor:'#1b2a4a',plaque:'JETER  ·  NO. 2'},
-  {kind:'tee',base:'#f3f1ea',trim:'#c6011f',num:'14',numColor:'#c6011f',plaque:'ROSE  ·  NO. 14'},
+  {kind:'tank',base:'#c8102e',trim:'#111111',hem:true,mesh:true,label:'ROSE',num:'1',numColor:'#f4f2ec',outline:'#111111',plaque:'D. ROSE  ·  NO. 1'},
   {kind:'tee',base:'#f1efe8',trim:'#1d6f9c',label:'ICHIRO',num:'51',numColor:'#0e2b4d',outline:'#aeb7c2',plaque:'ICHIRO  ·  NO. 51'},
   {kind:'tee',base:'#f4f2ec',stripe:{style:'bands',color:'#14161b',alt:'#f4f2ec',width:44},centerPanel:'#14161b',trim:'#14161b',label:'DYBALA',num:'10',numColor:'#f4f2ec',plaque:'DYBALA  ·  NO. 10'},
   {kind:'tee',base:'#f4f6f8',stripe:{style:'bands',color:'#74acdf',alt:'#f4f6f8',width:40},trim:'#1c2b4a',label:'MESSI',num:'10',numColor:'#14161b',plaque:'MESSI  ·  NO. 10'},
   {kind:'tank',base:'#f4f6f8',trim:'#0b2a5b',hem:true,mesh:true,label:'NOWITZKI',num:'41',numColor:'#0b4f9c',outline:'#b3bcc8',plaque:'NOWITZKI  ·  NO. 41'}
 ];
 
-/** Original stylised poster: a lone figure in blue seen from behind, head bowed, hands on hips, on a night pitch beside the penalty spot. */
+/** Original stylised poster: a lone figure in blue seen from behind, head bowed, hands on hips, on a floodlit night pitch beside the penalty spot.
+ *  Natural proportions (about 7.5 heads tall), shaded cloth and skin, mown stripes, a crowd band and floodlight bloom. */
 function baggioPoster(parent:THREE.Object3D,x:number,y:number,z:number){
   const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
-  box(g,0,0,.02,.96,1.34,.04,color('#15171d',0,.7));
+  box(g,0,0,.02,.82,1.28,.04,color('#15171d',0,.7));
   const tex=texture((c,W,H)=>{
-    const bg=c.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0c1331');bg.addColorStop(.52,'#27407e');bg.addColorStop(.60,'#2a6a46');bg.addColorStop(1,'#0e2a1c');
-    c.fillStyle=bg;c.fillRect(0,0,W,H);
-    // floodlight bloom
-    const fl=c.createRadialGradient(W*.82,H*.10,2,W*.82,H*.10,W*.5);fl.addColorStop(0,'rgba(255,244,214,.55)');fl.addColorStop(1,'rgba(255,244,214,0)');c.fillStyle=fl;c.fillRect(0,0,W,H);
-    // distant goal
-    c.strokeStyle='rgba(240,244,250,.85)';c.lineWidth=5;c.beginPath();c.moveTo(W*.32,H*.585);c.lineTo(W*.32,H*.47);c.lineTo(W*.68,H*.47);c.lineTo(W*.68,H*.585);c.stroke();
-    c.strokeStyle='rgba(240,244,250,.28)';c.lineWidth=1.5;for(let i=1;i<9;i++){c.beginPath();c.moveTo(W*(.32+i*.04),H*.47);c.lineTo(W*(.32+i*.04),H*.585);c.stroke();}for(let j=1;j<4;j++){c.beginPath();c.moveTo(W*.32,H*(.47+j*.029));c.lineTo(W*.68,H*(.47+j*.029));c.stroke();}
-    // pitch markings and the spot
-    c.strokeStyle='rgba(240,244,250,.5)';c.lineWidth=3;c.beginPath();c.ellipse(W*.5,H*.80,W*.30,H*.075,0,0,Math.PI*2);c.stroke();
-    c.beginPath();c.moveTo(W*.05,H*.66);c.lineTo(W*.95,H*.66);c.stroke();
-    c.fillStyle='#f1f3f7';c.beginPath();c.ellipse(W*.5,H*.815,W*.016,H*.007,0,0,Math.PI*2);c.fill();
-    // the figure, from behind (enlarged about his feet)
-    c.save();c.translate(W*.5,H*.79);c.scale(1.3,1.3);c.translate(-W*.5,-H*.79);
-    const skin='#c99a76',blue='#2a63c4',blueDark='#1c458d',white='#eef1f6',hair='#1b1310';
+    // Sky and stadium
+    const sky=c.createLinearGradient(0,0,0,H*.5);sky.addColorStop(0,'#070b1f');sky.addColorStop(1,'#1d2f66');c.fillStyle=sky;c.fillRect(0,0,W,H*.5);
+    // Crowd band: dark stand with a scatter of lit faces
+    c.fillStyle='#0b1022';c.fillRect(0,H*.40,W,H*.10);
+    let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return(sd-1)/2147483646;};
+    for(let i=0;i<420;i++){c.fillStyle=`rgba(${200+rnd()*55|0},${170+rnd()*60|0},${130+rnd()*60|0},${.15+rnd()*.35})`;c.fillRect(rnd()*W,H*.40+rnd()*H*.10,2,2);}
+    // Floodlight masts and bloom
+    for(const fx of [.12,.88]){c.fillStyle='#10152b';c.fillRect(W*fx-2,H*.08,4,H*.34);
+      const fl=c.createRadialGradient(W*fx,H*.09,2,W*fx,H*.09,W*.42);fl.addColorStop(0,'rgba(255,246,222,.85)');fl.addColorStop(.25,'rgba(255,240,205,.30)');fl.addColorStop(1,'rgba(255,240,205,0)');c.fillStyle=fl;c.fillRect(0,0,W,H*.6);}
+    // Pitch: perspective mown stripes
+    const grass=c.createLinearGradient(0,H*.50,0,H);grass.addColorStop(0,'#2f7a4b');grass.addColorStop(1,'#0e2c1d');c.fillStyle=grass;c.fillRect(0,H*.50,W,H*.50);
+    for(let i=0;i<9;i++){const y0=H*.50+Math.pow(i/9,1.6)*H*.50,y1=H*.50+Math.pow((i+1)/9,1.6)*H*.50;if(i%2){c.fillStyle='rgba(255,255,255,.045)';c.fillRect(0,y0,W,y1-y0);}}
+    // Distant goal with net
+    c.strokeStyle='rgba(240,244,250,.9)';c.lineWidth=3;c.beginPath();c.moveTo(W*.36,H*.545);c.lineTo(W*.36,H*.47);c.lineTo(W*.64,H*.47);c.lineTo(W*.64,H*.545);c.stroke();
+    c.strokeStyle='rgba(240,244,250,.22)';c.lineWidth=1;for(let i=1;i<14;i++){c.beginPath();c.moveTo(W*(.36+i*.02),H*.47);c.lineTo(W*(.36+i*.02),H*.545);c.stroke();}for(let j=1;j<5;j++){c.beginPath();c.moveTo(W*.36,H*(.47+j*.015));c.lineTo(W*.64,H*(.47+j*.015));c.stroke();}
+    // Markings: goal line, penalty arc, spot
+    c.strokeStyle='rgba(240,244,250,.55)';c.lineWidth=2.5;c.beginPath();c.moveTo(W*.04,H*.555);c.lineTo(W*.96,H*.555);c.stroke();
+    c.beginPath();c.ellipse(W*.5,H*.80,W*.30,H*.06,0,0,Math.PI*2);c.stroke();
+    c.fillStyle='#eef1f6';c.beginPath();c.ellipse(W*.5,H*.835,W*.014,H*.005,0,0,Math.PI*2);c.fill();
+    // Figure, from behind. All numbers are pixels on a 400 x 640 sheet; feet at y 515.
+    c.save();c.translate(W/2,515);c.scale(1.28,1.28);c.translate(-W/2,-515);   // enlarge the figure about his feet
+    const cx=W/2,skin='#b98660',skinDk='#8f6446',blue='#2b62c0',blueDk='#1b3f84',blueLt='#3d78d8',white='#e9edf3',hair='#17100d';
     c.lineCap='round';c.lineJoin='round';
-    c.strokeStyle=skin;c.lineWidth=W*.024;c.beginPath();c.moveTo(W*.43,H*.665);c.lineTo(W*.43,H*.745);c.moveTo(W*.57,H*.665);c.lineTo(W*.57,H*.745);c.stroke();   // legs
-    c.strokeStyle=blueDark;c.lineWidth=W*.03;c.beginPath();c.moveTo(W*.43,H*.725);c.lineTo(W*.43,H*.775);c.moveTo(W*.57,H*.725);c.lineTo(W*.57,H*.775);c.stroke();   // socks
-    c.fillStyle='#14161b';c.fillRect(W*.405,H*.775,W*.05,H*.012);c.fillRect(W*.545,H*.775,W*.05,H*.012);                          // boots
-    c.fillStyle=white;c.beginPath();c.moveTo(W*.42,H*.60);c.lineTo(W*.58,H*.60);c.lineTo(W*.60,H*.675);c.lineTo(W*.515,H*.675);c.lineTo(W*.5,H*.64);c.lineTo(W*.485,H*.675);c.lineTo(W*.40,H*.675);c.closePath();c.fill();   // shorts
-    c.fillStyle=blue;c.beginPath();c.moveTo(W*.385,H*.465);c.lineTo(W*.615,H*.465);c.lineTo(W*.585,H*.605);c.lineTo(W*.415,H*.605);c.closePath();c.fill();            // shirt
-    c.fillStyle=blueDark;c.fillRect(W*.40,H*.465,W*.04,H*.14);
-    c.strokeStyle=blue;c.lineWidth=W*.036;c.beginPath();c.moveTo(W*.392,H*.478);c.lineTo(W*.345,H*.545);c.lineTo(W*.415,H*.595);c.moveTo(W*.608,H*.478);c.lineTo(W*.655,H*.545);c.lineTo(W*.585,H*.595);c.stroke();   // arms, hands on hips
-    c.strokeStyle=skin;c.lineWidth=W*.024;c.beginPath();c.moveTo(W*.349,H*.54);c.lineTo(W*.352,H*.552);c.moveTo(W*.651,H*.54);c.lineTo(W*.648,H*.552);c.stroke();
-    c.fillStyle=skin;c.fillRect(W*.485,H*.435,W*.03,H*.035);                                                                        // neck
-    c.fillStyle=hair;c.beginPath();c.arc(W*.5,H*.415,W*.05,0,Math.PI*2);c.fill();                                               // head bowed, hair
-    c.strokeStyle=hair;c.lineWidth=W*.012;c.beginPath();c.moveTo(W*.5,H*.44);c.quadraticCurveTo(W*.515,H*.49,W*.505,H*.515);c.stroke();   // tied-back hair
-    c.fillStyle=white;c.textAlign='center';c.textBaseline='middle';
-    c.font=`bold ${W*.055}px Arial, Helvetica, sans-serif`;c.fillText('BAGGIO',W*.5,H*.495);
-    c.font=`bold ${W*.12}px Impact, "Arial Black", Arial, sans-serif`;c.fillText('10',W*.5,H*.552);
-    c.restore();
-    // headline and caption (textAlign was part of the saved state, so set it again)
-    c.textAlign='center';c.textBaseline='middle';
-    c.fillStyle='#f1f3f7';c.font=`bold ${W*.092}px Impact, "Arial Black", Arial, sans-serif`;c.fillText('THE LONG WALK',W*.5,H*.105);
-    c.fillStyle='#bcd0f0';c.font=`bold ${W*.045}px Arial, Helvetica, sans-serif`;c.fillText('PASADENA  ·  17 JULY 1994',W*.5,H*.935);
-    // vignette
-    const vg=c.createRadialGradient(W/2,H/2,W*.35,W/2,H/2,H*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');c.fillStyle=vg;c.fillRect(0,0,W,H);
-    c.strokeStyle='rgba(241,243,247,.8)';c.lineWidth=5;c.strokeRect(10,10,W-20,H-20);
-  },432,624);
-  litPlane(g,0,0,.0415,.88,1.272,tex,0,.34);
+    // soft contact shadow, thrown away from the right-hand mast
+    const sh=c.createRadialGradient(cx-14,518,2,cx-14,518,70);sh.addColorStop(0,'rgba(0,0,0,.55)');sh.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=sh;c.save();c.translate(cx-14,518);c.scale(1,.16);c.translate(-(cx-14),-518);c.beginPath();c.arc(cx-14,518,70,0,Math.PI*2);c.fill();c.restore();
+    // legs: knees, calves (socks), boots
+    for(const s of [-1,1]){
+      const lx=cx+s*13;
+      const leg=c.createLinearGradient(lx-9,0,lx+9,0);leg.addColorStop(0,skinDk);leg.addColorStop(.5,skin);leg.addColorStop(1,skinDk);
+      c.fillStyle=leg;c.beginPath();c.moveTo(lx-9,400);c.quadraticCurveTo(lx-10,425,lx-7,445);c.lineTo(lx+7,445);c.quadraticCurveTo(lx+10,425,lx+9,400);c.closePath();c.fill();      // thigh-to-knee
+      const sock=c.createLinearGradient(lx-8,0,lx+8,0);sock.addColorStop(0,blueDk);sock.addColorStop(.5,blue);sock.addColorStop(1,blueDk);
+      c.fillStyle=sock;c.beginPath();c.moveTo(lx-7,440);c.quadraticCurveTo(lx-10,470,lx-6,506);c.lineTo(lx+6,506);c.quadraticCurveTo(lx+10,470,lx+7,440);c.closePath();c.fill();           // sock / calf
+      c.fillStyle=white;c.fillRect(lx-7.5,444,15,4);                                                                                                                                  // sock band
+      c.fillStyle='#111319';c.beginPath();c.moveTo(lx-7,505);c.lineTo(lx+7,505);c.lineTo(lx+9,516);c.lineTo(lx-9,516);c.closePath();c.fill();                                             // boot heel
+    }
+    // shorts
+    const shg=c.createLinearGradient(cx-34,0,cx+34,0);shg.addColorStop(0,'#aeb6c4');shg.addColorStop(.5,white);shg.addColorStop(1,'#aeb6c4');
+    c.fillStyle=shg;c.beginPath();c.moveTo(cx-24,338);c.lineTo(cx+24,338);c.quadraticCurveTo(cx+30,375,cx+30,408);c.lineTo(cx+3,410);c.lineTo(cx,380);c.lineTo(cx-3,410);c.lineTo(cx-30,408);c.quadraticCurveTo(cx-30,375,cx-24,338);c.closePath();c.fill();
+    c.strokeStyle='rgba(0,0,0,.18)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,345);c.lineTo(cx,382);c.stroke();
+    // shirt body: shoulders at 262, waist at 340, with side shading
+    const shirt=c.createLinearGradient(cx-38,0,cx+38,0);shirt.addColorStop(0,blueDk);shirt.addColorStop(.3,blue);shirt.addColorStop(.55,blueLt);shirt.addColorStop(1,blueDk);
+    c.fillStyle=shirt;c.beginPath();c.moveTo(cx-20,258);c.quadraticCurveTo(cx-36,262,cx-37,274);c.quadraticCurveTo(cx-31,305,cx-27,342);c.lineTo(cx+27,342);c.quadraticCurveTo(cx+31,305,cx+37,274);c.quadraticCurveTo(cx+36,262,cx+20,258);c.quadraticCurveTo(cx,266,cx-20,258);c.closePath();c.fill();
+    // arms: short sleeves, then forearms to the hips
+    for(const s of [-1,1]){
+      c.strokeStyle=blue;c.lineWidth=17;c.beginPath();c.moveTo(cx+s*36,270);c.quadraticCurveTo(cx+s*52,288,cx+s*50,306);c.stroke();                       // sleeve and upper arm
+      c.strokeStyle=blueDk;c.lineWidth=17;c.beginPath();c.moveTo(cx+s*46,299);c.lineTo(cx+s*51,308);c.stroke();                                           // sleeve hem shade
+      c.strokeStyle=skin;c.lineWidth=13;c.beginPath();c.moveTo(cx+s*50,306);c.quadraticCurveTo(cx+s*47,326,cx+s*30,342);c.stroke();                       // forearm to the hip
+      c.fillStyle=skinDk;c.beginPath();c.arc(cx+s*28,343,6,0,Math.PI*2);c.fill();                                                                        // hand on the hip
+    }
+    // collar, neck, head bowed with hair and tied-back hair
+    c.fillStyle=blueDk;c.beginPath();c.ellipse(cx,259,15,6,0,0,Math.PI*2);c.fill();
+    c.fillStyle=skinDk;c.beginPath();c.moveTo(cx-8,243);c.lineTo(cx+8,243);c.lineTo(cx+9,258);c.lineTo(cx-9,258);c.closePath();c.fill();
+    c.fillStyle=skin;c.beginPath();c.ellipse(cx-17,240,3.5,6,0,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(cx+17,240,3.5,6,0,0,Math.PI*2);c.fill();       // ears
+    const hd=c.createRadialGradient(cx-5,232,2,cx,238,22);hd.addColorStop(0,'#2a1d17');hd.addColorStop(1,hair);c.fillStyle=hd;c.beginPath();c.ellipse(cx,236,17.5,21,0,0,Math.PI*2);c.fill();
+    c.strokeStyle=hair;c.lineWidth=5;c.beginPath();c.moveTo(cx+1,250);c.quadraticCurveTo(cx+7,268,cx+3,284);c.stroke();                                    // tied-back hair
+    c.fillStyle='#d9d2c4';c.fillRect(cx-3,251,7,3);                                                                                                       // hair tie
+    // lettering on the shirt
+    c.fillStyle='rgba(240,244,250,.95)';c.textAlign='center';c.textBaseline='middle';
+    c.font=`bold 13px Arial, Helvetica, sans-serif`;c.fillText('BAGGIO',cx,282);
+    c.font=`bold 44px Impact, "Arial Black", Arial, sans-serif`;c.fillText('10',cx,312);
+    c.restore();c.textAlign='center';c.textBaseline='middle';
+    // Headline and caption
+    c.fillStyle='#eef1f6';c.font=`bold ${W*.088}px Impact, "Arial Black", Arial, sans-serif`;c.fillText('THE LONG WALK',cx,H*.085);
+    c.fillStyle='#b9cdf0';c.font=`bold ${W*.04}px Arial, Helvetica, sans-serif`;c.fillText('PASADENA  ·  17 JULY 1994',cx,H*.935);
+    // Film grain, vignette, border
+    for(let i=0;i<1400;i++){c.fillStyle=`rgba(255,255,255,${rnd()*.06})`;c.fillRect(rnd()*W,rnd()*H,1.5,1.5);}
+    const vg=c.createRadialGradient(W/2,H/2,W*.30,W/2,H/2,H*.70);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');c.fillStyle=vg;c.fillRect(0,0,W,H);
+    c.strokeStyle='rgba(238,241,246,.75)';c.lineWidth=4;c.strokeRect(10,10,W-20,H-20);
+  },400,640);
+  litPlane(g,0,0,.0415,.76,1.216,tex,0,.34);
   return g;
 }
 
 /** A plain framed record sleeve: neutral stand-in with the album title, ready for the owner's own artwork. Hangs facing local +Z. */
-function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,title:string,bg:string,fg:string){
+function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,title:string,artist:string,bg:string,fg:string){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
   const fr=color('#1b1714',0,.7);
   for(const sy of [-1,1])box(g,0,sy*.1675,.0175,.36,.025,.035,fr);
@@ -2002,7 +2034,8 @@ function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number
     c.fillStyle=fg;c.textAlign='center';c.textBaseline='middle';
     let fs=72;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;
     while(c.measureText(title).width>W*.78&&fs>20){fs-=3;c.font=`bold ${fs}px Arial, Helvetica, sans-serif`;}
-    c.fillText(title,W/2,H/2);
+    c.fillText(title,W/2,H/2-10);
+    c.globalAlpha=.8;c.font=`bold 22px Arial, Helvetica, sans-serif`;c.fillText(artist.toUpperCase(),W/2,H/2+34);c.globalAlpha=1;
   },256,256);
   litPlane(g,0,0,.0135,.31,.31,tex,0,.28);
   return g;
@@ -2074,8 +2107,8 @@ function endgameInteriors(scene:THREE.Object3D){
   box(scene,-1.02,tt+.015,-1.05,.2,.03,.28,color('#425e6c'),.2);box(scene,-1.02,tt+.04,-1.05,.19,.02,.27,color('#d9cfb9'),.15);
   box(scene,-1.55,tt+.012,-.72,.17,.024,.25,color('#965857'),-.3);
   soccerBall(scene,-.7,uf+.11,-2.5);
-  // Four framed record sleeves on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
-  [['RAM','#2c2f36','#eae6dc'],['Luv(sic)','#a98a64','#2b2113'],['Graduation','#e6dcc6','#2b2f38'],['Mm..Food','#4a5b66','#e9eef1']].forEach(([t,bg,fg],i)=>albumFrame(scene,1.46,5.85,-2.54+i*.41,-Math.PI/2,t,bg,fg));
+  // Four framed record sleeves in a 2 x 2 grid on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
+  ([['RAM','Daft Punk','#2c2f36','#eae6dc'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1'],['Graduation','Kanye West','#e6dcc6','#2b2f38']] as const).forEach(([t,a,bg,fg],i)=>albumFrame(scene,1.46,i<2?6.2:5.8,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg));
   // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
   baggioPoster(scene,1.5,2.2,-2.835);
 }

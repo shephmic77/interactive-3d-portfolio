@@ -7,7 +7,7 @@ Changed file: `src/world.ts` only.
 |---|---|---|
 | 1 | Remove the red wagon and the standing lamp by it; add a white kei truck; move the heron if needed | Wagon and lamp post removed. A white cab-over kei pickup parks on the left, nose toward the street. Real-size proportions (about 3.45 m long, 1.48 m wide, 1.77 m to the roof, 1.9 m wheelbase, 12-inch wheels, 1.94 m flat bed with drop sides and tailgate). The cab is one extruded side profile with wheel-arch cut-outs, so the wheels sit in recesses and nothing passes through the body. No badges or lettering. Heron moved forward to the front-left corner. |
 | 2 | Fix the monkey | He now hangs upside down by his tail from a yellow grab bar, facing the street. The tail wraps three quarters of a turn around the bar; the bar sits on two steel brackets bolted to the panel. Holds and foot chips are cleared from his band. |
-| 3 | Better jerseys: Jeter, Rose, Dybala, Messi, Ichiro, Dirk | Six shadow-box frames in two rows above the sofa. Each jersey is a real extruded cloth shape (bevelled edges) with a 512 x 640 printed face: stripes, shading and folds, collar and sleeve binding, stitching, name and number. Brass name plate under each. See "Jersey notes" below. |
+| 3 | Better jerseys: Jeter, Rose, Dybala, Messi, Ichiro, Dirk | Six shadow-box frames in two rows above the sofa (Jeter, Derrick Rose, Ichiro, Dybala, Messi, Dirk). Each jersey is a real extruded cloth shape (bevelled edges) with a 512 x 640 printed face: stripes, shading and folds, collar and sleeve binding, stitching, name and number. Brass name plate under each. See "Jersey notes" below. |
 | 4 | Baggio poster | Original stylised illustration: a lone figure in blue seen from behind, head bowed, hands on hips, beside the penalty spot. Hangs on the ground-floor back wall. |
 | 5 | Four album covers above the record player | Four framed sleeves (RAM, Luv(sic), Graduation, Mm..Food) on the right wall. They carry the titles only, on plain neutral sleeves, **not the real cover art** (see "Substitutions"). |
 | 6 | Hobbes plushie on the couch | A plain brown teddy bear sits on the sofa between the cushions. **Not Hobbes** (see "Substitutions"). |
@@ -26,7 +26,7 @@ Team colours, surname and number only. No crests, logos, sponsor marks or brand 
 | Player | Garment | Details |
 |---|---|---|
 | Jeter | baseball, white | navy pinstripes, navy 2, no name (home style) |
-| Rose | baseball, white | red 14, red collar and sleeve bands |
+| Derrick Rose | basketball tank, red | white 1 with black outline, name ROSE, black armhole and hem binding, mesh texture |
 | Ichiro | baseball, white | navy 51 with silver outline, name ICHIRO, teal-blue trim |
 | Dybala | football, black and white stripes | broad black centre stripe on the back, **white** DYBALA 10 (not red) |
 | Messi | football, sky-blue and white stripes | black MESSI 10, navy collar |
@@ -42,3 +42,10 @@ Team colours, surname and number only. No crests, logos, sponsor marks or brand 
 - Pointer hit-target visibility: identical to round three.
 - Close-up renders (real Three.js, software GL) of the truck from four angles, the wall hoop, the bike, the monkey, the six jerseys, the album frames, the plush bear, the poster and the chess board.
 - Not done: a real Vite build, a GPU render, a phone test.
+
+## Follow-up pass (same day)
+- **Middle jersey** corrected to Derrick Rose (red tank, number 1), not Pete Rose.
+- **Baggio poster** redrawn: narrower frame, natural proportions (about 7.5 heads tall), shaded shirt, skin and hair, mown pitch stripes, a crowd band, floodlights and film grain.
+- **Album frames** are now a 2 x 2 grid (RAM / Luv(sic) Hexology on top, Mm..Food / Graduation below). Each carries the title and artist in plain text on a neutral sleeve. The real cover art is still not drawn.
+- **Red motorbike** left as the generic roadster: I do not recreate the film bike's design, even with reference images.
+- Checks repeated: stub-typed `tsc` clean, 0 unsupported parts, clip audit identical to round three, 0 interior meshes out of bounds, close-up renders of the poster, album grid and Rose frame. No real Vite build.
