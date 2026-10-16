@@ -1,4 +1,4 @@
-# vtest17: terrace-rug nook restyle, dimmer interior, tile flicker fix, clearer terrace and roof
+# vtest17: nook rug and chair restyle, dimmer interior, tile flicker fix, clearer terrace and roof
 
 Changed file: `src/world.ts`.
 
