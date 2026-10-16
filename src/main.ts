@@ -68,7 +68,6 @@ function readHash(){const h=location.hash.replace('#','');const section:Section|
 initUI(navigateTo);
 document.querySelectorAll<HTMLButtonElement>('[data-section]').forEach(button=>button.addEventListener('click',()=>navigateTo(button.dataset.section as Section)));
 document.querySelector<HTMLButtonElement>('#reset-view')!.addEventListener('click',()=>navigateTo('home'));
-document.querySelector<HTMLButtonElement>('#explore-btn')!.addEventListener('click',()=>navigateTo('projects'));
 document.querySelector<HTMLAnchorElement>('#logo-home')!.addEventListener('click',(event)=>{event.preventDefault();navigateTo('home')});
 menuToggle.addEventListener('click',()=>{const on=quickNav.classList.toggle('mobile-open');menuToggle.setAttribute('aria-expanded',String(on));menuToggle.innerHTML=on?'CLOSE <span>×</span>':'EXPLORE <span>↑</span>';});
 window.addEventListener('popstate',readHash);
