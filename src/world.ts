@@ -462,49 +462,124 @@ function boulderRoute(scene:THREE.Object3D){
     for(const sx of [-1,1])box(scene,cx+sx*.23,by,z0+(wallZ-z0)/2+.01,.07,.07,len,iron);
   }
   const g=new THREE.Group();g.position.set(cx,0,zf);g.rotation.y=Math.PI;scene.add(g);   // local +z points out from the wall
-  // Bolt-hole grid (T-nuts) on the panel face, one row every 20 cm.
-  const rows=Math.round(h/.2);
-  const grid=texture((c,W,H)=>{c.clearRect(0,0,W,H);c.fillStyle='#3c4254';for(let i=0;i<4;i++)for(let j=0;j<rows;j++){c.beginPath();c.arc(20+i*40,20+j*40,3.2,0,Math.PI*2);c.fill();}},160,rows*40);
-  const face=new THREE.Mesh(new THREE.PlaneGeometry(w-.02,h-.02),new THREE.MeshStandardMaterial({map:grid,transparent:true,roughness:.9,depthWrite:false}));
-  face.position.set(0,mid,.002);face.renderOrder=1;g.add(face);
-  // Painted height ticks every two metres, so the climb reads as a ladder.
-  for(let m=2;m<8;m+=2){box(g,-w/2+.07,m,.004,.09,.016,.006,color('#efeae0'));box(g,w/2-.07,m,.004,.09,.016,.006,color('#efeae0'));}
-  const coral=color('#ff7a59',0,.5,'#ff5a3c',.18),cyan2=color('#3fd0e8',0,.5,'#1fb0d0',.18),chip=color('#d9dce6',0,.7),violet2=color('#7c63c9',0,.6),sun=color('#ffbf3f',0,.5,'#ff9a1f',.18),amber2=color('#d98a2b',0,.6);
+  // ---- vtest18: a more detailed, more realistic (still low-poly) wall. The face is one painted-texture canvas (four section tints, speckle,
+  // T-nut holes every 20 cm, edge screws, height marks); every hold is a faceted rock-like polygon with a bolt in its middle and sits on the
+  // T-nut lattice (four columns, one row every 20 cm); a soft contact shadow sits under each hold; there are grade tags, quickdraws on
+  // bolt hangers and two top-out anchors. The route positions, colours and the monkey are the ones you already approved.
+  const PXM=380,TW=Math.round((w-.02)*PXM),TH=Math.round((h-.02)*PXM);
+  const LAT=.2,LAT0=bottom+.10,COLS=[-.3,-.1,.1,.3];
+  const latX=(x:number)=>+Math.max(-.3,Math.min(.3,Math.round((x+.1)/LAT)*LAT-.1)).toFixed(3);
+  const latY=(y:number)=>+(Math.round((y-LAT0)/LAT)*LAT+LAT0).toFixed(3);
+  const px=(lx:number)=>TW/2+lx*PXM,py=(y:number)=>TH*(1-(y-(bottom+.01))/(h-.02));
+  const faceTex=texture((c,W,H)=>{
+    const tints=['#8d94a8','#858ca0','#9298ab','#8a91a5'];                                   // section tints, bottom to top
+    for(let k=0;k<4;k++){c.fillStyle=tints[k];c.fillRect(0,H*(3-k)/4,W,H/4+1);}
+    for(let i=0;i<9000;i++){                                                                   // painted-grit speckle
+      c.fillStyle=i%2?'rgba(20,24,40,.09)':'rgba(255,255,255,.07)';
+      c.fillRect(hash1(i*1.7)*W,hash1(i*2.3+9)*H,1+(i%3===0?1:0),1+(i%5===0?1:0));
+    }
+    c.strokeStyle='rgba(255,255,255,.03)';c.lineWidth=1;                                      // faint roller streaks
+    for(let i=0;i<150;i++){const x=hash1(i*5.1)*W;c.beginPath();c.moveTo(x,0);c.lineTo(x+(hash1(i)-.5)*6,H);c.stroke();}
+    for(let j=0;;j++){                                                                         // T-nut lattice
+      const y=LAT0+j*LAT;if(y>top-.08)break;
+      for(const lx of COLS){const X=px(lx),Y=py(y);c.fillStyle='#232837';c.beginPath();c.arc(X,Y,5,0,7);c.fill();c.strokeStyle='rgba(205,212,230,.45)';c.lineWidth=1.2;c.stroke();c.fillStyle='#0f121b';c.beginPath();c.arc(X,Y,2.6,0,7);c.fill();}
+    }
+    const screw=(X:number,Y:number)=>{c.fillStyle='#5a6176';c.beginPath();c.arc(X,Y,3.2,0,7);c.fill();c.strokeStyle='#2b3040';c.lineWidth=1;c.beginPath();c.moveTo(X-2,Y-1);c.lineTo(X+2,Y+1);c.stroke();};
+    for(let y=.3;y<top;y+=.4){screw(px(-.325),py(y));screw(px(.325),py(y));}                   // edge screws
+    for(let k=1;k<4;k++){const sy=bottom+k*h/4;for(const lx of [-.2,0,.2])for(const d of [-.045,.045])screw(px(lx),py(sy+d));}   // along each seam
+    c.fillStyle='rgba(239,234,224,.92)';c.font='bold 22px sans-serif';c.textBaseline='middle';
+    for(let m=1;m<=7;m++){                                                                       // height marks, the long ones labelled
+      const Y=py(m),long=m%2===0;
+      c.fillRect(px(-.34),Y-1.5,long?46:24,3);c.fillRect(px(.34)-(long?46:24),Y-1.5,long?46:24,3);
+      if(long){c.textAlign='left';c.fillText(`${m} m`,px(-.34)+52,Y);c.textAlign='right';c.fillText(`${m} m`,px(.34)-52,Y);}
+    }
+  },TW,TH);
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(w-.02,h-.02),new THREE.MeshStandardMaterial({map:faceTex,roughness:.92,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
+  face.position.set(0,mid,.004);g.add(face);
+  const rock=(hex:string,em='#000000',ei=0)=>new THREE.MeshStandardMaterial({color:hex,roughness:.64,flatShading:true,emissive:em,emissiveIntensity:ei});
+  const coral=rock('#ff7a59','#ff5a3c',.18),cyan2=rock('#3fd0e8','#1fb0d0',.18),pink2=rock('#ff6fae','#e0407f',.18),chip=rock('#d9dce6'),violet2=rock('#7c63c9'),sun=color('#ffbf3f',0,.5,'#ff9a1f',.18),amber2=rock('#d98a2b'),bolt=color('#2b2f3a',.6,.4);
   type Kind='jug'|'crimp'|'sloper'|'pinch'|'chip';
+  const SHAPE:Record<Kind,[number,number,number,number]>={jug:[.095,.075,.07,1],sloper:[.125,.10,.045,1],crimp:[.095,.03,.05,1],pinch:[.04,.085,.06,1],chip:[.045,.035,.024,0]};
+  const geos=new Map<string,THREE.BufferGeometry>();
+  const rockGeo=(kind:Kind,v:number)=>{
+    const key=kind+v;const have=geos.get(key);if(have)return have;
+    const [sx,sy,sz,det]=SHAPE[kind];const geo=new THREE.IcosahedronGeometry(1,det);const p=geo.attributes.position;
+    for(let i=0;i<p.count;i++){
+      const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+      const n=1+(hash1(Math.round(x*40)*1.31+Math.round(y*40)*7.17+Math.round(z*40)*3.73+v*19.7)-.5)*.42;   // same vertex, same bump
+      p.setXYZ(i,x*n*sx,y*n*sy,Math.max(z*n,-.2)*sz);                                                      // flat back, buried a little in the panel
+    }
+    p.needsUpdate=true;geo.computeBoundingSphere();geos.set(key,geo);return geo;
+  };
+  const boltGeo=new THREE.CylinderGeometry(.013,.013,.012,6);
+  const chalkMat=new THREE.MeshBasicMaterial({color:'#efeae0',transparent:true,opacity:.09,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+  const shadeMat=new THREE.MeshBasicMaterial({color:'#05060c',transparent:true,opacity:.26,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   const placed:{x:number;y:number}[]=[];
-  const chalkMat=new THREE.MeshBasicMaterial({color:'#efeae0',transparent:true,opacity:.16,depthWrite:false});
-  const hold=(x:number,y:number,kind:Kind,mat:THREE.Material,spin=0)=>{
-    let m:THREE.Mesh;
-    if(kind==='jug'){m=sphere(g,x,y,.045,.085,mat,1);m.scale.set(1.05,.85,.8);}
-    else if(kind==='sloper'){m=sphere(g,x,y,.03,.12,mat,1);m.scale.set(1,.75,.42);}
-    else if(kind==='chip'){m=sphere(g,x,y,.02,.045,mat,1);m.scale.set(1,.8,.6);}
-    else if(kind==='crimp')m=box(g,x,y,.03,.17,.035,.07,mat);
-    else m=box(g,x,y,.035,.06,.15,.08,mat);
-    m.rotation.z=spin;placed.push({x,y});
-    const chalk=new THREE.Mesh(new THREE.CircleGeometry(kind==='chip'?.06:.1,9),chalkMat);   // chalk smudge on the panel behind the hold
-    chalk.position.set(x,y,.004);chalk.renderOrder=2;g.add(chalk);
+  const taken=new Set<string>();
+  const cell=(x:number,y:number)=>`${x.toFixed(2)},${y.toFixed(2)}`;
+  const MONKEY={lo:3.99,hi:5.25};                                           // the hanging monkey and his bar occupy this band; every route passes either side of it
+  const blocked=(y:number)=>y>MONKEY.lo&&y<MONKEY.hi;
+  let seedN=0;
+  const hold=(x0:number,y0:number,kind:Kind,mat:THREE.Material,spin=0)=>{
+    const x=latX(x0),y=latY(y0);
+    if(blocked(y)||taken.has(cell(x,y)))return null;
+    taken.add(cell(x,y));
+    const [sx,sy]=SHAPE[kind];
+    const sh=new THREE.Mesh(new THREE.CircleGeometry(1,10),shadeMat);sh.scale.set(sx*1.05,sy*1.05,1);sh.position.set(x+.012,y-.02,.0085);sh.rotation.z=spin;g.add(sh);   // contact shadow
+    const chalk=new THREE.Mesh(new THREE.CircleGeometry(1,8),chalkMat);chalk.scale.set(sx*.8,sy*.8,1);chalk.position.set(x,y+.035,.0092);chalk.rotation.z=spin;g.add(chalk);                              // chalk smudge
+    const m=new THREE.Mesh(rockGeo(kind,seedN++%4),mat);m.position.set(x,y,.0095);m.rotation.z=spin;g.add(m);
+    const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(0,0,SHAPE[kind][2]*.88);m.add(b);                                                          // the bolt
+    placed.push({x,y});
     return m;
   };
-  const MONKEY={lo:4.12,hi:5.14};                                           // the hanging monkey and his bar occupy this band; routes pass either side of it
-  const blocked=(y:number)=>y>MONKEY.lo&&y<MONKEY.hi;
+  // Volumes first (so no hold lands under them): a violet and an amber truncated pyramid, each over a 2 x 2 block of lattice points.
+  for(const [vy,vm,vs] of [[2.64,violet2,0],[6.24,amber2,.35]] as const){
+    const fr=new THREE.CylinderGeometry(.11,.20,.13,4);fr.rotateY(Math.PI/4);
+    const vol=new THREE.Mesh(fr,vm);vol.rotation.set(Math.PI/2,0,vs);vol.position.set(0,vy,.07);g.add(vol);
+    for(const bx of [-.045,.045]){const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(bx,vy,.138);g.add(b);}
+    for(const lx of [-.1,.1])for(const ly of [vy-.1,vy+.1])taken.add(cell(lx,latY(ly)));
+    placed.push({x:0,y:vy});
+  }
   // Coral route: two taped start holds, a zig-zag all the way up, and a big finish jug just under the roof edge.
-  hold(-.14,1.0,'jug',coral);hold(.12,1.08,'jug',coral,.2);
-  for(const sx of [-.14,.12])box(g,sx,.86,.003,.17,.03,.006,coral);
-  const cx2=[-.13,.14,-.04,.17,-.17,.07,-.12,.16,-.06,.13],kinds:Kind[]=['jug','crimp','sloper','pinch','jug','crimp'];
+  hold(-.1,.94,'jug',coral);hold(.1,1.14,'jug',coral,.2);
+  for(const sx of [-.1,.1])box(g,sx,.80,.0105,.17,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
+  const COR=[-.1,.1,-.3,.1,-.1,.1,-.3,-.1,.1,-.1],kinds:Kind[]=['jug','crimp','sloper','pinch','jug','crimp'];
   let n=0;
-  for(let y=1.55;y<7.45;y+=.52,n++){const yy=y+(n%3)*.04;if(blocked(yy))continue;hold(cx2[n%10],yy,kinds[n%6],coral,((n*37)%7-3)*.09);}
-  const finish=hold(-.02,7.76,'jug',coral);finish.scale.multiplyScalar(1.3);box(g,-.02,7.60,.003,.2,.03,.006,coral);
-  // Cyan problem down the right edge.
-  n=0;for(let y=.95;y<7.4;y+=.6,n++){const yy=y+(n%2)*.07;if(blocked(yy)||blocked(yy+.2))continue;hold(.27+(n%3)*.015,yy,(['jug','crimp','sloper'] as Kind[])[n%3],cyan2,(n%2?-.2:.15));}
-  hold(.2,7.62,'jug',cyan2);
-  // Volumes: a violet prism low down and an amber one near the top.
-  for(const [vy,vm] of [[2.5,violet2],[6.2,amber2]] as const){const vol=cyl(g,0,vy,.03,.2,.2,.46,vm,3);vol.rotation.z=Math.PI/2;placed.push({x:0,y:vy});}
+  for(let y=1.55;y<7.45;y+=.52,n++){const yy=y+(n%3)*.04;hold(COR[n%10],yy,kinds[n%6],coral,((n*37)%7-3)*.09);}
+  const finish=hold(.1,7.74,'jug',coral);if(finish)finish.scale.multiplyScalar(1.3);box(g,.1,7.58,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
+  // Cyan problem down the right edge (local +x), pink problem down the left edge.
+  n=0;for(let y=.95;y<7.4;y+=.6,n++){const yy=y+(n%2)*.07;if(blocked(yy+.2))continue;hold(.3,yy,(['jug','crimp','sloper'] as Kind[])[n%3],cyan2,(n%2?-.2:.15));}
+  hold(.3,7.62,'jug',cyan2);
+  n=0;for(let y=2.0;y<7.3;y+=.64,n++){hold(-.3,y+(n%2)*.08,(['sloper','pinch','jug','crimp'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
+  // Grade tags on tape at the three starts.
+  const tag=(x:number,y:number,txt:string,hex:string)=>{
+    const t=texture((c,W,H)=>{c.fillStyle='#f4f1e8';c.fillRect(0,0,W,H);c.fillStyle=hex;c.fillRect(0,0,W*.22,H);c.fillStyle='#1c1f2a';c.font='bold 40px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W*.62,H*.52);},128,64);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(.13,.065),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+    m.position.set(x,y,.0115);g.add(m);
+  };
+  tag(0,.64,'V3','#ff7a59');tag(.3,.72,'V5','#3fd0e8');tag(-.3,1.9,'V4','#ff6fae');
+  for(const [lx,ly] of [[0,.64],[.3,.72],[-.3,1.9]] as const)for(const dx of lx===0?[-.1,.1]:[lx])for(const dy of [-.1,.1])taken.add(cell(latX(dx),latY(ly+dy)));
   // Neutral foot chips scattered over the whole board, kept clear of the other holds.
   for(let y=.45;y<7.9;y+=.31){
     const x=(hash1(y)-.5)*.56;
-    if(blocked(y)||blocked(y+.1)||placed.some(p=>Math.hypot(p.x-x,p.y-y)<.2))continue;
+    if(placed.some(p=>Math.hypot(p.x-latX(x),p.y-latY(y))<.25))continue;
     hold(x,y,'chip',chip);
   }
+  // Quickdraws on bolt hangers: steel hanger, carabiner, dog-bone sling, carabiner. Each takes the first lattice column that is free below it.
+  const QD=[color('#ff5a8a',0,.6),color('#3fd0e8',0,.6),color('#ffbf3f',0,.6),color('#8bd45a',0,.6)];
+  const ringGeo=new THREE.TorusGeometry(.02,.0045,5,9);
+  let qi=0;
+  for(const target of [2.2,3.45,5.9,7.0]){
+    const yy=latY(target);
+    const col=[.1,-.1,-.3,.3].find(cx=>!blocked(yy-.2)&&!taken.has(cell(cx,yy))&&!taken.has(cell(cx,latY(yy-.2))));
+    if(col===undefined)continue;
+    taken.add(cell(col,yy));taken.add(cell(col,latY(yy-.2)));
+    box(g,col,yy,.0125,.05,.032,.012,zinc);
+    for(const ry of [-.045,-.19]){const r=new THREE.Mesh(ringGeo,zinc);r.scale.set(.8,1.5,1);r.position.set(col,yy+ry,.022);g.add(r);}
+    box(g,col,yy-.118,.024,.02,.1,.012,QD[qi++%QD.length]);
+  }
+  // Top-out: two steel anchor plates with rap rings on the cap, where the roof's back rail is open.
+  for(const sx of [-.14,.14]){box(g,sx,8.04,.0125,.07,.05,.012,zinc);const r=new THREE.Mesh(new THREE.TorusGeometry(.032,.007,5,10),zinc);r.position.set(sx,7.995,.024);g.add(r);}
   // ---- The monkey: hangs upside down from a yellow grab bar by his tail, facing the street, arms and legs dangling. Every limb starts
   // INSIDE the torso (shoulder and hip balls overlap it), and the tail wraps the bar, so the animal is one connected body that is
   // held by the bar, the bar by two steel brackets, and the brackets by the panel. Nothing floats and nothing pokes into the wall.
@@ -538,6 +613,10 @@ function boulderRoute(scene:THREE.Object3D){
   box(scene,padX,GROUND+.08,padZ,1.1,.16,.9,pad);
   for(const sz of [-.15,.15])box(scene,padX,GROUND+.162,padZ+sz,1.1,.004,.025,color('#3f9aa6'));
   box(scene,padX,GROUND+.162,padZ-.40,.5,.004,.05,color('#e8c26a'));
+  // Chalk bucket at the pad's edge: white tub, dark rim, a little chalk dust on top.
+  cyl(scene,padX-.38,GROUND+.16+.085,padZ-.12,.085,.075,.17,color('#e9e6dc',0,.8),9);
+  cyl(scene,padX-.38,GROUND+.16+.172,padZ-.12,.09,.09,.016,color('#2a2f3a',0,.7),9);
+  cyl(scene,padX-.38,GROUND+.16+.181,padZ-.12,.07,.07,.004,color('#f6f3ea',0,.95),9);
   // Climbing shoes (red and black) on the pad, side by side, toes to the wall.
   for(const [sx,sr] of [[-.30,.05],[-.14,-.05]] as const){
     const sh=new THREE.Group();sh.position.set(padX+.30+sx,GROUND+.16,padZ+.12);sh.rotation.y=sr;scene.add(sh);
@@ -2080,7 +2159,9 @@ function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,c
 /** A framed poster that shows a supplied picture from public/posters (a flat colour until it loads). Faces +Z; w x h in metres. */
 function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,file:string,fallback:string,pix=0,glow=.22,rotY=0){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
-  box(g,0,0,.02,w+.06,h+.06,.04,color('#15171d',0,.7));
+  // vtest18: the frame is a little thicker and its back sits just off the wall, and the picture floats .012 in front of the frame, so the three
+  // surfaces are never within depth-buffer precision of each other (the old .0005 gap shimmered while dragging).
+  box(g,0,0,.0275,w+.06,h+.06,.045,color('#15171d',0,.7));
   const tex=texture((c,W,H)=>{c.fillStyle=fallback;c.fillRect(0,0,W,H);},512,Math.round(512*h/w));
   if(typeof Image!=='undefined'){
     const im=new Image();
@@ -2097,7 +2178,8 @@ function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h
     };
     im.src=`${import.meta.env.BASE_URL}posters/${file}`;
   }
-  litPlane(g,0,0,.0405,w,h,tex,0,glow);
+  const pic=litPlane(g,0,0,.062,w,h,tex,0,glow);
+  const pm=pic.material as THREE.Material;pm.polygonOffset=true;pm.polygonOffsetFactor=-2;pm.polygonOffsetUnits=-4;
   return g;
 }
 /** Small gaming corner against the ground-floor back wall (building-local units): a CRT on a low open cabinet, three unbranded consoles in
