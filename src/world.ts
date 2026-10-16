@@ -419,7 +419,7 @@ function facadeServiceDetail(scene:THREE.Object3D){
   // without piling more rooms onto the intentionally simple two-box structure.
   const joints=color('#3d4353');
   for(const side of [-1,1]){
-    for(let row=0;row<8;row++){
+    for(let row=0;row<(TIMBER_FRAME?0:8);row++){   // vtest23: no brick joints on plaster
       const yy=.43+row*.47;
       for(let j=0;j<6;j++){
         const zz=-2.80+j*1.03+(row%2)*.25;
@@ -890,7 +890,7 @@ function upperRoofTerrace(scene:THREE.Object3D){
 }
 
 function storefront(scene:THREE.Object3D){
- const brick=color('#52556a'),upperBrick=color('#626579');
+ const brick=TIMBER_FRAME?color('#c3b294',0,.95):color('#52556a'),upperBrick=TIMBER_FRAME?color('#d3c4a7',0,.95):color('#626579');   // vtest23: plaster; set TIMBER_FRAME=false for the old brick
  const u=ARCH.upper,gd=ARCH.ground;
  const upperY=u.bottom+u.height/2;
  // 1) Register every window and door first: the walls below are cut around these openings.
@@ -936,14 +936,14 @@ function storefront(scene:THREE.Object3D){
  upperRoofTerrace(scene);
  // Clear vertical corner posts, not extra turrets or additional rooms.
  for(const xx of [-4.24,4.24])for(const zz of [-3.06,3.06]){
-  box(scene,xx,2.13,zz,.22,4.21,.25,stone);
+  box(scene,xx,2.13,zz,.22,4.21,.25,TIMBER_FRAME?timberMat:stone);
  }
  for(const xx of [u.x-u.width/2,u.x+u.width/2])for(const zz of [u.z-u.depth/2,u.z+u.depth/2]){
-  box(scene,xx,upperY,zz,.23,u.height+.08,.23,stone);
+  box(scene,xx,upperY,zz,.23,u.height+.08,.23,TIMBER_FRAME?timberMat:stone);
  }
  // Thin masonry courses break up the flat walls; none are drawn across a window or door.
  const mortar=color('#41475d');
- for(let row=0;row<8;row++){
+ for(let row=0;row<(TIMBER_FRAME?0:8);row++){
   const yy=.46+row*.48;
   for(let col=0;col<9;col++){
    const xx=-3.84+col*.95+(row%2)*.28;
@@ -951,7 +951,7 @@ function storefront(scene:THREE.Object3D){
    const m=box(scene,xx,yy,3.087,.70,.025,.035,mortar);m.castShadow=false;
   }
  }
- for(let row=0;row<6;row++){
+ for(let row=0;row<(TIMBER_FRAME?0:6);row++){
   const yy=u.bottom+.44+row*.47;
   for(let col=0;col<6;col++){
    const xx=u.x-2.40+col*.86+(row%2)*.18;
@@ -2692,6 +2692,217 @@ function endgameExterior(scene:THREE.Object3D){
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
 // ---------------------------------------------------------------------------------------------
+// VTEST23: toward the stacked timber-frame hilltop house. The shell keeps its two boxes, both terraces and every opening, but now reads
+// as warm plaster over a stone plinth with a dark timber frame (posts, beams, braces, window headers), a terracotta tile cabana roof on
+// the roof terrace, a tile hood over the terrace door, and a brick chimney with a thread of smoke. Nothing that was on the building moved:
+// beams are cut wherever they would cross a window, door, lamp, vent, pipe or the corkboard. Set TIMBER_FRAME to false for the old brick look.
+// ---------------------------------------------------------------------------------------------
+const TIMBER_FRAME=true;
+const timberMat=color('#4a3123',0,.88);
+const timberWarm=color('#6a4630',0,.86);
+const plinthMat=color('#6f6b78',0,.95);
+const tileDark=color('#7a3320',0,.8);
+
+interface Box3{x0:number;x1:number;y0:number;y1:number;z0:number;z1:number}
+/** Things bolted to or hanging on the walls, in building-local coordinates (x0..x1 etc.). Timber is cut around them. */
+const WALL_ITEMS:Box3[]=[
+  // right ground wall (x = 4.25): condenser, vent, electrics, pipes, lamps and the corkboard
+  {x0:4.15,x1:4.95,y0:3.05,y1:4.30,z0:1.55,z1:2.95},{x0:4.15,x1:4.55,y0:1.05,y1:1.85,z0:1.85,z1:2.55},
+  {x0:4.15,x1:4.65,y0:.75,y1:1.45,z0:-3.15,z1:-2.55},{x0:4.15,x1:4.5,y0:0,y1:4.3,z0:2.65,z1:2.97},
+  {x0:4.15,x1:4.45,y0:0,y1:4.3,z0:-2.62,z1:-2.30},{x0:4.15,x1:4.5,y0:0,y1:4.3,z0:-3.12,z1:-2.78},
+  {x0:4.15,x1:4.75,y0:1.60,y1:4.30,z0:-.90,z1:1.70},{x0:4.15,x1:4.6,y0:3.25,y1:3.98,z0:-1.30,z1:-.80},
+  // left ground wall (x = -4.25): vent, box, pipes, lamps, ivy and the hoop
+  {x0:-4.75,x1:-4.15,y0:3.05,y1:3.95,z0:1.45,z1:2.30},{x0:-4.75,x1:-4.15,y0:.75,y1:1.45,z0:1.85,z1:2.50},
+  {x0:-4.6,x1:-4.15,y0:0,y1:4.3,z0:.55,z1:1.02},{x0:-4.6,x1:-4.15,y0:0,y1:4.3,z0:-2.78,z1:-2.30},
+  {x0:-4.75,x1:-4.15,y0:3.20,y1:3.95,z0:-3.0,z1:-2.30},{x0:-4.75,x1:-4.15,y0:1.85,y1:2.65,z0:2.60,z1:3.30},
+  {x0:-4.95,x1:-4.15,y0:1.7,y1:4.3,z0:.05,z1:1.65},{x0:-4.45,x1:-4.15,y0:1.85,y1:4.25,z0:1.45,z1:2.75},
+  {x0:-4.45,x1:-4.15,y0:2.4,y1:4.1,z0:-3.0,z1:-1.75},
+  // front ground wall (z = 3.075): lamps by the door, sign, awning rear beam, ivy
+  {x0:-1.3,x1:-.75,y0:2.9,y1:3.5,z0:2.9,z1:3.6},{x0:.85,x1:1.4,y0:2.9,y1:3.5,z0:2.9,z1:3.6},
+  {x0:-3.95,x1:3.95,y0:3.25,y1:4.05,z0:2.9,z1:4.3},{x0:-4.2,x1:-3.4,y0:1.9,y1:4.1,z0:2.9,z1:3.7},
+  // back ground wall (z = -3.075): the two machines, condenser, box, lamps and ivy
+  {x0:-.80,x1:2.35,y0:0,y1:2.65,z0:-4.3,z1:-2.9},{x0:3.3,x1:4.3,y0:1.3,y1:2.8,z0:-3.6,z1:-2.9},
+  {x0:2.6,x1:3.3,y0:.85,y1:1.5,z0:-3.4,z1:-2.9},{x0:-3.3,x1:-2.7,y0:3.5,y1:4.2,z0:-3.6,z1:-2.9},
+  {x0:-.35,x1:.25,y0:3.3,y1:3.85,z0:-3.6,z1:-2.9},{x0:2.9,x1:3.5,y0:3.3,y1:3.9,z0:-3.6,z1:-2.9},
+  {x0:-.4,x1:1.5,y0:2.9,y1:4.3,z0:-3.6,z1:-2.9},{x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-4.2,z1:-2.9},
+  // upper walls: condensers, vents, boxes, lamps, ivy, the bracket lamp, the downspout
+  {x0:1.60,x1:2.45,y0:5.5,y1:6.7,z0:-2.4,z1:-1.4},{x0:1.6,x1:2.1,y0:6.6,y1:7.35,z0:-2.3,z1:-1.75},
+  {x0:1.6,x1:2.1,y0:6.0,y1:6.6,z0:-3.0,z1:-2.45},{x0:-3.4,x1:-1.4,y0:5.6,y1:7.5,z0:-3.6,z1:-2.9},
+  {x0:-3.3,x1:-2.6,y0:6.6,y1:7.4,z0:-3.6,z1:-2.9},{x0:-4.6,x1:-3.8,y0:5.6,y1:6.9,z0:-.35,z1:.55},
+  {x0:-4.1,x1:-3.8,y0:4.4,y1:7.9,z0:.6,z1:1.0},{x0:-1.5,x1:-1.0,y0:5.8,y1:6.8,z0:.8,z1:1.4},{x0:1.1,x1:1.55,y0:5.8,y1:6.8,z0:.8,z1:1.4},
+  {x0:-1.4,x1:.9,y0:1,y1:9,z0:-3.6,z1:-2.9},
+  {x0:1.2,x1:2.0,y0:6.0,y1:7.9,z0:.7,z1:1.4},
+  // the climbing wall's stand-off and the stair landing
+  {x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-3.8,z1:-3.0},{x0:4.2,x1:4.9,y0:4.35,y1:5.4,z0:-2.3,z1:-1.4},
+  {x0:4.2,x1:4.95,y0:.0,y1:2.1,z0:-3.0,z1:-2.55}
+];
+const itemHit=(x:number,y:number,z:number,m:number)=>{for(const b of WALL_ITEMS)if(x>b.x0-m&&x<b.x1+m&&y>b.y0-m&&y<b.y1+m&&z>b.z0-m&&z<b.z1+m)return true;return false;};
+
+interface WallDef{x:number;y:number;z:number;rot:number;W:number}
+function wallFree(w:WallDef,lx:number,ly:number,mx:number,my:number):boolean{
+  const c=Math.cos(w.rot),s=Math.sin(w.rot);
+  const px=w.x+lx*c+.05*s,pz=w.z-lx*s+.05*c,py=w.y+ly;
+  if(itemHit(px,py,pz,Math.max(mx,my)))return false;
+  for(const o of openings){
+    if(Math.abs(Math.sin((o.rot-w.rot)/2))>1e-3)continue;
+    const dx=o.x-w.x,dz=o.z-w.z,ln=dx*s+dz*c,lo=dx*c-dz*s;
+    if(Math.abs(ln)>.45)continue;
+    if(Math.abs(lx-lo)<o.w/2+.17+mx&&Math.abs(ly-(o.y-w.y))<o.h/2+.17+my)return false;
+  }
+  return true;
+}
+function freeSpans(a:number,b:number,ok:(t:number)=>boolean,minLen=.32,step=.04):[number,number][]{
+  const out:[number,number][]=[];let start:number|null=null;
+  for(let t=a;t<=b+1e-6;t+=step){
+    const good=ok(t);
+    if(good&&start===null)start=t;
+    if((!good||t+step>b+1e-6)&&start!==null){const end=good?Math.min(t,b):t-step;if(end-start>=minLen)out.push([start,end]);start=null;}
+  }
+  return out;
+}
+/** Timber framing for one wall: horizontal rails at the given heights, posts on a regular grid, diagonal braces in clear panels. */
+function frameWall(parent:THREE.Object3D,w:WallDef,y0:number,y1:number,rails:number[],opts:{postGap?:number;braces?:boolean;plinth?:boolean;railH?:number}={}){
+  const g=new THREE.Group();g.position.set(w.x,w.y,w.z);g.rotation.y=w.rot;parent.add(g);
+  const gap=opts.postGap??1.35,n=Math.max(1,Math.round(w.W/gap)),xs:number[]=[];
+  for(let k=0;k<=n;k++)xs.push(-w.W/2+k*w.W/n);
+  const rh=opts.railH??.15,pw=.14;
+  if(opts.plinth){
+    for(const [a,b] of freeSpans(-w.W/2,w.W/2,t=>wallFree(w,t,.27,0,.27)))box(g,(a+b)/2,.27,.035,b-a,.54,.07,plinthMat);
+    for(const [a,b] of freeSpans(-w.W/2,w.W/2,t=>wallFree(w,t,.58,0,.05)))box(g,(a+b)/2,.58,.05,b-a,.09,.10,timberMat);
+  }
+  for(const ry of rails){
+    for(const [a,b] of freeSpans(-w.W/2,w.W/2,t=>wallFree(w,t,ry-w.y,0,rh/2)))box(g,(a+b)/2,ry-w.y,.03,b-a,rh,.06,timberMat);
+  }
+  for(let k=1;k<n;k++){
+    for(const [a,b] of freeSpans(y0,y1,t=>wallFree(w,xs[k],t-w.y,pw/2,0),.5))box(g,xs[k],(a+b)/2-w.y,.03,pw,b-a,.06,timberMat);
+  }
+  if(opts.braces){
+    const lo=[y0,...rails.filter(r=>r>y0+.2&&r<y1-.2),y1];
+    for(let i=0;i<n;i++)for(let j=0;j+1<lo.length;j++){
+      const cw=xs[i+1]-xs[i],cy0=lo[j]-w.y+.1,cy1=lo[j+1]-w.y-.1,ch=cy1-cy0;
+      if(cw<.55||cw>1.9||ch<.4||ch>1.6)continue;
+      let clear=true;
+      for(let a=0;a<=4&&clear;a++)for(let b=0;b<=3&&clear;b++)if(!wallFree(w,xs[i]+.1+(cw-.2)*a/4,cy0+ch*b/3,.05,.05))clear=false;
+      if(!clear)continue;
+      const len=Math.hypot(cw-.2,ch),ang=Math.atan2(ch,cw-.2)*((i+j)%2?-1:1);
+      const d=box(g,(xs[i]+xs[i+1])/2,(cy0+cy1)/2,.03,len,.09,.05,timberWarm);d.rotation.z=ang;
+    }
+  }
+}
+/** Terracotta tile material: scalloped rows with tile-to-tile colour variation, repeated to the roof's size. */
+let tileBase:THREE.Texture|null=null;
+function tileMat(u:number,v:number){
+  tileBase??=texture((c,W,H)=>{
+    c.fillStyle='#9a4527';c.fillRect(0,0,W,H);
+    const rows=8,cols=8,th=H/rows,tw=W/cols;
+    for(let r=0;r<rows;r++)for(let k=-1;k<=cols;k++){
+      const x=k*tw+(r%2?tw/2:0),y=r*th,n=hash1(r*13.7+k*3.1+5);
+      c.fillStyle=`hsl(${12+n*10},${58+n*14}%,${34+n*10}%)`;
+      c.beginPath();c.moveTo(x+1,y);c.lineTo(x+tw-1,y);c.lineTo(x+tw-1,y+th*.62);c.quadraticCurveTo(x+tw/2,y+th*1.18,x+1,y+th*.62);c.closePath();c.fill();
+      c.strokeStyle='rgba(60,20,10,.55)';c.lineWidth=2;c.beginPath();c.moveTo(x+1,y+th*.62);c.quadraticCurveTo(x+tw/2,y+th*1.18,x+tw-1,y+th*.62);c.stroke();
+    }
+  },256,256);
+  const t=tileBase.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(Math.max(1,u),Math.max(1,v));t.needsUpdate=true;
+  return new THREE.MeshStandardMaterial({map:t,roughness:.82,color:'#ffffff'});
+}
+/** Gable tile roof, ridge along local X, centred on the footprint; `y` is the eave line. Returns the group and the ridge height. */
+function gableRoof(parent:THREE.Object3D,x:number,y:number,z:number,len:number,span:number,rise:number,rotY:number,ov=.38,endOv=.3){
+  // Origin y is the wall-plate line (the roof surface passes through it at the posts); `rise` is the ridge height above it.
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  const half=span/2+ov,a=Math.atan2(rise,span/2),tanA=Math.tan(a),L=half/Math.cos(a),thick=.075,full=len+2*endOv;
+  const cyM=(rise-ov*tanA)/2-thick/2;
+  const m=tileMat(full/.62,L/.52);
+  for(const s of [-1,1]){
+    const slab=new THREE.Mesh(cubeGeometry,m);slab.scale.set(full,thick,L);slab.position.set(0,cyM,s*half/2);slab.rotation.x=s*a;
+    slab.castShadow=true;slab.receiveShadow=true;g.add(slab);
+    box(g,0,-ov*tanA-.05,s*half,full,.1,.05,timberMat);                                // fascia board along the eave
+    for(const e of [-1,1]){const rake=box(g,e*(full/2),cyM,s*half/2,.05,.08,L+.04,timberMat);rake.rotation.x=s*a;}   // rake boards on the gable ends
+  }
+  box(g,0,rise+.01,0,full+.02,.11,.2,tileDark);                                          // ridge cap
+  return {g,H:rise};
+}
+/** Single-slope tile hood against a wall (local +Z points away from the wall); `y` is the top edge at the wall. */
+function pentRoof(parent:THREE.Object3D,x:number,y:number,z:number,w:number,run:number,drop:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  const a=Math.atan2(drop,run),L=Math.hypot(run,drop)+.1,thick=.07;
+  const slab=new THREE.Mesh(cubeGeometry,tileMat(w/.6,L/.5));slab.scale.set(w,thick,L);slab.position.set(0,-drop/2-thick/2,run/2);slab.rotation.x=a;
+  slab.castShadow=true;slab.receiveShadow=true;g.add(slab);
+  box(g,0,-drop-.06,run+.02,w,.09,.05,timberMat);                                       // fascia at the outer edge
+  box(g,0,.02,.04,w+.04,.10,.09,timberMat);                                             // wall plate
+  for(const s of [-1,1]){
+    rod(g,s*(w/2-.12),-drop-.02,run-.05,-.95,.06,.035,timberWarm,5);                      // diagonal bracket from the wall up to the hood
+    box(g,s*(w/2-.12),-1.0,.03,.1,.12,.06,timberMat);
+  }
+  return g;
+}
+const brickTexture=()=>texture((c,W,H)=>{
+  c.fillStyle='#bfae98';c.fillRect(0,0,W,H);
+  const rows=8,bw=W/4,bh=H/rows;
+  for(let r=0;r<rows;r++)for(let k=-1;k<5;k++){
+    const x=k*bw+(r%2?bw/2:0),n=hash1(r*7.3+k*1.9);
+    c.fillStyle=`hsl(${10+n*8},${44+n*12}%,${30+n*9}%)`;c.fillRect(x+2,r*bh+2,bw-4,bh-4);
+  }
+},128,128);
+/** Brick chimney on the terrace beside the door, rising past the roof edge (hidden rail posts stay inside it). */
+function chimney(parent:THREE.Object3D){
+  const cx=1.98,cz=.64,w=.52,y0=4.43,top=9.35;
+  const bt=brickTexture().clone();bt.wrapS=bt.wrapT=THREE.RepeatWrapping;bt.repeat.set(2,(top-y0)/.55);bt.needsUpdate=true;
+  const brickMat=new THREE.MeshStandardMaterial({map:bt,roughness:.9,color:'#ffffff'});
+  box(parent,cx,(y0+top)/2,cz,w,top-y0,w,brickMat);
+  box(parent,cx,y0+.18,cz,w+.16,.36,w+.16,stone);                               // stone footing
+  box(parent,cx,top+.07,cz,w+.2,.14,w+.2,tileDark);box(parent,cx,top+.19,cz,w+.1,.1,w+.1,tileDark);   // corbelled cap
+  for(const dx of [-.12,.12]){cyl(parent,cx+dx,top+.45,cz,.075,.085,.34,color('#9b5236',0,.85),8);cyl(parent,cx+dx,top+.64,cz,.095,.075,.07,tileDark,8);}
+  box(parent,cx-w/2-.045,y0+2.2,cz,.09,.1,w+.2,stone);                           // a stone string course on the stack
+  box(parent,cx-w/2-.045,y0+4.0,cz,.09,.1,w+.2,stone);
+}
+const smokeMat=()=>new THREE.SpriteMaterial({map:glowTexture(),color:'#aab8d0',transparent:true,opacity:.2,depthWrite:false,fog:true});
+function chimneySmoke(parent:THREE.Object3D,reduced:boolean){
+  const puffs:{s:THREE.Sprite;m:THREE.SpriteMaterial;k:number}[]=[];
+  for(let i=0;i<6;i++){const m=smokeMat();const s=new THREE.Sprite(m);parent.add(s);puffs.push({s,m,k:i/6});}
+  return (elapsed:number)=>{
+    for(const p of puffs){
+      const t=reduced?p.k*.8+.1:(elapsed*.075+p.k)%1;
+      p.s.position.set(1.98+t*1.0+Math.sin(t*5+p.k*9)*.12,10.1+t*3.1,.64+Math.cos(t*4+p.k*7)*.08);
+      const sc=.55+t*1.9;p.s.scale.set(sc,sc,1);p.m.opacity=.26*Math.min(1,t*5)*(1-t);
+    }
+  };
+}
+/** Timber, tile and brick on the shell: called last, after every opening and wall item exists. Returns the smoke animation. */
+function timberAndTiles(b:THREE.Object3D,reduced:boolean){
+  if(!TIMBER_FRAME)return ()=>{};
+  const gd=ARCH.ground,u=ARCH.upper,T=WALL_T;
+  const ground:WallDef[]=[
+    {x:0,y:0,z:gd.depth/2,rot:0,W:gd.width},{x:0,y:0,z:-gd.depth/2,rot:Math.PI,W:gd.width},
+    {x:gd.width/2,y:0,z:0,rot:Math.PI/2,W:gd.depth-2*T},{x:-gd.width/2,y:0,z:0,rot:-Math.PI/2,W:gd.depth-2*T}];
+  for(const w of ground)frameWall(b,w,0,gd.height,[3.98,4.17],{plinth:true,postGap:1.25});
+  const upper:WallDef[]=[
+    {x:u.x,y:u.bottom,z:u.z+u.depth/2,rot:0,W:u.width},{x:u.x,y:u.bottom,z:u.z-u.depth/2,rot:Math.PI,W:u.width},
+    {x:u.x+u.width/2,y:u.bottom,z:u.z,rot:Math.PI/2,W:u.depth-2*T},{x:u.x-u.width/2,y:u.bottom,z:u.z,rot:-Math.PI/2,W:u.depth-2*T}];
+  for(const w of upper)frameWall(b,w,u.bottom,u.bottom+u.height,[u.bottom+.2,u.bottom+.66,7.31,7.62],{postGap:1.3,braces:true});
+  // Window and door headers and sills: a heavy lintel beam above every opening, a slim sill below.
+  for(const o of openings){
+    const nx=Math.sin(o.rot),nz=Math.cos(o.rot);
+    box(b,o.x+nx*.085,o.y+o.h/2+.2,o.z+nz*.085,o.w+.52,.15,.13,timberMat,o.rot);
+    box(b,o.x+nx*.09,o.y-o.h/2-.17,o.z+nz*.09,o.w+.4,.06,.2,timberWarm,o.rot);
+  }
+  // Tile hood over the terrace door on the upper block's right wall (door z = -.45, wall face x = 1.70).
+  pentRoof(b,u.x+u.width/2+.06,7.58,-.45,1.75,.95,.42,Math.PI/2);
+  // Open timber cabana with a tile gable roof on the left of the roof terrace: the table, chairs, tank and lanterns stay in the open.
+  const R=7.945,eave=9.85,cxC=-3.05,zA=-2.25,zB=.55,xL=-3.80,xR=-2.30;
+  const roof=gableRoof(b,cxC,eave,(zA+zB)/2,zB-zA,xR-xL,.5,Math.PI/2);
+  for(const px of [xL,xR])for(const pz of [zA,(zA+zB)/2,zB])box(b,px,(R+eave)/2,pz,.13,eave-R,.13,timberMat);
+  for(const px of [xL,xR])box(b,px,eave-.07,(zA+zB)/2,.14,.14,zB-zA+.2,timberMat);       // wall plates along the eaves
+  for(const pz of [zA,(zA+zB)/2,zB]){
+    box(b,cxC,eave-.07,pz,xR-xL+.1,.12,.12,timberMat);                                  // tie beam across the cabana
+    rodX(b,pz,xL,eave+.02,cxC,eave+roof.H*.62,.03,timberWarm,5);rodX(b,pz,xR,eave+.02,cxC,eave+roof.H*.62,.03,timberWarm,5);   // rafters/truss
+    box(b,cxC,eave+.2,pz,.06,.42,.06,timberWarm);                                       // king post
+  }
+  for(const pz of [zA,zB])for(const px of [xL,xR]){rodX(b,pz,px+(px<cxC?.02:-.02),eave-.62,px+(px<cxC?.42:-.42),eave-.1,.03,timberWarm,5);}   // knee braces
+  hangingLamp(b,cxC,9.1,(zA+zB)/2,1.0,eave-.1);
+  chimney(b);
+  return chimneySmoke(b,reduced);
+}
+// ---------------------------------------------------------------------------------------------
 // VTEST22: the Porco Rosso / Ghibli pass. A painted night sky with drifting clouds and a low moon, layered hills, a grassy meadow with
 // tufts, flowers and round-canopy trees around the plaza, fireflies, and a gentle wind in every leaf. Nothing here moves any existing
 // object, and nothing uses the shared seeded random() (so no existing plant, vine or tile moves): it has its own hash-based generator.
@@ -2935,6 +3146,7 @@ export function buildWorld():World{
  // Last, so the seeded scatter used by every plant above is untouched.
  cozyBuilding(building);cozyWorld(scene);
  const reducedMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const smokeTick=timberAndTiles(building,reducedMotion);   // vtest23: timber frame, plinth, tile roofs, chimney (runs last: needs every opening and wall item)
  const ghibliTick=ghibliWorld(scene,reducedMotion);   // sky, meadow, trees, fireflies and wind (own generator; touches nothing above)
  const lightCount=keyLights.length;
  if(import.meta.env.DEV&&lightCount>POINT_LIGHT_BUDGET)console.warn(`Point-light budget exceeded: ${lightCount} real lights (budget ${POINT_LIGHT_BUDGET}). Use halo()/glowPatch() for new lamps.`);
@@ -2956,7 +3168,7 @@ export function buildWorld():World{
  const reduced=typeof window.matchMedia==='function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  return {scene,hits,occluders,setHovered:(hit:HitTarget|null)=>{currentHover=hit?.visual??null;},animate:(elapsed:number)=>{
    let moved=false;
-   ghibliTick(elapsed);
+   ghibliTick(elapsed);smokeTick(elapsed);
    for(const visual of hoverVisuals){
      const isHover=visual===currentHover;
      const target=isHover?1.045:1;
