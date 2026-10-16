@@ -242,7 +242,6 @@ function hangingLamp(parent:THREE.Object3D,x:number,y:number,z:number,intensity=
   halo(parent,x,y-.06,z,.9+.45*intensity,'#ffc78f',.65);
   glowPatch(parent,x,surfaceBelow(y),z,2.0+.7*intensity,1.8+.6*intensity,'#ffc27a',.09*Math.min(1.4,intensity),0,true);
 }
-function lampPost(parent:THREE.Object3D,x:number,z:number,scale=1){cyl(parent,x,1.72*scale,z,.07,.10,3.4*scale,dark,10);sphere(parent,x,3.42*scale,z,.13,brass);line(parent,[V(x,3.1*scale,z),V(x+.45*scale,3.25*scale,z),V(x+.68*scale,2.9*scale,z)],.05,dark);hangingLamp(parent,x+.68*scale,2.84*scale,z,1.8,2.84*scale);}
 /** Clean low-poly houseplant: a clay pot with a soil disc and a bush made of a few flat-shaded leaf blobs. Every blob
  *  overlaps its neighbours and the pot rim, so nothing floats or pokes out as a stray shard. `trail` makes a fuller bush
  *  that spills a little over the rim. `floorY` is kept for call-site compatibility (the old trailing vines are gone). */
@@ -884,9 +883,8 @@ function storefront(scene:THREE.Object3D){
  // Upper-floor sconces sit on the wall piers between and beside the windows (not across a window).
  wallLight(scene,-1.265,6.3,u.z+u.depth/2+.057,0,1.0);
  wallLight(scene,1.32,6.3,u.z+u.depth/2+.057,0,1.0);
- // (The left-side lamp post by the old wagon spot was removed in round four: the kei truck parks there now.)
- lampPost(scene,6.4,-1.6,1.12);
- lampPost(scene,5.4,-4.4,.92);
+ // (The left-side lamp post by the old wagon spot was removed in round four: the kei truck parks there now. The two tall street
+ // lamps on the right side were removed in vtest10; the code is in git history.)
  // Side utility conduits emphasize compact, lived-in construction.
  line(scene,[V(ARCH.ground.width/2+.057,4.15,-2.46),V(ARCH.ground.width/2+.057,.03,-2.46)],.055,dark);
  line(scene,[V(-ARCH.ground.width/2-.045,4.15,-2.55),V(-ARCH.ground.width/2-.045,.03,-2.55)],.042,dark);
@@ -968,37 +966,7 @@ function floor(scene:THREE.Object3D){
 /** World position of the former sign post. The five-sign stack was removed (the on-screen menu already navigates), but the
  *  cool light that used to spill from it stays as general moonlit fill on the right elevation. */
 const NEON={x:6.45,z:2.1};
-/** Placeholder blade sign on a street pole. It is intentionally blank: no lettering and no glow decals.
- *  Change `w`/`h` for another shape, `x/y/z` to move it, `rotY` to turn it. `pole.x` is where the pole stands. */
-const NAME_SIGN={x:-4.0,y:5.2,z:2.0,rotY:-.15,w:.80,h:2.72,thick:.17,pole:{x:-4.55,z:2.0},neon:'#ffba72'};
-function nameSign(scene:THREE.Object3D){
- const {x,y,z,rotY,w,h,thick,pole,neon:hex}=NAME_SIGN;
- // Pole and arm, so the sign is held up by something instead of floating over the pavement.
- const top=y+h/2+.28;
- cyl(scene,pole.x,top/2,pole.z,.065,.085,top,dark,10);
- sphere(scene,pole.x,top+.05,pole.z,.10,brass);
- box(scene,(pole.x+x)/2,top-.08,z,Math.abs(x-pole.x)+.1,.07,.07,iron);
- const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;scene.add(g);
- for(const dx of [-w*.3,w*.3])box(g,dx,h/2+.12,0,.035,.30,.035,iron);   // hangers from the arm
- box(g,0,0,0,w,h,thick,dark);
- // The name, in two columns of stacked letters, on both faces (vtest8; the panel used to be empty).
- const nameTex=texture((c,W,H)=>{
-  c.fillStyle='#17131f';c.fillRect(0,0,W,H);
-  c.fillStyle='#ffd9a0';c.shadowColor='#ffb56a';c.shadowBlur=16;c.textAlign='center';c.textBaseline='middle';c.font='bold 78px Georgia, "Times New Roman", serif';
-  [['M','I','C','H','A','E','L'],['S','H','E','P','H','E','R','D']].forEach((col,ci)=>{
-   const x=W*(ci?.69:.31),step=Math.min(98,(H-130)/col.length),y0=H/2-(col.length-1)*step/2;
-   col.forEach((ch,i)=>c.fillText(ch,x,y0+i*step));
-  });
- },240,816);
- for(const side of [1,-1])plane(g,0,0,side*(thick/2+.014),w-.2,h-.22,nameTex,side===1?0:Math.PI);
- // Slim lit border on both faces around the lettering.
- const frame=neon(hex,.7),t=.05;
- for(const side of [1,-1]){
-  const zf=side*(thick/2+.012);
-  box(g,0,h/2-t/2-.03,zf,w-.06,t,.025,frame);box(g,0,-h/2+t/2+.03,zf,w-.06,t,.025,frame);
-  box(g,-w/2+t/2+.03,0,zf,t,h-.06,.025,frame);box(g,w/2-t/2-.03,0,zf,t,h-.06,.025,frame);
- }
-}
+// The tall name sign and its pole were removed in vtest10 (the name is already on the page); the code is in git history.
 const RESUME_STAND={x:3.4,z:3.75};
 function resumeStand(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group();g.position.set(RESUME_STAND.x,0,RESUME_STAND.z);g.rotation.y=-.17;scene.add(g);
  box(g,0,.86,0,1.02,1.50,.15,wood);box(g,0,1.15,.105,.89,1.16,.055,color('#efeadb'));
@@ -1090,8 +1058,7 @@ function interiors(scene:THREE.Object3D){
  // a table with stools between the display windows and the door, and a plant by the left display.
  box(scene,-1.7,gf+.55,-2.35,3.4,1.1,.6,wood);
  box(scene,-1.7,gf+1.125,-2.35,3.5,.05,.7,counterTop);
- box(scene,-.55,gf+1.35,-2.45,.46,.4,.38,zinc);
- for(const cx of [-2.3,-2.0,-1.5])cyl(scene,cx,gf+1.15+.07,-2.3,.07,.06,.14,color('#e8dfd0'),8);
+ // The counter top is left bare on purpose (vtest10).
  bookshelf(scene,3.84,gf,.7,2.9,2.3,-Math.PI/2);
  box(scene,.2,gf+.015,.45,3.4,.02,2.2,rug('#7a3f4a'));
  cyl(scene,1.9,gf+.78,.35,.5,.5,.06,wood,14);cyl(scene,1.9,gf+.4,.35,.06,.07,.74,iron,8);cyl(scene,1.9,gf+.04,.35,.3,.3,.06,iron,10);
@@ -1503,18 +1470,6 @@ function bookStack(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number)
   for(const sx of [-1,1])box(ball,sx*.013,.004,.0345,.0035,.022,.003,color('#b8312b')).rotation.z=sx*.45;   // two short red stitch marks on the front face
   return g;
 }
-/** Teapot and two cups on a round tray. The tray top is at y+.012. */
-function teaSet(parent:THREE.Object3D,x:number,y:number,z:number){
-  const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
-  const clay=color('#8a4a33',0,.7),cup=color('#efe3c8',0,.6);
-  cyl(g,0,.006,0,.11,.11,.012,color('#2a2523',0,.7),14);
-  sphere(g,0,.0545,0,.05,clay,1).scale.set(1,.85,1);
-  cyl(g,0,.095,0,.03,.03,.012,clay,10);sphere(g,0,.108,0,.01,clay,0);
-  const spout=new THREE.Mesh(new THREE.ConeGeometry(.014,.07,6),clay);spout.rotation.z=-1.1;spout.position.set(.053,.08,0);g.add(spout);
-  const handle=new THREE.Mesh(new THREE.TorusGeometry(.03,.006,5,12),clay);handle.position.set(-.058,.058,0);g.add(handle);
-  for(const dz of [-.07,.07])cyl(g,0,.032,dz,.026,.02,.04,cup,10);
-  return g;
-}
 /** Flat lattice board with a handful of plain stones (a generic two-player tile game; no lotus, no emblem). Surface at y+.012. */
 function latticeBoard(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,size=.27){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
@@ -1715,23 +1670,34 @@ function wallHoop(parent:THREE.Object3D,wallX:number,z:number){
   return g;
 }
 
-/** Soft plush teddy sitting upright on a seat (y = seat surface), facing local +Z. A plain brown bear: no character, no outfit. */
-function plushBear(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number){
+/** Soft plush tiger sitting upright on a seat (y = seat surface), facing local +Z. A generic orange-and-black toy tiger of our own
+ *  making: round ears, cream muzzle, cheek ruffs and tummy, dark stripes, a striped tail. No outfit, no character. */
+function plushTiger(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number){
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
-  const fur=color('#a9764a',0,.98),light=color('#d9b88a',0,.98),dk=color('#2a1d16',0,.6);
+  const fur=color('#e0842a',0,.98),cream=color('#f3e2bc',0,.98),dk=color('#241812',0,.7),nose=color('#6a3030',0,.6);
   const body=sphere(g,0,.115,0,.105,fur,1);body.scale.set(1,1.1,.95);
-  const tum=sphere(g,0,.105,.06,.07,light,1);tum.scale.set(1,1.1,.7);
-  sphere(g,0,.27,.015,.08,fur,1);
-  const mz=sphere(g,0,.255,.085,.037,light,1);mz.scale.set(1,.8,.8);
-  sphere(g,0,.268,.112,.012,dk,0);
-  for(const sx of [-1,1]){
-    sphere(g,sx*.03,.29,.082,.009,dk,0);                                          // eyes
-    sphere(g,sx*.06,.335,0,.03,fur,1);sphere(g,sx*.06,.335,.012,.016,light,0);    // ears with a pale inner
-    const arm=sphere(g,sx*.125,.15,.03,.04,fur,1);arm.scale.set(.9,1.5,.9);arm.rotation.z=-sx*.3;
-    const leg=sphere(g,sx*.07,.045,.09,.055,fur,1);leg.scale.set(1,.8,1.4);
-    const pad=sphere(g,sx*.07,.04,.15,.03,light,1);pad.scale.set(1,.8,1);
+  const tum=sphere(g,0,.105,.06,.07,cream,1);tum.scale.set(1,1.1,.7);
+  // Dark bands around the torso (the cream tummy hides them at the front, so they read as side and back stripes).
+  for(const [by,br] of [[.07,.099],[.125,.106],[.18,.089]] as const){
+    const band=new THREE.Mesh(new THREE.TorusGeometry(br,.0075,5,16),dk);band.rotation.x=Math.PI/2;band.position.set(0,by,-.004);band.scale.set(1,.95,1);g.add(band);
   }
-  sphere(g,0,.06,-.1,.03,fur,0);
+  sphere(g,0,.27,.015,.08,fur,1);
+  const mz=sphere(g,0,.255,.085,.037,cream,1);mz.scale.set(1,.8,.8);
+  sphere(g,0,.268,.113,.011,nose,0);
+  const fc=sphere(g,0,.337,.06,.012,dk,0);fc.scale.set(.45,1.7,.45);                   // centre forehead stripe
+  for(const sx of [-1,1]){
+    const ruff=sphere(g,sx*.066,.252,.035,.036,cream,1);ruff.scale.set(1,.9,.8);       // cheek ruff
+    sphere(g,sx*.03,.29,.085,.009,dk,0);                                               // eyes
+    sphere(g,sx*.058,.337,0,.03,fur,1);sphere(g,sx*.058,.335,.014,.016,cream,0);       // ears with a pale inner
+    const fs=sphere(g,sx*.03,.333,.054,.011,dk,0);fs.scale.set(.45,1.6,.45);fs.rotation.z=sx*.3;
+    for(const [cy,cz] of [[.268,.034],[.244,.046]] as const){const cs=sphere(g,sx*.098,cy,cz,.011,dk,0);cs.scale.set(.4,.6,1.6);}   // cheek stripes
+    const arm=sphere(g,sx*.125,.15,.03,.04,fur,1);arm.scale.set(.9,1.5,.9);arm.rotation.z=-sx*.3;
+    for(const ay of [.125,.165]){const as=sphere(g,sx*(.157-(ay-.125)*.2),ay,.03,.012,dk,0);as.scale.set(.4,.5,1.6);}                    // arm stripes
+    const leg=sphere(g,sx*.07,.045,.09,.055,fur,1);leg.scale.set(1,.8,1.4);
+    sphere(g,sx*.07,.04,.15,.03,cream,1).scale.set(1,.8,1);
+  }
+  // Tail curling up behind, ringed.
+  [[.05,-.12,.03,fur],[.07,-.15,.027,dk],[.098,-.165,.025,fur],[.128,-.162,.023,dk]].forEach(([ty,tz,tr,m])=>sphere(g,0,ty as number,tz as number,tr as number,m as THREE.Material,0));
   return g;
 }
 
@@ -2032,26 +1998,18 @@ function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h
   return g;
 }
 function endgameInteriors(scene:THREE.Object3D){
-  const gf=.07,uf=4.425,counter=gf+1.15;   // counter top
-  const copper=color('#b9683a',.5,.4),cream=color('#efe3c8',0,.7);
+  const uf=4.425;
+  const cream=color('#efe3c8',0,.7);
   // ---- Ground floor ---------------------------------------------------------------------------------------
   toyPlane(scene,2.6,2.85,1.75,.6,ARCH.ground.height-.03);
-  // Counter: a copper pot with a wooden spoon, a snare drum with sticks, and a plain red stapler.
-  cyl(scene,-2.65,counter+.1,-2.40,.15,.17,.2,copper,10);
-  cyl(scene,-2.65,counter+.205,-2.40,.16,.16,.012,copper,10);
-  for(const sx of [-1,1])box(scene,-2.65+sx*.185,counter+.14,-2.40,.04,.03,.05,copper);
-  cyl(scene,-2.62,counter+.36,-2.38,.012,.012,.3,wood,5).rotation.z=.18;
-  cyl(scene,-3.15,counter+.05,-2.35,.13,.13,.09,color('#ddd8ce',0,.5),12);
-  cyl(scene,-3.15,counter+.05,-2.35,.135,.135,.02,color('#9aa3ad',.6,.4),12);
-  for(const [sz,sr] of [[-.03,.12],[.03,-.1]] as const)box(scene,-3.15,counter+.1,-2.35+sz,.28,.014,.014,wood,sr);
-  box(scene,-.9,counter+.0125,-2.28,.17,.025,.05,color('#b8312b'));box(scene,-.9,counter+.037,-2.28,.17,.02,.045,color('#c23a31'));
+  // Counter top left empty (the copper pot, snare drum and stapler were removed in vtest10).
   // Retro gaming corner (CRT, display cabinet, consoles, handheld, gamepad) removed in round three; the code is parked in git history.
   // ---- Upper floor ----------------------------------------------------------------------------------------
   // Six framed jerseys in two rows above the sofa (inner face of the back wall is z = -2.78).
   const wallZ=-2.78;
   JERSEYS.forEach((spec,i)=>jerseyFrame(scene,-3.1+(i%3)*.8,i<3?7.0:6.0,wallZ,spec));
-  // Plush bear on the sofa, leaning against the backrest between the two cushions.
-  plushBear(scene,-2.3,uf+.4,-2.45,0);
+  // Plush tiger on the sofa, leaning against the backrest between the two cushions.
+  plushTiger(scene,-2.3,uf+.4,-2.45,0);
   // Turntable on a sideboard against the right wall, flanked by two small speakers.
   const sx=1.26,sz=-2.0;
   box(scene,sx,uf+.4,sz,.4,.8,1.2,wood);
@@ -2065,17 +2023,10 @@ function endgameInteriors(scene:THREE.Object3D){
     cyl(scene,sx-.1,uf+.8+.12,sz+dz,.07,.07,.01,color('#14171f'),10).rotation.z=Math.PI/2;
     cyl(scene,sx-.1,uf+.8+.26,sz+dz,.03,.03,.01,color('#14171f'),8).rotation.z=Math.PI/2;
   }
-  // Coffee table: a fan of playing cards, a lit candle and two paperbacks.
+  // Coffee table: just the candle now (the playing cards and two paperbacks were removed in vtest10).
   const tt=uf+.425;
-  for(let i=0;i<5;i++){
-    const card=new THREE.Group();card.position.set(-1.12,tt+.001+i*.0022,-.85);card.rotation.y=(i-2)*.28;scene.add(card);
-    box(card,0,0,.035,.058,.002,.09,i%2?color('#a02c35'):color('#f1efe8'));
-    if(i%2===0)box(card,0,.0016,.02,.018,.001,.018,color('#c9302c'));
-  }
   cyl(scene,-1.7,tt+.05,-.9,.03,.03,.1,cream,8);
   sphere(scene,-1.7,tt+.115,-.9,.014,bright,0);halo(scene,-1.7,tt+.12,-.9,.5,'#ffb866',.5);
-  box(scene,-1.02,tt+.015,-1.05,.2,.03,.28,color('#425e6c'),.2);box(scene,-1.02,tt+.04,-1.05,.19,.02,.27,color('#d9cfb9'),.15);
-  box(scene,-1.55,tt+.012,-.72,.17,.024,.25,color('#965857'),-.3);
   soccerBall(scene,-.7,uf+.11,-2.5);
   // Six framed pictures in a 2 wide x 3 tall grid (top row: two supplied pictures; below: four record sleeves) on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
   ([['','','#2d6fb8','#ffffff','skydive.jpg'],['','','#c9371f','#ffffff','red-pool.jpg'],['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,6.6-Math.floor(i/2)*.4,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
@@ -2104,18 +2055,6 @@ function festoon(parent:THREE.Object3D,a:THREE.Vector3,b:THREE.Vector3,sag:numbe
   const curve=new THREE.CatmullRomCurve3(pts);
   for(let i=0;i<n;i++){const p=curve.getPoint((i+.5)/n);sphere(parent,p.x,p.y-.045,p.z,.04,bulbMat,1);halo(parent,p.x,p.y-.045,p.z,.5,hex,.5);}
 }
-/** A small glass-and-iron lantern standing on the paving, with a bloom and a light pool under it. */
-function groundLantern(parent:THREE.Object3D,x:number,z:number,s=1,y=PAVE){
-  const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(s);parent.add(g);
-  cyl(g,0,.02,0,.11,.12,.04,iron,8);
-  box(g,0,.15,0,.13,.21,.13,lanternGlass);
-  for(const sx of [-1,1])for(const sz of [-1,1])box(g,sx*.07,.15,sz*.07,.02,.23,.02,iron);
-  cyl(g,0,.285,0,.02,.13,.07,iron,4);
-  sphere(g,0,.335,0,.025,brass,1);
-  halo(g,0,.16,0,.95,'#ffbf75',.55);
-  glowPatch(g,0,.012,0,1.7,1.7,'#ffbd70',.15,0,true);
-  return g;
-}
 /** Candle in a glass jar (sits at y). */
 function candleJar(parent:THREE.Object3D,x:number,y:number,z:number){
   cyl(parent,x,y+.035,z,.04,.04,.07,color('#ffd9a8',0,.25,'#ffb05a',.9),8);
@@ -2142,24 +2081,7 @@ function trough(parent:THREE.Object3D,x:number,z:number,len=.95,rotY=0){
   const n=Math.round(len/.17);
   for(let i=0;i<n;i++){const fx=-len/2+.1+i*(len-.2)/(n-1);sphere(g,fx,.38+cozyRandom()*.04,(cozyRandom()-.5)*.1,.065,i%3===1?leaf:flowerCols[Math.floor(cozyRandom()*flowerCols.length)],1);}
 }
-/** Plain bicycle with a basket of flowers on the handlebars, drawn leaning on the hedge. Wheels roll along local Z. */
-function bicycle(parent:THREE.Object3D,x:number,z:number,rotY:number){
-  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;g.rotation.z=.09;parent.add(g);
-  const tire=color('#15181f',0,.9),frame=color('#2f6f78',.3,.5);
-  for(const wz of [-.55,.55]){
-    const w=new THREE.Mesh(new THREE.TorusGeometry(.33,.024,6,18),tire);w.rotation.y=Math.PI/2;w.position.set(0,.35,wz);g.add(w);
-    cyl(g,0,.35,wz,.03,.03,.05,iron,6).rotation.z=Math.PI/2;
-  }
-  rod(g,0,.35,-.55,.32,-.10,.016,frame);rod(g,0,.32,-.10,.84,-.22,.016,frame);
-  rod(g,0,.84,-.22,.80,.30,.016,frame);rod(g,0,.32,-.10,.78,.30,.016,frame);
-  rod(g,0,.35,.55,.84,.31,.016,frame);rod(g,0,.84,-.22,.35,-.55,.012,frame);
-  rod(g,0,.78,.30,.98,.30,.016,iron);box(g,0,.99,.30,.5,.03,.03,iron);
-  box(g,0,.88,-.24,.12,.04,.27,color('#5a3a2c'));
-  // basket with a bunch of flowers
-  box(g,0,.88,.52,.30,.16,.22,color('#8a6a48'));
-  for(let i=0;i<7;i++)sphere(g,(i-3)*.04,1.0+cozyRandom()*.05,.52+(cozyRandom()-.5)*.1,.06,i%2?leaf:flowerCols[i%flowerCols.length],1);
-}
-/** A cosy rug, bench, poufs, side table with a lantern and a floor lamp, facing the building. */
+/** A cosy rug, bench, poufs and a side table with a lantern, a book stack and a candle, facing the building. */
 function lounge(parent:THREE.Object3D,x:number,z:number,rotY:number){
   const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;g.scale.setScalar(.85);parent.add(g);
   cyl(g,0,.011,0,1.25,1.25,.022,color('#7d4b44',0,.95),24);
@@ -2173,14 +2095,10 @@ function lounge(parent:THREE.Object3D,x:number,z:number,rotY:number){
   tableLantern(g,0,.425,.12);
   bookStack(g,-.14,.425,.20,.4);
   candleJar(g,.16,.425,.04);
-  // floor lamp: slim pole, warm shade, a bloom and a pool of light on the rug
-  cyl(g,-1.15,.0,-.15,.1,.1,.05,iron,10);cyl(g,-1.15,.75,-.15,.017,.017,1.5,iron,6);
-  cyl(g,-1.15,1.52,-.15,.16,.24,.28,color('#f2d8a8',0,.8,'#ffbe70',.9),12);
-  halo(g,-1.15,1.5,-.15,1.4,'#ffc27a',.6);
-  glowPatch(g,-1.0,.03,0,2.6,2.6,'#ffbd70',.14,0,true);
   pot(g,1.15,.02,-.75,.7,true);
 }
-/** The four corner lantern posts, their bulb strings, hedges, curb troughs and the small stuff that makes the courtyard lived in. */
+/** The four corner lantern posts, their bulb strings, hedges, curb troughs and the small stuff that makes the courtyard lived in.
+ *  (vtest10: the floor lanterns, the bicycle and the couch floor lamp were removed.) */
 function cozyWorld(scene:THREE.Object3D){
   const {x0,x1,z0,z1}=PLAZA,px0=x0+.3,px1=x1-.3,pz0=z0+.3,pz1=z1-.35,top=2.55;
   // Posts with a lantern on top and a pool of light below.
@@ -2191,13 +2109,15 @@ function cozyWorld(scene:THREE.Object3D){
     halo(scene,x,top+.1,z,1.25,'#ffbf75',.6);
     glowPatch(scene,x,PAVE+.012,z,3.4,3.4,'#ffbd70',.11,0,true);
   }
-  // Bulb strings along the back and both sides; the front stays open so the shop front is never crossed.
+  // Bulb strings follow the plaza edge and turn at the corner posts: down both sides, and along the back edge from each corner post
+  // to a slim stake at the end of its hedge. The gap between the stakes (behind the vending machine and the arcade cabinet) stays
+  // open, and the front stays open so the shop front is never crossed.
   const P=(x:number,z:number)=>V(x,top-.12,z);
-  // The back run goes from each corner post to a hook on the side wall, not straight across, so it never hangs in front of the
-  // vending machine and arcade cabinet when the camera looks at them.
-  const hookL=V(-ARCH.ground.width/2*BUILDING_SCALE-.04,2.95,-1.4),hookR=V(ARCH.ground.width/2*BUILDING_SCALE+.04,2.95,-1.4);
-  festoon(scene,P(px0,pz0),hookL,.35,14);festoon(scene,P(px1,pz0),hookR,.35,14);
-  for(const h of [hookL,hookR])box(scene,h.x,h.y,h.z,.08,.08,.08,iron);
+  const stakeL=-2.55,stakeR=3.55;
+  for(const sx of [stakeL,stakeR]){
+    cyl(scene,sx,(top-.05)/2,pz0,.028,.036,top-.05,dark,6);sphere(scene,sx,top-.04,pz0,.045,brass,1);
+  }
+  festoon(scene,P(px0,pz0),P(stakeL,pz0),.3,16);festoon(scene,P(px1,pz0),P(stakeR,pz0),.28,13);
   festoon(scene,P(px0,pz0),P(px0,pz1),.5,15);
   festoon(scene,P(px1,pz0),P(px1,pz1),.5,15);
   // Hedges close the courtyard on the sides and back, with gaps for the machines, the truck and the heron.
@@ -2205,21 +2125,16 @@ function cozyWorld(scene:THREE.Object3D){
   hedge(scene,px1+.05,(pz0+3.2)/2,Math.abs(3.2-pz0)-.5,'z',.3);                   // right
   hedge(scene,(px0+.4-2.4)/2,pz0,Math.abs(-2.4-(px0+.4)),'x');                      // back left
   hedge(scene,(3.4+px1-.4)/2,pz0,Math.abs(px1-.4-3.4),'x');                         // back right
-  // Curb flower troughs and lanterns by the shop.
+  // Curb flower troughs by the shop.
   trough(scene,-2.45,4.95,1.0);trough(scene,.1,4.98,1.0);trough(scene,2.45,4.95,.9);
-  groundLantern(scene,-1.2,2.95,1.0);groundLantern(scene,1.2,2.95,1.0);groundLantern(scene,-3.15,4.35,.9);groundLantern(scene,4.2,4.3,.9);
   // Right-hand corner: a place to sit with a book.
   lounge(scene,5.3,1.15,-Math.PI/2);
-  bicycle(scene,6.2,-2.65,-.55);
-  groundLantern(scene,5.85,-.85,.9);
-  // Back: bench, lantern and a stack of crates with a plant.
+  // Back: a bench and a stack of crates with a plant.
   const g=new THREE.Group();g.position.set(-4.2,PAVE,-3.75);g.scale.setScalar(.85);scene.add(g);
   bench(g,0,.02,0,0,2,1.5);box(g,-.35,.56,.02,.42,.12,.3,color('#d9b45a'),.1);
   for(const sx of [-1,1])box(g,sx*.9,.18,.45,.2,.2,.2,color('#4f3d38'));
-  groundLantern(g,1.25,.5,1.0,0);
   crate(scene,-6.1,-3.7,.46,.2);crate(scene,-6.15,-3.2,.34,-.3);
   pot(scene,-6.1,.02+.46+.03,-3.7,.5,true);
-  groundLantern(scene,2.95,-4.15,.9);
 }
 /** Details on the building itself, in its local units. */
 function cozyBuilding(b:THREE.Object3D){
@@ -2232,6 +2147,12 @@ function cozyBuilding(b:THREE.Object3D){
   addVines(upBack,'z',0,1.85,7.7,2.3);addVines(upBack,'z',0,-1.55,7.7,1.7);
   // Candle jars on the shop-front crates.
   candleJar(b,-3.70,.52+.03+GROUND,4.22);candleJar(b,-3.12,.40+.03+GROUND,4.14);
+  // Bracket lamp on the left wall by the front corner: it lights the corner where the tall name sign used to stand (vtest10).
+  const lx=-ARCH.ground.width/2,lz=1.95;
+  box(b,lx-.04,3.9,lz,.06,.34,.14,iron);                       // wall plate
+  box(b,lx-.30,3.98,lz,.58,.06,.06,iron);                      // arm out from the wall
+  rodX(b,lz,lx-.02,3.52,lx-.52,3.95,.02,iron);                 // brace under the arm
+  hangingLamp(b,lx-.54,3.42,lz,1.5,3.98+.03);
 }
 function endgameExterior(scene:THREE.Object3D){
   const bt={x:2.95,z:1.45};
@@ -2240,7 +2161,6 @@ function endgameExterior(scene:THREE.Object3D){
   baseballSet(scene,2.15,4.0);
   wallHoop(scene,-ARCH.ground.width/2,.85);                                               // left wall, in front of the parked truck
   chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
-  teaSet(scene,-1.17+.19,8.695,-.30+.10);                                                // roof table
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
 export function buildWorld():World{
@@ -2275,7 +2195,7 @@ export function buildWorld():World{
  storefront(building);bounceDecals(building);
  // Purposeful V4 architectural detail, intentionally separated from all navigation targets.
  storefrontDetails(building);terraceFurnishings(building);roofFurnishings(building);facadeServiceDetail(building);utilityExterior(building);
- nameSign(scene);bookCart(scene,hits);noticeboard(building,hits);resumeStand(scene,hits);serviceBack(building,hits);
+ bookCart(scene,hits);noticeboard(building,hits);resumeStand(scene,hits);serviceBack(building,hits);
  endgameExterior(building);
  // Interiors come last so they never shift the random sequence used by the plants and paving above.
  interiors(building);
