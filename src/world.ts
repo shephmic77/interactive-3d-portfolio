@@ -1139,12 +1139,11 @@ function bookshelf(scene:THREE.Object3D,x:number,floorY:number,z:number,len:numb
 }
 function interiors(scene:THREE.Object3D){
  const u=ARCH.upper,gf=.07,uf=4.425,top=ARCH.ground.height,roof=u.bottom+u.height;
- const counterTop=color('#b88d62',0,.7),rug=(hex:string)=>color(hex,0,.95,'#ff7a60',.10*tuning.room);
- // ---- Ground floor: a small shop/studio. Shelves sit on the right wall, the counter below the rear window,
+ const rug=(hex:string)=>color(hex,0,.95,'#ff7a60',.10*tuning.room);
+ // ---- Ground floor: a small shop/studio. Shelves sit on the right wall, an 80s reading nook fills the back-left corner,
  // a table with stools between the display windows and the door, and a plant by the left display.
- box(scene,-1.7,gf+.55,-2.35,3.4,1.1,.6,wood);
- box(scene,-1.7,gf+1.125,-2.35,3.5,.05,.7,counterTop);
- // The counter top is left bare on purpose (vtest10).
+ // vtest16: the counter is gone; the back-left corner is now an 80s reading nook (see readingNook).
+ readingNook(scene,gf);
  bookshelf(scene,3.84,gf,.7,2.9,2.3,-Math.PI/2);
  box(scene,.2,gf+.015,.45,3.4,.02,2.2,rug('#7a3f4a'));
  cyl(scene,1.9,gf+.78,.35,.5,.5,.06,wood,14);cyl(scene,1.9,gf+.4,.35,.06,.07,.74,iron,8);cyl(scene,1.9,gf+.04,.35,.3,.3,.06,iron,10);
@@ -2212,7 +2211,6 @@ function endgameInteriors(scene:THREE.Object3D){
   imagePoster(scene,-4.01,gy+dy,gz-dz,.56,.84,'xbalanque.jpg','#4a6a3a',0,.22,Math.PI/2);
   imagePoster(scene,-4.01,gy-dy,gz+dz,.56,.84,'joker.jpg','#3a55b0',0,.22,Math.PI/2);
   imagePoster(scene,-4.01,gy-dy,gz-dz,.56,.84,'kafka-8bit.jpg','#ece8e0',0,.14,Math.PI/2);
-  imagePoster(scene,-.55,2.45,-2.835,.90,1.27,'kafka.jpg','#ece8e0',110,.12);
   // vtest12: a workbench and a storage chest along the left wall under the pictures.
   // vtest15: re-spaced along the wall to make room for the little table under the grid: workbench, table, chest, then the plant.
   workbench(scene,-3.54,.07,.00,Math.PI/2);
@@ -2475,6 +2473,64 @@ function workbench(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:numbe
   }
   box(g,-.17,.36,.386,.30,.08,.008,color('#b9c0cc',.5,.5));box(g,-.35,.36,.388,.07,.06,.014,color('#6b4528',0,.9));   // saw: blade and handle
   box(g,.17,.32,.388,.035,.24,.014,color('#6b4528',0,.9));box(g,.17,.46,.39,.13,.06,.022,color('#4a4f5a',.4,.5));    // hammer: handle and head
+}
+/** 80s reading nook (vtest16): the back-left corner of the ground floor, where the counter used to stand. A chunky teal armchair turned
+ *  toward the room, a round black-lacquer coffee table with a pink under-glow, a geometric "Memphis" rug and a halogen torchiere.
+ *  All light is faked (emissive bowl, halo, wall and floor decals); no PointLights. Building-local units, `gf` is the floor height. */
+function readingNook(scene:THREE.Object3D,gf:number){
+ // rug: purple ground, teal and pink borders, scattered triangles, squiggles and dots (fixed positions, nothing random)
+ const rt=texture((c,W,H)=>{
+  c.fillStyle='#2b2147';c.fillRect(0,0,W,H);
+  c.strokeStyle='#2fb3b0';c.lineWidth=14;c.strokeRect(14,14,W-28,H-28);
+  c.strokeStyle='#f26a9b';c.lineWidth=5;c.strokeRect(38,38,W-76,H-76);
+  const tri=(x:number,y:number,s:number,hex:string,rot:number)=>{c.save();c.translate(x,y);c.rotate(rot);c.fillStyle=hex;c.beginPath();c.moveTo(0,-s);c.lineTo(s*.9,s*.7);c.lineTo(-s*.9,s*.7);c.closePath();c.fill();c.restore();};
+  const zig=(x:number,y:number,n:number,hex:string)=>{c.strokeStyle=hex;c.lineWidth=9;c.lineJoin='round';c.beginPath();c.moveTo(x,y);for(let i=1;i<=n;i++)c.lineTo(x+i*22,y+(i%2?-16:16));c.stroke();};
+  tri(120,130,38,'#f6c445',.3);tri(520,110,34,'#f26a9b',-.5);tri(300,200,44,'#2fb3b0',.15);tri(150,380,34,'#f26a9b',.8);tri(470,360,42,'#f6c445',-.2);tri(330,420,30,'#2fb3b0',-.9);
+  zig(190,70,8,'#2fb3b0');zig(380,300,7,'#f6c445');zig(70,260,5,'#f26a9b');zig(430,450,6,'#2fb3b0');zig(220,300,5,'#f26a9b');
+  c.fillStyle='#fff3d6';for(let i=0;i<6;i++)for(let j=0;j<4;j++){c.beginPath();c.arc(90+i*95+(j%2)*40,150+j*80,5,0,Math.PI*2);c.fill();}
+  c.fillStyle='#f26a9b';c.beginPath();c.arc(560,260,28,0,Math.PI*2);c.fill();c.fillStyle='#f6c445';c.beginPath();c.arc(90,470,22,0,Math.PI*2);c.fill();
+ },640,512);
+ const rugMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.5,2.0),new THREE.MeshStandardMaterial({map:rt,roughness:.95,emissive:'#ffffff',emissiveMap:rt,emissiveIntensity:.14}));
+ rugMesh.rotation.x=-Math.PI/2;rugMesh.position.set(-2.7,gf+.03,-1.7);rugMesh.receiveShadow=true;scene.add(rugMesh);
+ armchair80s(scene,-3.15,gf+.03,-2.05,Math.PI/4);
+ roundCoffeeTable(scene,-2.3,gf+.03,-1.2);
+ torchiere(scene,-2.05,gf+.03,-2.6);
+}
+/** Chunky single-seat armchair in teal velvet with chrome feet, a gold piping line and a coral throw pillow. Faces +Z. */
+function armchair80s(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
+ const g=new THREE.Group();g.position.set(x,gfy,z);g.rotation.y=rotY;parent.add(g);
+ const velvet=color('#2b8a91',0,.9),velvet2=color('#37a2a6',0,.9),pink=color('#e8618c',0,.85),gold=color('#e9b84d',.4,.45),chrome=color('#c9d3dc',.8,.25);
+ for(const sx of [-.4,.4])for(const sz of [-.34,.34])cyl(g,sx,.06,sz,.035,.025,.12,chrome,8);
+ box(g,0,.22,0,.98,.2,.9,velvet);                                        // base
+ box(g,0,.38,.06,.66,.12,.62,velvet2);                                   // seat cushion
+ box(g,0,.335,.375,.70,.022,.022,gold);                                  // piping along the seat front
+ box(g,0,.62,-.36,.98,.62,.20,velvet);                                   // back
+ box(g,0,.66,-.25,.62,.40,.12,velvet2).rotation.x=-.12;                  // back cushion, leaning a little
+ for(const sx of [-1,1]){box(g,sx*.45,.40,0,.18,.36,.9,velvet);box(g,sx*.45,.60,0,.22,.07,.88,velvet2);}   // arms with a rolled top
+ const pillow=box(g,.2,.55,-.1,.30,.30,.09,pink);pillow.rotation.y=.5;pillow.rotation.z=.35;
+}
+/** Round black-lacquer coffee table with chrome legs, a lower shelf, a pink under-glow, two books and a mug. */
+function roundCoffeeTable(parent:THREE.Object3D,x:number,gfy:number,z:number){
+ const g=new THREE.Group();g.position.set(x,gfy,z);parent.add(g);
+ const lacquer=color('#1c1a28',.2,.35),chrome=color('#c9d3dc',.8,.25);
+ cyl(g,0,.43,0,.46,.46,.04,lacquer,20);
+ cyl(g,0,.405,0,.475,.475,.012,color('#ff5fa8',.1,.3,'#ff5fa8',1.1),20);   // pink glow strip just under the top edge
+ cyl(g,0,.18,0,.34,.34,.02,lacquer,16);
+ for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;cyl(g,Math.cos(a)*.32,.215,Math.sin(a)*.32,.022,.022,.43,chrome,8);}
+ box(g,-.12,.465,-.06,.26,.035,.18,color('#2fb3b0',0,.8)).rotation.y=.35;
+ box(g,-.11,.50,-.05,.22,.03,.15,color('#f6c445',0,.8)).rotation.y=.1;
+ cyl(g,.14,.49,.1,.04,.035,.07,color('#f2efe6',0,.6),10);
+ glowPatch(g,0,.02,0,1.6,1.6,'#ff5fa8',.12,0,true);
+}
+/** Halogen torchiere: dark pole, uplight bowl, a halo, and warm washes on the back wall and the rug. */
+function torchiere(parent:THREE.Object3D,x:number,gfy:number,z:number){
+ const g=new THREE.Group();g.position.set(x,gfy,z);parent.add(g);
+ const pole=color('#1b1b22',.4,.5);
+ cyl(g,0,.02,0,.17,.17,.04,pole,14);cyl(g,0,.8,0,.016,.016,1.56,pole,8);
+ cyl(g,0,1.66,0,.2,.06,.2,color('#ffe3b0',0,.4,'#ffbf75',.9),14);        // open uplight bowl
+ halo(g,0,1.78,0,1.1,'#ffc27a',.5);
+ glowPatch(g,0,1.0,-.22,2.8,2.7,'#ffb878',.13);                          // wash up the back wall (inner face is .235 behind the lamp)
+ glowPatch(g,0,.02,.2,2.4,2.0,'#ffb878',.10,0,true);                     // pool on the rug
 }
 /** Little wooden side table with a lower shelf and a candle on top. Faces +Z; `gfy` is the floor height. */
 function littleTable(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
