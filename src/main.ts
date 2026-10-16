@@ -80,7 +80,9 @@ try{
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
  renderer.toneMappingExposure=1.52;
  renderer.shadowMap.enabled=true;
- renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ renderer.shadowMap.type=mobile()?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;   // the cheaper filter on phones
+ // Nothing that casts a shadow moves except the hover-scaled targets, so the shadow map is drawn once and redrawn only when one of them moves.
+ renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  element.appendChild(renderer.domElement);
  camera=new THREE.PerspectiveCamera(40,element.clientWidth/element.clientHeight,.09,150);
  const home=homeView();
@@ -110,7 +112,7 @@ try{
    controls.target.lerpVectors(cameraTween.startTarget,cameraTween.endTarget,k);
    if(raw>=1){cameraTween=null;controls.enabled=true;}
   }
-  controls.update();world.animate(clock.getElapsedTime());renderer.render(world.scene,camera);
+  controls.update();if(world.animate(clock.getElapsedTime()))renderer.shadowMap.needsUpdate=true;renderer.render(world.scene,camera);
  };
  render();
  const isInside=(o:THREE.Object3D,ancestor?:THREE.Object3D)=>{for(let p:THREE.Object3D|null=o;p;p=p.parent)if(p===ancestor)return true;return false;};

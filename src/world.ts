@@ -1,9 +1,10 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { projects, type Project } from './content';
 import type { Section } from './ui';
 
 export type HitTarget={ object:THREE.Object3D; section:Section; label:string; projectId?:string; visual?:THREE.Object3D };
-export type World={scene:THREE.Object3D; hits:HitTarget[]; /** Solid meshes that can hide an interactive object from the pointer (used to reject hovers through walls). */ occluders:THREE.Object3D[]; setHovered:(hit:HitTarget|null)=>void; animate:(elapsed:number)=>void};
+export type World={scene:THREE.Object3D; hits:HitTarget[]; /** Solid meshes that can hide an interactive object from the pointer (used to reject hovers through walls). */ occluders:THREE.Object3D[]; setHovered:(hit:HitTarget|null)=>void; /** Advances the animation; returns true when something that casts a shadow moved, so the (otherwise frozen) shadow map must be redrawn. */ animate:(elapsed:number)=>boolean};
 const V=(x:number,y:number,z:number)=>new THREE.Vector3(x,y,z);
 const materialCache=new Map<string,THREE.MeshStandardMaterial>();
 const color=(hex:string,metalness=0,roughness=.79,emissive?:string,emissiveIntensity=0)=>{
@@ -2690,6 +2691,43 @@ function endgameExterior(scene:THREE.Object3D){
   chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
+/** vtest21 (performance): the scene was ~3,400 separate meshes, i.e. ~3,400 draw calls (plus the same again for the shadow map on every frame).
+ *  Nothing in it moves except the hover-scaled target groups, so every solid, opaque, non-interactive mesh is baked into world space and merged
+ *  with the others that share its material, shadow flags and a 12-unit cell of the scene. The picture is identical; the draw-call count drops
+ *  by roughly an order of magnitude. Interactive groups, transparent decals and glass, sprites and mirrored (negative-scale) meshes are left alone. */
+function mergeStaticMeshes(root:THREE.Object3D,protect:Set<THREE.Object3D>){
+  root.updateMatrixWorld(true);
+  const matIds=new Map<THREE.Material,number>();
+  const buckets=new Map<string,{mat:THREE.Material;cast:boolean;recv:boolean;order:number;geos:THREE.BufferGeometry[]}>();
+  const CELL=12,victims:THREE.Mesh[]=[];
+  const pos=new THREE.Vector3();
+  root.traverse((o:THREE.Object3D)=>{
+    const m=o as THREE.Mesh;
+    if(!m.isMesh||(m as THREE.InstancedMesh).isInstancedMesh||(m as THREE.SkinnedMesh).isSkinnedMesh)return;
+    const mat=m.material as THREE.Material;
+    if(Array.isArray(mat)||mat.transparent||mat.depthWrite===false)return;
+    if(m.matrixWorld.determinant()<0)return;
+    for(let p:THREE.Object3D|null=m;p;p=p.parent){if(protect.has(p)||!p.visible)return;}
+    const g=m.geometry;
+    if(!g.attributes.position||!g.attributes.normal)return;
+    if(!matIds.has(mat))matIds.set(mat,matIds.size);
+    pos.setFromMatrixPosition(m.matrixWorld);
+    const names=Object.keys(g.attributes).sort().join('+');
+    const key=[matIds.get(mat),m.castShadow?1:0,m.receiveShadow?1:0,m.renderOrder,names,Math.floor(pos.x/CELL),Math.floor(pos.y/CELL),Math.floor(pos.z/CELL)].join('|');
+    let b=buckets.get(key);if(!b){b={mat,cast:m.castShadow,recv:m.receiveShadow,order:m.renderOrder,geos:[]};buckets.set(key,b);}
+    const baked=(g.index?g.toNonIndexed():g.clone());
+    baked.applyMatrix4(m.matrixWorld);
+    b.geos.push(baked);victims.push(m);
+  });
+  for(const m of victims)m.parent?.remove(m);
+  for(const b of buckets.values()){
+    if(!b.geos.length)continue;
+    const geo=b.geos.length===1?b.geos[0]:mergeGeometries(b.geos,false);
+    if(!geo)continue;
+    const mesh=new THREE.Mesh(geo,b.mat);mesh.castShadow=b.cast;mesh.receiveShadow=b.recv;mesh.renderOrder=b.order;
+    root.add(mesh);
+  }
+}
 export function buildWorld():World{
  keyLights.length=0;openings.length=0;
  const scene=new THREE.Scene();scene.background=new THREE.Color('#080b19');scene.fog=new THREE.FogExp2('#080b19',.013);
@@ -2733,6 +2771,9 @@ export function buildWorld():World{
  if(import.meta.env.DEV&&lightCount>POINT_LIGHT_BUDGET)console.warn(`Point-light budget exceeded: ${lightCount} real lights (budget ${POINT_LIGHT_BUDGET}). Use halo()/glowPatch() for new lamps.`);
  // Everything solid and visible can hide a hit target. Invisible hit boxes and see-through decals (glow patches,
  // glare, floor glows: all transparent with opacity < .6) are excluded, so they never block the pointer.
+ const hoverVisuals=[...new Set(hits.flatMap(h=>h.visual?[h.visual]:[]))];
+ const protect=new Set<THREE.Object3D>([...hits.map(h=>h.object),...hoverVisuals]);
+ mergeStaticMeshes(scene,protect);
  const hitObjects=new Set<THREE.Object3D>(hits.map(h=>h.object));
  const occluders:THREE.Object3D[]=[];
  scene.traverse((o:THREE.Object3D)=>{
@@ -2742,18 +2783,20 @@ export function buildWorld():World{
   if(Array.isArray(mat)||(mat.transparent&&mat.opacity<.6))return;
   occluders.push(o);
  });
- const hoverVisuals=[...new Set(hits.flatMap(h=>h.visual?[h.visual]:[]))];
  let currentHover:THREE.Object3D|null=null;
  const reduced=typeof window.matchMedia==='function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  return {scene,hits,occluders,setHovered:(hit:HitTarget|null)=>{currentHover=hit?.visual??null;},animate:(elapsed:number)=>{
+   let moved=false;
    for(const visual of hoverVisuals){
      const isHover=visual===currentHover;
      const target=isHover?1.045:1;
      const value=reduced?target:THREE.MathUtils.lerp(visual.scale.x,target,.17);
+     if(Math.abs(value-visual.scale.x)>1e-5)moved=true;
      visual.scale.setScalar(value);
    }
    // Every real light breathes around the intensity it was configured with, so tuning a light
    // above can never be undone by the animation (the old hard-coded base values caused that).
    for(const k of keyLights)k.light.intensity=reduced||k.amp===0?k.base:k.base+Math.sin(elapsed*k.speed+k.phase)*k.amp;
+   return moved;
  }};
 }
