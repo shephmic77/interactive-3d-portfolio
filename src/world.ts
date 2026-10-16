@@ -2205,9 +2205,10 @@ function endgameInteriors(scene:THREE.Object3D){
   imagePoster(scene,2.85,2.2,-2.835,.94,1.28,'desert-poster.jpg','#d9b27a');
   // vtest12: four supplied pictures, pixelated for the 8-bit look. Left wall (inner face x = -4.01, turned to face +X), clear of the dark
   // window (z -1.98 .. -.54) and the plant (z 2.2); the fourth on the back wall above the counter, between the window and the Baggio poster.
-  imagePoster(scene,-4.01,2.55,.10,.86,1.29,'battlefront2.jpg','#16202e',120,.22,Math.PI/2);
-  imagePoster(scene,-4.01,2.55,1.15,.90,1.20,'xbalanque.jpg','#4a6a3a',80,.22,Math.PI/2);
-  imagePoster(scene,-4.01,2.55,2.20,.90,1.20,'joker.jpg','#3a55b0',90,.22,Math.PI/2);
+  // vtest14: the three ground-floor left-wall posters are now the supplied 8-bit artwork (already pixel art, so no extra pixelation) at 80% of their old size, all 2:3
+  imagePoster(scene,-4.01,2.55,.10,.69,1.03,'battlefront2.jpg','#16202e',0,.22,Math.PI/2);
+  imagePoster(scene,-4.01,2.55,1.15,.64,.96,'xbalanque.jpg','#4a6a3a',0,.22,Math.PI/2);
+  imagePoster(scene,-4.01,2.55,2.20,.64,.96,'joker.jpg','#3a55b0',0,.22,Math.PI/2);
   imagePoster(scene,-.55,2.45,-2.835,.90,1.27,'kafka.jpg','#ece8e0',110,.12);
   // vtest12: a workbench and a storage chest along the left wall under the pictures.
   workbench(scene,-3.54,.07,.10,Math.PI/2);
