@@ -2004,13 +2004,78 @@ function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h
   litPlane(g,0,0,.0405,w,h,tex,0,.22);
   return g;
 }
+/** Small gaming corner against the ground-floor back wall (building-local units): a CRT on a low open cabinet, three unbranded consoles in
+ *  its cubbies (a chunky dark box, a flat black slab and a slim upright white one), two pads on top, a low coffee table with a clamshell
+ *  handheld, a pouf and a small round rug. No logos, no lettering, no copied product designs: the consoles differ by shape and colour only. */
+function gamingCorner(scene:THREE.Object3D){
+  const gf=.07,cx=2.2,cz=-2.58,top=gf+.52;
+  const wood2=color('#5a4640',0,.8),topWood=color('#b88d62',0,.7),black=color('#1b1e25',0,.55),white=color('#eceae4',0,.5);
+  // Cabinet: plinth, base board, two sides, two dividers, back and top board; open at the front so the consoles show.
+  box(scene,cx,gf+.03,cz,1.52,.06,.40,dark);
+  box(scene,cx,gf+.08,cz,1.56,.04,.46,wood);
+  for(const dx of [-.78,.78])box(scene,cx+dx,gf+.29,cz,.04,.40,.46,wood);
+  for(const dx of [-.253,.253])box(scene,cx+dx,gf+.29,cz,.03,.40,.44,wood);
+  box(scene,cx,gf+.29,cz-.20,1.56,.40,.02,wood2);
+  box(scene,cx,gf+.50,cz,1.64,.04,.50,topWood);
+  const shelf=gf+.10;
+  // Console 1: chunky dark box with a disc tray and a green LED.
+  const x1=cx-.51;
+  box(scene,x1,shelf+.07,cz,.36,.14,.30,black);box(scene,x1,shelf+.145,cz,.34,.01,.28,color('#2b313b'));
+  box(scene,x1+.05,shelf+.085,cz+.152,.15,.014,.004,dark);
+  box(scene,x1-.11,shelf+.05,cz+.152,.03,.012,.004,color('#7dff9a',0,.4,'#43ff7a',1.6));halo(scene,x1-.11,shelf+.05,cz+.17,.3,'#7dff9a',.45);
+  // Console 2: flat black slab with a tray slit and a blue LED.
+  box(scene,cx,shelf+.04,cz,.34,.08,.22,color('#14161c',0,.5));box(scene,cx,shelf+.082,cz,.32,.006,.2,color('#20242c'));
+  box(scene,cx+.02,shelf+.05,cz+.112,.17,.012,.004,dark);
+  box(scene,cx-.12,shelf+.03,cz+.112,.02,.012,.004,color('#6bd0ff',0,.4,'#35b6ff',1.5));halo(scene,cx-.12,shelf+.03,cz+.13,.28,'#6bd0ff',.45);
+  // Console 3: slim upright white box on a small foot, with a glowing disc slot.
+  const x3=cx+.51;
+  box(scene,x3,shelf+.006,cz,.13,.012,.13,color('#d6d4cc'));
+  box(scene,x3,shelf+.012+.12,cz,.075,.24,.17,white);
+  box(scene,x3,shelf+.012+.17,cz+.0875,.012,.1,.004,color('#6bd0ff',0,.4,'#35b6ff',1.3));halo(scene,x3,shelf+.19,cz+.105,.3,'#6bd0ff',.4);
+  // CRT: front body and bezel with the tube housing tapering behind, a generic pixel-art screen, rabbit ears.
+  box(scene,cx,top+.27,cz+.06,.66,.54,.26,color('#3a3f4b'));
+  box(scene,cx,top+.2,cz-.12,.38,.36,.20,color('#2a2f3a'));
+  box(scene,cx,top+.27,cz+.195,.62,.50,.02,color('#1d2029'));
+  const screen=texture((c,W,H)=>{
+    const sky=c.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#1b3f73');sky.addColorStop(1,'#7fc6e8');c.fillStyle=sky;c.fillRect(0,0,W,H);
+    c.fillStyle='#2f7a4d';c.beginPath();c.moveTo(0,H*.78);c.lineTo(W*.28,H*.42);c.lineTo(W*.56,H*.78);c.fill();
+    c.beginPath();c.moveTo(W*.4,H*.78);c.lineTo(W*.7,H*.5);c.lineTo(W,H*.78);c.fill();
+    c.fillStyle='#8a5a34';c.fillRect(0,H*.78,W,H*.22);c.fillStyle='#a8703f';
+    for(let y=H*.78;y<H;y+=16)for(let x=((y/16)%2)*16;x<W;x+=32)c.fillRect(x+2,y+2,28,12);
+    c.fillStyle='#ffc13a';for(const [x,y] of [[W*.5,H*.5],[W*.5+30,H*.44],[W*.5+60,H*.5]])c.fillRect(x,y,14,14);
+    c.fillStyle='#e8662a';c.fillRect(W*.2,H*.78-26,24,26);c.fillStyle='#1b1e25';c.fillRect(W*.2+14,H*.78-20,4,6);
+    c.fillStyle='rgba(0,0,0,.22)';for(let y=0;y<H;y+=4)c.fillRect(0,y,W,2);
+  },256,192);
+  plane(scene,cx,top+.28,cz+.2065,.5,.38,screen);
+  cyl(scene,cx,top+.55,cz+.05,.05,.06,.02,color('#1d2029'),8);
+  for(const sr of [-.55,.55]){const rod=new THREE.Group();rod.position.set(cx,top+.56,cz+.05);rod.rotation.z=sr;scene.add(rod);cyl(rod,0,.15,0,.005,.005,.3,zinc,5);}
+  halo(scene,cx,top+.28,cz+.4,1.5,'#8fe8ff',.35);
+  glowPatch(scene,cx,gf+.012,cz+1.1,2.6,1.9,'#8fe8ff',.07,0,true);
+  // Two pads on the top board: a dark gamepad and a slim white remote.
+  box(scene,cx-.68,top+.0125,cz+.14,.13,.025,.07,color('#2a2f3a'));
+  for(const gx of [-.035,.035])cyl(scene,cx-.68+gx,top+.0375,cz+.14,.012,.012,.025,color('#14171f'),8);
+  box(scene,cx+.68,top+.0125,cz+.1,.035,.025,.14,white,.2);sphere(scene,cx+.68,top+.027,cz+.06,.008,color('#6bd0ff',0,.4,'#35b6ff',1.2),0);
+  // Coffee table with the handheld, a pouf and a small round rug.
+  const tx=cx-.1,tz=-1.45,tt=gf+.36;
+  cyl(scene,tx,gf+.008,tz,.72,.72,.016,color('#3f5d70',0,.95),24);
+  box(scene,tx,tt-.025,tz,.9,.05,.5,wood);
+  for(const lx of [-.4,.4])for(const lz of [-.2,.2])box(scene,tx+lx,gf+.165,tz+lz,.05,.33,.05,iron);
+  const hh=tt+.0;
+  box(scene,tx,hh+.008,tz+.05,.18,.016,.10,color('#cfd4dc'));
+  box(scene,tx,hh+.0172,tz+.05,.11,.002,.07,color('#7be0ff',0,.4,'#35b6ff',1));
+  const lid=new THREE.Group();lid.position.set(tx,hh+.016,tz);lid.rotation.x=-1.75;scene.add(lid);   // hinged along its back edge, opened past 90 degrees
+  box(lid,0,0,.05,.18,.012,.10,color('#cfd4dc'));box(lid,0,-.0066,.05,.13,.002,.075,color('#7be0ff',0,.4,'#35b6ff',1));
+  halo(scene,tx,hh+.05,tz+.06,.35,'#7be0ff',.3);
+  cyl(scene,tx-.15,gf+.17,-.82,.26,.29,.32,color('#8a5a6e',0,.9),12);
+}
 function endgameInteriors(scene:THREE.Object3D){
   const uf=4.425;
   const cream=color('#efe3c8',0,.7);
   // ---- Ground floor ---------------------------------------------------------------------------------------
   toyPlane(scene,2.6,2.85,1.75,.6,ARCH.ground.height-.03);
+  // Gaming corner against the back wall, right of the counter (vtest11).
+  gamingCorner(scene);
   // Counter top left empty (the copper pot, snare drum and stapler were removed in vtest10).
-  // Retro gaming corner (CRT, display cabinet, consoles, handheld, gamepad) removed in round three; the code is parked in git history.
   // ---- Upper floor ----------------------------------------------------------------------------------------
   // Six framed jerseys in two rows above the sofa (inner face of the back wall is z = -2.78).
   const wallZ=-2.78;
