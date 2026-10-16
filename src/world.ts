@@ -910,35 +910,127 @@ function noticeboard(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Gr
  wallLight(scene,ARCH.ground.width/2+.057,3.62,-1.05,Math.PI/2,.8);
  const target=box(g,0,0,.23,2.35,2.35,.1,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));hits.push({object:target,section:'about',label:'Read the corkboard'});
 }
+/** Mixes two #rrggbb colours in sRGB (t=0 gives a, t=1 gives b), the same blend the CSS shelf on the Projects page uses. */
+const mixHex=(a:string,b:string,t:number)=>{const c=(h:string)=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=c(a),B=c(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');};
+/** Spine art for the cart books, drawn to match the shelf on the Projects page: dark tinted leather, gold bands, the volume
+ *  number and a title running down the spine. All generated from project metadata. */
+function spineTexture(p:Project,n:number,w:number,h:number){
+ const W=160,H=Math.round(W*h/w);
+ return texture((c)=>{
+  c.fillStyle=mixHex('#1b1320',p.color,.5);c.fillRect(0,0,W,H);
+  const sh=c.createLinearGradient(0,0,W,0);
+  sh.addColorStop(0,'rgba(0,0,0,.44)');sh.addColorStop(.15,'rgba(0,0,0,0)');sh.addColorStop(.38,'rgba(255,255,255,.15)');sh.addColorStop(.62,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(0,0,0,.45)');
+  c.fillStyle=sh;c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(255,255,255,.03)';for(let y=0;y<H;y+=6)c.fillRect(0,y,W,2);
+  const gold=(y:number,bh:number)=>{const g=c.createLinearGradient(0,0,W,0);g.addColorStop(0,'#a8782f');g.addColorStop(.35,'#f2d78f');g.addColorStop(.7,'#d6aa55');g.addColorStop(1,'#8f6322');c.fillStyle=g;c.fillRect(0,y,W,bh);};
+  const bh=Math.max(9,H*.03),tl=bh*.35,y0=H*.035,yb=H*.965-bh;
+  gold(y0,bh);gold(y0+bh*1.7,tl);gold(yb,bh);gold(yb-bh*.7-tl,tl);
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillStyle='#ecd493';c.font=`600 ${Math.round(W*.2)}px "DM Mono",ui-monospace,Menlo,monospace`;
+  const numY=y0+bh*2.9+W*.1;c.fillText(String(n).padStart(2,'0'),W/2,numY);
+  // small gold diamond above the bottom band
+  const dy=yb-bh*2.6,dr=W*.07;c.fillStyle='#e4c277';c.beginPath();c.moveTo(W/2,dy-dr);c.lineTo(W/2+dr,dy);c.lineTo(W/2,dy+dr);c.lineTo(W/2-dr,dy);c.closePath();c.fill();
+  const top=numY+W*.16,bot=dy-dr-W*.12,avail=bot-top;
+  let fs=Math.round(W*.3);c.font=`600 ${fs}px Georgia,"Times New Roman",serif`;
+  const tw=c.measureText(p.name).width;if(tw>avail){fs=Math.floor(fs*avail/tw);c.font=`600 ${fs}px Georgia,"Times New Roman",serif`;}
+  c.save();c.translate(W/2,(top+bot)/2);c.rotate(Math.PI/2);c.fillStyle='#f6e7bd';c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=3;c.fillText(p.name,0,0);c.restore();
+ },W,H);
+}
+/** One cart book, standing on its base at the group origin with the spine facing +Z. The spine is a rounded strip, the
+ *  boards are thin and slightly proud of the page block, and the pages show cream at the top, so it reads as a book rather than a box. */
+function cartBook(p:Project,n:number,w:number,h:number,d:number){
+ const g=new THREE.Group();
+ const bulge=w*.3,zc=d/2-bulge,t=.016,segs=8;
+ const leather=color(mixHex('#1b1320',p.color,.3),0,.7),pages=color('#e8dcc0',0,.95,'#b8864a',.10);
+ const tex=spineTexture(p,n,w,h);
+ const spineMat=new THREE.MeshStandardMaterial({map:tex,emissiveMap:tex,emissive:'#ffffff',emissiveIntensity:.34,roughness:.55,metalness:.04});
+ const pos:number[]=[],uv:number[]=[],idx:number[]=[];
+ for(let i=0;i<=segs;i++){const u=i/segs,a=u*Math.PI,x=-Math.cos(a)*w/2,z=zc+Math.sin(a)*bulge;pos.push(x,0,z,x,h,z);uv.push(u,0,u,1);}
+ for(let i=0;i<segs;i++){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}
+ const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));sg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));sg.setIndex(idx);sg.computeVertexNormals();
+ const spine=new THREE.Mesh(sg,spineMat);spine.castShadow=true;spine.receiveShadow=true;g.add(spine);
+ // flat head and tail caps that close the rounded spine
+ for(const top of [true,false]){
+  const cp:number[]=[0,0,zc],cn:number[]=[0,top?1:-1,0],ci:number[]=[];
+  for(let i=0;i<=segs;i++){const a=i/segs*Math.PI;cp.push(-Math.cos(a)*w/2,0,zc+Math.sin(a)*bulge);cn.push(0,top?1:-1,0);}
+  for(let i=0;i<segs;i++)ci.push(0,top?i+1:i+2,top?i+2:i+1);
+  const cg=new THREE.BufferGeometry();cg.setAttribute('position',new THREE.Float32BufferAttribute(cp,3));cg.setAttribute('normal',new THREE.Float32BufferAttribute(cn,3));cg.setIndex(ci);
+  const cap=new THREE.Mesh(cg,leather);cap.position.y=top?h:0;g.add(cap);
+ }
+ box(g,-(w/2-t/2),(h+.011)/2,-bulge/2,t,h+.011,d-bulge,leather);   // front and back boards
+ box(g,w/2-t/2,(h+.011)/2,-bulge/2,t,h+.011,d-bulge,leather);
+ box(g,0,h/2,(-bulge+.014)/2,w-2*t-.004,h-.012,d-bulge-.014,pages);   // page block, a little shorter than the boards and set back from the fore-edge
+ return g;
+}
+/** Small engraved brass plate for a shelf front. */
+function shelfPlate(text:string,w:number,h:number){
+ const PW=Math.round(w*1000),PH=Math.round(h*1000);
+ return texture((c,W,H)=>{
+  c.fillStyle='#2b2030';c.fillRect(0,0,W,H);c.strokeStyle='#b88a3e';c.lineWidth=3;c.strokeRect(2,2,W-4,H-4);
+  c.fillStyle='#e5cf9b';c.textAlign='center';c.textBaseline='middle';c.font=`500 ${Math.round(H*.5)}px "DM Mono",ui-monospace,Menlo,monospace`;
+  (c as CanvasRenderingContext2D&{letterSpacing?:string}).letterSpacing='3px';
+  c.fillText(text,W/2,H/2+1,W-24);
+ },PW,PH);
+}
 /** World position of the project book cart (it sits on the pavement in front of the left display window). */
 const CART={x:-4.75,z:3.5};
+/** The project book cart, built as a small wooden bookcase on casters to echo the shelf on the Projects page: dark walnut frame,
+ *  plum back panel with a warm wash, brass shelf plates, and one rounded-spine book per project (spine out, gold bands, vertical titles).
+ *  The neon sign now crowns the case, so it no longer hides the lower row. */
 function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group();g.position.set(CART.x,-.036,CART.z);g.rotation.y=-.13;scene.add(g);
- const shelfmat=color('#6a5143'),metal=color('#486777',.58,.36);
- for(let y of [.73,1.6])plank(g,0,y,0,2.75,.93,shelfmat);
- for(let x of [-1.24,1.24])for(let z of [-.36,.36])box(g,x,1.0,z,.10,1.84,.11,metal);
- for(let x of [-.97,.97])for(let z of [-.34,.34]){cyl(g,x,.19,z,.18,.18,.26,dark);cyl(g,x,.19,z,.11,.11,.28,metal);}
- const map=new THREE.Group();g.add(map);
- projects.forEach((p:Project,i)=>{
-  const row=i<6?0:1;const col=row===0?i:i-6;const count=row===0?6:5;
-  const x=(col-(count-1)/2)*.38;
-  const y=(row===0?1.6:.73)+.055+.375;   // plank top + half a book, so the books sit on the shelf
-  const book=new THREE.Group();book.position.set(x,y,.05);book.rotation.y=(i%3-1)*.07;map.add(book);
-  box(book,0,0,0,.325,.75,.32,color(p.color));
-  plane(book,0,0,.166,.311,.737,bookCoverTexture(p));
-  box(book,.156,0,0,.025,.69,.27,color('#f0e7d7'));
-  box(book,0,.29,.172,.285,.044,.023,brass);
-  box(book,0,-.29,.172,.285,.044,.023,brass);
-  // The book cover itself is readable when the visitor zooms toward the cart.
-  const hit=box(book,0,0,0,.35,.80,.43,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));
-  hits.push({object:hit,visual:book,section:'projects',projectId:p.id,label:`Open ${p.name}`});
- });
- // large little banner at base of cart
- plane(g,0,1.22,.52,2.27,.31,labelTexture('PROJECTS / THE BOOK CART','#d8faff','#263748','#83dfed',1024,140));  // 1024:140 = the 2.27:.31 plane
+ const W=2.82,D=.72,frame=color('#5a3b2a',0,.82),frameDark=color('#3d291f',0,.85),shelfWood=color('#6e4b33',0,.8),back=color('#2a1f2d',0,.95,'#ffb866',.06),metal=color('#486777',.58,.36);
+ const S1=.66,S2=1.525,CEIL=2.245;   // tops of the lower and upper shelves, and the underside of the top board
+ // casters
+ for(const x of [-1.18,1.18])for(const z of [-.24,.24]){const wh=cyl(g,x,.105,z,.105,.105,.07,dark,12);wh.rotation.z=Math.PI/2;box(g,x,.205,z,.1,.07,.14,metal);}
+ // cabinet base with two doors
+ box(g,0,.365,0,W-.04,.39,D-.06,frameDark);
+ for(const sx of [-1,1]){box(g,sx*.66,.365,D/2-.03+.014,1.26,.31,.026,frame);box(g,sx*.66,.365,D/2-.03+.03,1.08,.2,.012,shelfWood);sphere(g,sx*.07,.365,D/2-.03+.05,.03,brass,2);}
+ // uprights, back panel, planks, header
+ for(const sx of [-1,1])box(g,sx*(W/2-.07),1.265,0,.14,2.19,D,frame);
+ box(g,0,1.45,-D/2+.045,W-.26,1.62,.04,back);
+ for(const yTop of [S1,S2])plank(g,0,yTop-.055,0,W-.16,D-.04,shelfWood);
+ plank(g,0,CEIL+.055,0,W-.16,D-.04,shelfWood);
+ box(g,0,2.56,0,W,.41,D,frame);
+ box(g,0,2.80,0,W+.12,.07,D+.1,frameDark);
+ // brass plates on the shelf fronts, like the row labels on the Projects page
+ plane(g,0,S2-.055,(D-.04)/2+.004,.82,.075,shelfPlate('DATA SCIENCE & ML',.82,.075));
+ plane(g,0,S1-.055,(D-.04)/2+.004,1.72,.075,shelfPlate('SOFTWARE & AI · HARDWARE · ENGINEERING',1.72,.075));
+ // warm strip lights under the upper shelf and the top board, with a wash on the back panel (fake light, no new PointLights)
+ const strip=new THREE.MeshBasicMaterial({color:'#ffe2b0'});
+ for(const [yUnder,yFloor] of [[S2-.11,S1],[CEIL,S2]] as [number,number][]){
+  box(g,0,yUnder-.012,.2,W-.4,.016,.04,strip);
+  glowPatch(g,0,yUnder-.30,-D/2+.075,2.4,.78,'#ffb866',.24);
+  halo(g,0,yUnder-.03,.2,1.4,'#ffc27a',.14);
+  glowPatch(g,0,yFloor+.004,.0,2.3,.5,'#ffbd70',.10,0,true);
+ }
+ // the project books: seven data science volumes up top, four software / hardware / engineering volumes below (same order and grouping as the Projects page)
+ const widths=[.22,.27,.25,.22,.27,.25,.22, .27,.25,.23,.27];
+ const heights=[.64,.58,.54,.68,.61,.55,.65, .62,.69,.58,.60];
+ const rows=[{from:0,to:7,y:S2,gaps:[.03,.03,.03,.03,.03,.03]},{from:7,to:11,y:S1,gaps:[.03,.24,.24]}];
+ const z0=-.02,depth=.40,jitter=[.006,-.008,.01,-.004,.008,-.01,.004,-.006,.01,-.008,.006];
+ for(const row of rows){
+  let total=0;for(let i=row.from;i<row.to;i++)total+=widths[i]+(i<row.to-1?row.gaps[i-row.from]:0);
+  let x=-total/2;
+  const brassEnd=(ex:number,dir:number)=>{box(g,ex,row.y+.12,z0,.012,.24,.22,brass);box(g,ex+dir*.04,row.y+.006,z0,.09,.012,.22,brass);};
+  brassEnd(x-.016,-1);
+  for(let i=row.from;i<row.to;i++){
+   const p=projects[i],w=widths[i],h=heights[i];
+   const book=cartBook(p,i+1,w,h,depth);book.position.set(x+w/2,row.y,z0+jitter[i]);book.rotation.y=(i%3-1)*.03;g.add(book);
+   // the whole book (with a little margin) is the click target; the visible spine is lit and readable when the visitor zooms in
+   const hit=box(book,0,h/2,0,w+.03,h+.04,depth+.06,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));
+   hits.push({object:hit,visual:book,section:'projects',projectId:p.id,label:`Open ${p.name}`});
+   x+=w+(i<row.to-1?row.gaps[i-row.from]:0);
+  }
+  brassEnd(x+.016,1);
+ }
+ // neon sign crowning the case
+ plane(g,0,2.56,D/2+.004,2.27,.31,labelTexture('PROJECTS / THE BOOK CART','#d8faff','#263748','#83dfed',1024,140));  // 1024:140 = the 2.27:.31 plane
+ glowPatch(g,0,2.56,D/2+.03,3.5,.9,'#83dfed',.07);
  // Warm pool on the pavement in front of the cart, from the nearby streetlamp.
  glowPatch(g,0,.08,.95,4.2,2.6,'#ffbf86',.10,0,true);
- const hit=box(g,0,1.25,0,2.80,2.3,1.05,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));
+ const hit=box(g,0,1.45,-.5,3.0,2.7,.5,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));
  // large hit behind the books only, so front book hit areas still win in raycast
- hit.position.z=-.38;hits.push({object:hit,visual:g,section:'projects',label:'Browse projects'});
+ hits.push({object:hit,visual:g,section:'projects',label:'Browse projects'});
 }
 /** The paved plaza (world units). Kept tight around the building so the whole scene reads from the default view. */
 const PLAZA={x0:-7.2,x1:7.2,z0:-4.9,z1:5.2};
