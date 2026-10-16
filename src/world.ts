@@ -497,13 +497,23 @@ function boulderRoute(scene:THREE.Object3D){
   const face=new THREE.Mesh(new THREE.PlaneGeometry(w-.02,h-.02),new THREE.MeshStandardMaterial({map:faceTex,roughness:.92,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
   face.position.set(0,mid,.004);g.add(face);
   const rock=(hex:string,em='#000000',ei=0)=>new THREE.MeshStandardMaterial({color:hex,roughness:.64,flatShading:true,emissive:em,emissiveIntensity:ei});
-  const coral=rock('#ff7a59','#ff5a3c',.18),cyan2=rock('#3fd0e8','#1fb0d0',.18),pink2=rock('#ff6fae','#e0407f',.18),chip=rock('#d9dce6'),violet2=rock('#7c63c9'),sun=color('#ffbf3f',0,.5,'#ff9a1f',.18),amber2=rock('#d98a2b'),bolt=color('#2b2f3a',.6,.4);
-  type Kind='jug'|'crimp'|'sloper'|'pinch'|'chip';
-  const SHAPE:Record<Kind,[number,number,number,number]>={jug:[.095,.075,.07,1],sloper:[.125,.10,.045,1],crimp:[.095,.03,.05,1],pinch:[.04,.085,.06,1],chip:[.045,.035,.024,0]};
+  const coral=rock('#ff7a59','#ff5a3c',.18),cyan2=rock('#3fd0e8','#1fb0d0',.18),pink2=rock('#ff6fae','#e0407f',.18),chip=rock('#d9dce6'),violet2=rock('#7c63c9'),sun=color('#ffbf3f',0,.5,'#ff9a1f',.18),amber2=rock('#d98a2b'),gold=rock('#ffd23f','#ffb800',.2),wood=rock('#b98550'),bolt=color('#2b2f3a',.6,.4);
+  type Kind='jug'|'crimp'|'sloper'|'pinch'|'chip'|'pocket'|'rail'|'horn'|'prism';
+  // [x half-size, y half-size, height off the wall, icosphere detail]; the last four kinds are built from plain solids instead of a bumpy icosphere.
+  const SHAPE:Record<Kind,[number,number,number,number]>={jug:[.095,.075,.07,1],sloper:[.125,.10,.045,1],crimp:[.095,.03,.05,1],pinch:[.04,.085,.06,1],chip:[.045,.035,.024,0],pocket:[.085,.085,.04,0],rail:[.11,.03,.04,0],horn:[.05,.05,.11,0],prism:[.10,.06,.065,0]};
   const geos=new Map<string,THREE.BufferGeometry>();
   const rockGeo=(kind:Kind,v:number)=>{
     const key=kind+v;const have=geos.get(key);if(have)return have;
-    const [sx,sy,sz,det]=SHAPE[kind];const geo=new THREE.IcosahedronGeometry(1,det);const p=geo.attributes.position;
+    const [sx,sy,sz,det]=SHAPE[kind];
+    if(kind==='pocket'||kind==='rail'||kind==='horn'||kind==='prism'){
+      let sg:THREE.BufferGeometry;
+      if(kind==='pocket'){sg=new THREE.CylinderGeometry(sx,sx*1.1,sz,8);sg.rotateX(Math.PI/2);sg.translate(0,0,sz/2-.006);}            // a round, shallow pocket block
+      else if(kind==='rail'){sg=new THREE.CylinderGeometry(sy*1.25,sy*1.25,sx*2,5);sg.rotateZ(Math.PI/2);sg.translate(0,0,sy*.8);}   // a pentagonal edge rail lying on its side
+      else if(kind==='horn'){sg=new THREE.ConeGeometry(sx*1.2,sz,5);sg.rotateX(Math.PI/2);sg.translate(0,0,sz/2-.006);}               // a cone that sticks straight out
+      else{sg=new THREE.CylinderGeometry(sy*1.2,sy*1.2,sx*2,3);sg.rotateZ(Math.PI/2);sg.translate(0,0,sy*.55);}                       // a triangular prism ridge
+      geos.set(key,sg);return sg;
+    }
+    const geo=new THREE.IcosahedronGeometry(1,det);const p=geo.attributes.position;
     for(let i=0;i<p.count;i++){
       const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
       const n=1+(hash1(Math.round(x*40)*1.31+Math.round(y*40)*7.17+Math.round(z*40)*3.73+v*19.7)-.5)*.42;   // same vertex, same bump
@@ -512,6 +522,7 @@ function boulderRoute(scene:THREE.Object3D){
     p.needsUpdate=true;geo.computeBoundingSphere();geos.set(key,geo);return geo;
   };
   const boltGeo=new THREE.CylinderGeometry(.013,.013,.012,6);
+  const pocketDark=new THREE.MeshBasicMaterial({color:'#07080d'});
   const chalkMat=new THREE.MeshBasicMaterial({color:'#efeae0',transparent:true,opacity:.09,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   const shadeMat=new THREE.MeshBasicMaterial({color:'#05060c',transparent:true,opacity:.26,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   const placed:{x:number;y:number}[]=[];
@@ -528,48 +539,53 @@ function boulderRoute(scene:THREE.Object3D){
     const sh=new THREE.Mesh(new THREE.CircleGeometry(1,10),shadeMat);sh.scale.set(sx*1.05,sy*1.05,1);sh.position.set(x+.012,y-.02,.0085);sh.rotation.z=spin;g.add(sh);   // contact shadow
     const chalk=new THREE.Mesh(new THREE.CircleGeometry(1,8),chalkMat);chalk.scale.set(sx*.8,sy*.8,1);chalk.position.set(x,y+.035,.0092);chalk.rotation.z=spin;g.add(chalk);                              // chalk smudge
     const m=new THREE.Mesh(rockGeo(kind,seedN++%4),mat);m.position.set(x,y,.0095);m.rotation.z=spin;g.add(m);
-    const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(0,0,SHAPE[kind][2]*.88);m.add(b);                                                          // the bolt
+    if(kind==='pocket'){const hole=new THREE.Mesh(new THREE.CircleGeometry(.04,8),pocketDark);hole.position.set(0,0,SHAPE.pocket[2]+.0005);m.add(hole);}                       // the finger hole
+    else{const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(0,0,SHAPE[kind][2]*(kind==='horn'?.2:.88));m.add(b);}                                    // the bolt
     placed.push({x,y});
     return m;
   };
   // Volumes first (so no hold lands under them): a violet and an amber truncated pyramid, each over a 2 x 2 block of lattice points.
-  for(const [vy,vm,vs] of [[2.64,violet2,0],[6.24,amber2,.35]] as const){
+  for(const [vy,vm,vs] of [[3.04,violet2,0],[6.24,amber2,.35]] as const){
     const fr=new THREE.CylinderGeometry(.11,.20,.13,4);fr.rotateY(Math.PI/4);
     const vol=new THREE.Mesh(fr,vm);vol.rotation.set(Math.PI/2,0,vs);vol.position.set(0,vy,.07);g.add(vol);
     for(const bx of [-.045,.045]){const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(bx,vy,.138);g.add(b);}
     for(const lx of [-.1,.1])for(const ly of [vy-.1,vy+.1])taken.add(cell(lx,latY(ly)));
     placed.push({x:0,y:vy});
   }
-  // Coral route: two taped start holds, a zig-zag all the way up, and a big finish jug just under the roof edge.
-  hold(-.1,.94,'jug',coral);hold(.1,1.14,'jug',coral,.2);
-  for(const sx of [-.1,.1])box(g,sx,.80,.0105,.17,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
-  const COR=[-.1,.1,-.3,.1,-.1,.1,-.3,-.1,.1,-.1],kinds:Kind[]=['jug','crimp','sloper','pinch','jug','crimp'];
+  // THE hard one: a V4-5 boulder problem in gold, placed first so nothing else takes its holds. Two taped starts (a pinch and a sloper), a long
+  // reach to a crimp, a lock-off to a side pocket, a rail, a dyno from a sloper to the prism and a horn, then a finish jug. Feet are gold chips.
+  const hard:[number,number,Kind,number][]=[[.1,.94,'pinch',.1],[-.1,1.14,'sloper',-.2],[.1,1.74,'crimp',.15],[-.3,2.14,'pocket',0],[.1,2.54,'rail',-.25],[.3,3.14,'sloper',.25],[-.1,3.54,'horn',0],[-.3,3.74,'jug',.2]];
+  for(const [hx,hy,hk,hs] of hard){const m=hold(hx,hy,hk,gold,hs);if(m&&hk==='jug')m.scale.multiplyScalar(1.2);}
+  for(const [fx,fy] of [[-.1,.54],[.3,.74],[-.3,1.34],[.3,1.54],[.1,2.14],[-.3,2.54],[.1,2.94],[-.1,3.34]] as const)hold(fx,fy,'chip',gold);
+  for(const sx of [.1,-.1])box(g,sx,sx>0?.80:1.00,.0105,.17,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
+  box(g,-.3,3.58,.0105,.2,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
+  // Coral warm-up route, much sparser than before: big jugs and a horn or two, all the way up to the finish jug under the roof edge.
+  const COR=[-.3,-.1,-.3,.1,-.3,-.1,.1,-.3],kinds:Kind[]=['jug','horn','jug','rail','jug','prism'];
   let n=0;
-  for(let y=1.55;y<7.45;y+=.52,n++){const yy=y+(n%3)*.04;hold(COR[n%10],yy,kinds[n%6],coral,((n*37)%7-3)*.09);}
+  for(let y=1.4;y<7.45;y+=.95,n++){hold(COR[n%8],y+(n%3)*.04,kinds[n%6],n%3===1?wood:coral,((n*37)%7-3)*.09);}
   const finish=hold(.1,7.74,'jug',coral);if(finish)finish.scale.multiplyScalar(1.3);box(g,.1,7.58,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
-  // Cyan problem down the right edge (local +x), pink problem down the left edge.
-  n=0;for(let y=.95;y<7.4;y+=.6,n++){const yy=y+(n%2)*.07;if(blocked(yy+.2))continue;hold(.3,yy,(['jug','crimp','sloper'] as Kind[])[n%3],cyan2,(n%2?-.2:.15));}
+  // Cyan problem down the right edge and a pink one down the left, a few holds each, in other shapes.
+  n=0;for(let y=1.0;y<7.4;y+=1.2,n++){hold(.3,y+(n%2)*.07,(['pocket','pinch','sloper','prism'] as Kind[])[n%4],cyan2,(n%2?-.2:.15));}
   hold(.3,7.62,'jug',cyan2);
-  n=0;for(let y=2.0;y<7.3;y+=.64,n++){hold(-.3,y+(n%2)*.08,(['sloper','pinch','jug','crimp'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
-  // Grade tags on tape at the three starts.
+  n=0;for(let y=1.9;y<7.3;y+=1.3,n++){hold(-.3,y+(n%2)*.08,(['crimp','horn','sloper','pocket'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
+  // Grade tags on tape at the starts.
   const tag=(x:number,y:number,txt:string,hex:string)=>{
-    const t=texture((c,W,H)=>{c.fillStyle='#f4f1e8';c.fillRect(0,0,W,H);c.fillStyle=hex;c.fillRect(0,0,W*.22,H);c.fillStyle='#1c1f2a';c.font='bold 40px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W*.62,H*.52);},128,64);
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(.13,.065),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+    const t=texture((c,W,H)=>{c.fillStyle='#f4f1e8';c.fillRect(0,0,W,H);c.fillStyle=hex;c.fillRect(0,0,W*.2,H);c.fillStyle='#1c1f2a';c.font='bold 38px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W*.6,H*.52);},128,64);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(.15,.075),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
     m.position.set(x,y,.0115);g.add(m);
   };
-  tag(0,.64,'V3','#ff7a59');tag(.3,.72,'V5','#3fd0e8');tag(-.3,1.9,'V4','#ff6fae');
-  for(const [lx,ly] of [[0,.64],[.3,.72],[-.3,1.9]] as const)for(const dx of lx===0?[-.1,.1]:[lx])for(const dy of [-.1,.1])taken.add(cell(latX(dx),latY(ly+dy)));
+  tag(0,.40,'V4-5','#ffd23f');tag(.3,.46,'V2','#3fd0e8');tag(-.3,1.55,'V3','#ff6fae');tag(-.3,.40,'V0','#ff7a59');
   // Neutral foot chips scattered over the whole board, kept clear of the other holds.
-  for(let y=.45;y<7.9;y+=.31){
+  for(let y=.45;y<7.9;y+=.62){
     const x=(hash1(y)-.5)*.56;
-    if(placed.some(p=>Math.hypot(p.x-latX(x),p.y-latY(y))<.25))continue;
+    if(placed.some(p=>Math.hypot(p.x-latX(x),p.y-latY(y))<.4))continue;
     hold(x,y,'chip',chip);
   }
   // Quickdraws on bolt hangers: steel hanger, carabiner, dog-bone sling, carabiner. Each takes the first lattice column that is free below it.
   const QD=[color('#ff5a8a',0,.6),color('#3fd0e8',0,.6),color('#ffbf3f',0,.6),color('#8bd45a',0,.6)];
   const ringGeo=new THREE.TorusGeometry(.02,.0045,5,9);
   let qi=0;
-  for(const target of [2.2,3.45,5.9,7.0]){
+  for(const target of [5.9,7.0]){
     const yy=latY(target);
     const col=[.1,-.1,-.3,.3].find(cx=>!blocked(yy-.2)&&!taken.has(cell(cx,yy))&&!taken.has(cell(cx,latY(yy-.2))));
     if(col===undefined)continue;
