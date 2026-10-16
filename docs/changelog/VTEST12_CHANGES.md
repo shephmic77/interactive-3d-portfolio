@@ -16,10 +16,9 @@ Changed files: `src/world.ts`, `src/ui.ts`, and four new pictures in `public/pos
 - The corner lamp from vtest10 moved up to the blank second-floor wall you circled.
 
 **Outside**
-- A brown **tufted couch** on slim metal legs on the right of the courtyard, with a plain low-poly **raccoon** sitting on it and a **blue jay** perched on the backrest.
-- A **cardboard standee** of a surfer rooster with a plain striped board, on a base plate against the back wall to the +x side of the contact vending machine (the left of it when you look at the back wall from behind).
-- A big **sleeping bear** curled up in the back-right corner of the courtyard.
-- A small hanging **bistro sign** (deep green board, pixel stew pot, "BISTRO") on a bracket on the front-right lantern post.
+- A brown **tufted couch** on slim metal legs with a plain low-poly **raccoon** sitting on it and a **blue jay** perched on the backrest. Placed with its back against the right wall under the corkboard, facing out.
+- Removed again at your request in the same session: the cardboard surfer-rooster standee, the sleeping bear, the hanging bistro sign, and the whole rug-bench-pouf lounge area on the right of the courtyard (the lounge and the first couch spot are gone; the code is in git history).
+- The ivy on the back wall moved from the back window's frame to the wall above the credits cabinet (it was clipping the window).
 
 **Inside**
 - Four pictures from you as posters, pixelated for an 8-bit look: three on the ground-floor left wall (Battlefront II cover, Xbalanque, Balatro joker card) and one on the back wall above the counter (Kafka).
@@ -33,5 +32,4 @@ Changed files: `src/world.ts`, `src/ui.ts`, and four new pictures in `public/pos
 Type-checked with the stub-typed `tsc` (exit 0). Rendered from several cameras in software WebGL (stair, couch and animals, bear, standee, sign, lamps, terrace, posters, workbench). Not tested: the real Vite build, the Vercel deploy, phones, GPU frame rate.
 
 ## Notes
-- Where a request named a specific character, logo or brand artwork, generic stand-ins were built instead (rooster standee, bear, bistro sign, workbench and chest, dark-sailed galleon); the posters are your own image files.
-- The standee sits on the +x side of the vending machine because the gap between the two machines is too narrow. It hides the maintenance hatch and electric box behind it; say if you want it moved.
+- Where a request named a specific character, logo or brand artwork, generic stand-ins were built instead (workbench and chest, dark-sailed galleon); the posters are your own image files.

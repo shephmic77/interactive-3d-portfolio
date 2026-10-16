@@ -2167,22 +2167,6 @@ function trough(parent:THREE.Object3D,x:number,z:number,len=.95,rotY=0){
   const n=Math.round(len/.17);
   for(let i=0;i<n;i++){const fx=-len/2+.1+i*(len-.2)/(n-1);sphere(g,fx,.38+cozyRandom()*.04,(cozyRandom()-.5)*.1,.065,i%3===1?leaf:flowerCols[Math.floor(cozyRandom()*flowerCols.length)],1);}
 }
-/** A cosy rug, bench, poufs and a side table with a lantern, a book stack and a candle, facing the building. */
-function lounge(parent:THREE.Object3D,x:number,z:number,rotY:number){
-  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;g.scale.setScalar(.85);parent.add(g);
-  cyl(g,0,.011,0,1.25,1.25,.022,color('#7d4b44',0,.95),24);
-  cyl(g,0,.014,0,.95,.95,.022,color('#c9a37a',0,.95),24);
-  cyl(g,0,.017,0,.55,.55,.022,color('#7d4b44',0,.95),24);
-  bench(g,0,.02,-.92,0,0,1.5);
-  box(g,-.38,.56,-.84,.42,.12,.30,color('#b5584a'),.1);box(g,.30,.55,-.82,.38,.11,.28,color('#d9b45a'),-.15);   // cushions
-  box(g,.05,.50,-.92,.80,.04,.40,color('#4f6b86'),.04);                                                           // folded blanket
-  for(const [px,pz,c] of [[-.95,.25,'#6f7ea3'],[.95,.1,'#b36a58']] as const)cyl(g,px,.16,pz,.24,.26,.32,color(c,0,.9),12);
-  cyl(g,0,.40,.12,.30,.30,.045,wood,14);cyl(g,0,.2,.12,.05,.06,.38,iron,8);cyl(g,0,.03,.12,.22,.22,.05,iron,10);
-  tableLantern(g,0,.425,.12);
-  bookStack(g,-.14,.425,.20,.4);
-  candleJar(g,.16,.425,.04);
-  pot(g,1.15,.02,-.75,.7,true);
-}
 /** The four corner lantern posts, their bulb strings, hedges, curb troughs and the small stuff that makes the courtyard lived in.
  *  (vtest10: the floor lanterns, the bicycle and the couch floor lamp were removed.) */
 function cozyWorld(scene:THREE.Object3D){
@@ -2213,18 +2197,15 @@ function cozyWorld(scene:THREE.Object3D){
   hedge(scene,(3.4+px1-.4)/2,pz0,Math.abs(px1-.4-3.4),'x');                         // back right
   // Curb flower troughs by the shop.
   trough(scene,-2.45,4.95,1.0);trough(scene,.1,4.98,1.0);trough(scene,2.45,4.95,.9);
-  // Right-hand corner: a place to sit with a book.
-  lounge(scene,5.3,1.15,-Math.PI/2);
   // Back: a bench and a stack of crates with a plant.
   const g=new THREE.Group();g.position.set(-4.2,PAVE,-3.75);g.scale.setScalar(.85);scene.add(g);
   bench(g,0,.02,0,0,2,1.5);box(g,-.35,.56,.02,.42,.12,.3,color('#d9b45a'),.1);
   for(const sx of [-1,1])box(g,sx*.9,.18,.45,.2,.2,.2,color('#4f3d38'));
   crate(scene,-6.1,-3.7,.46,.2);crate(scene,-6.15,-3.2,.34,-.3);
   pot(scene,-6.1,.02+.46+.03,-3.7,.5,true);
-  // vtest12: second couch on the right with a raccoon and a blue jay, a big sleeping bear behind it, a bistro sign on the front-right post.
-  tuftedCouch(scene,6.18,-1.5,-Math.PI/2);
-  sleepingBear(scene,4.85,-3.55,.3);
-  bistroSign(scene,px1,pz1);
+  // vtest12: couch with a raccoon and a blue jay, back against the right wall under the corkboard (the sill band sticks out to world
+  // x = 3.377, the couch back sits at 3.40 and the couch faces +X; the corkboard's lower edge is well above the backrest).
+  tuftedCouch(scene,3.71,.31,Math.PI/2);
 }
 /** Details on the building itself, in its local units. */
 function cozyBuilding(b:THREE.Object3D){
@@ -2232,7 +2213,7 @@ function cozyBuilding(b:THREE.Object3D){
   const left=new THREE.Group();left.position.set(-ARCH.ground.width/2,0,0);left.rotation.y=-Math.PI/2;b.add(left);
   addVines(left,'z',0,2.05,4.1,2.1);addVines(left,'z',0,-2.35,4.0,1.5);
   const back=new THREE.Group();back.position.set(0,0,-ARCH.ground.depth/2);back.rotation.y=Math.PI;b.add(back);
-  addVines(back,'z',0,1.35,4.0,1.5);
+  addVines(back,'z',0,.55,4.0,1.5);   // was at 1.35, which put it on the back window's frame (vtest12)
   const upBack=new THREE.Group();upBack.position.set(0,0,ARCH.upper.z-ARCH.upper.depth/2-.01);upBack.rotation.y=Math.PI;b.add(upBack);
   addVines(upBack,'z',0,1.85,7.7,2.3);addVines(upBack,'z',0,-1.55,7.7,1.7);
   // Candle jars on the shop-front crates.
@@ -2258,8 +2239,8 @@ function cozyBuilding(b:THREE.Object3D){
   terraceStair(b);
 }
 // ---------------------------------------------------------------------------------------------
-// VTEST12: a spiral stair up to the side terrace, a cardboard surfer-rooster standee, a second couch with a raccoon and a blue jay,
-// a big sleeping bear, a hanging bistro sign, and indoors a ship in a bottle, a workbench and a chest.
+// VTEST12: a spiral stair up to the side terrace, lantern posts, a couch with a raccoon and a blue jay under the corkboard, and indoors
+// a ship in a bottle, a workbench and a chest. (The rooster standee, sleeping bear and bistro sign were removed again; git history has them.)
 // Everything is generic low-poly. No characters, logos or copied designs: where a request named one, a generic stand-in is built.
 // None of it uses the seeded generators, so nothing built earlier moves.
 // ---------------------------------------------------------------------------------------------
@@ -2312,38 +2293,6 @@ function terraceStair(b:THREE.Object3D){
   halo(b,cx,5.40,cz,1.5,'#ffbf75',.6);
   glowPatch(b,cx,.045,cz,3.6,3.6,'#ffbd70',.12,0,true);
 }
-/** Flat painted piece of the cardboard standee: a coloured layer over a slightly larger cardboard-brown backing (the cut edge). */
-function cutout(g:THREE.Group,pts:[number,number][],hex:string,layer:number){
-  const shape=new THREE.Shape();pts.forEach(([x,y],i)=>{if(i)shape.lineTo(x,y);else shape.moveTo(x,y);});shape.closePath();
-  const paint=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.006,bevelEnabled:false}),color(hex,0,.85));
-  paint.position.z=.001+layer*.0045;paint.castShadow=true;g.add(paint);
-  let mx=0,my=0;for(const [x,y] of pts){mx+=x;my+=y;}mx/=pts.length;my/=pts.length;
-  const grown=new THREE.Shape();pts.forEach(([x,y],i)=>{const gx=mx+(x-mx)*1.06,gy=my+(y-my)*1.06;if(i)grown.lineTo(gx,gy);else grown.moveTo(gx,gy);});grown.closePath();
-  const back=new THREE.Mesh(new THREE.ExtrudeGeometry(grown,{depth:.03,bevelEnabled:false}),color('#b58a58',0,.9));
-  back.position.z=-.03;back.castShadow=true;g.add(back);
-}
-/** Cardboard standee of a laid-back surfer rooster (a profile cut-out with a plain striped board behind its tail), stood on a flat base
- *  plate against the back wall. Building-local; faces -Z (towards the back lane). Generic: not a copy of any film character. */
-function cardboardRooster(parent:THREE.Object3D,x:number,z:number){
-  const g=new THREE.Group();g.position.set(x,GROUND+.008,z);g.rotation.y=Math.PI;parent.add(g);
-  cutout(g,[[-.60,.04],[-.20,.04],[-.15,.90],[-.24,1.50],[-.40,1.96],[-.56,1.50],[-.65,.90]],'#1f9aa6',0);            // board
-  cutout(g,[[-.45,.10],[-.35,.10],[-.34,1.45],[-.40,1.80],[-.46,1.45]],'#f1e6c8',1);                                   // board stripe
-  cutout(g,[[-.62,.30],[-.18,.30],[-.18,.40],[-.62,.40]],'#ee6a4d',2);                                                  // board band
-  cutout(g,[[-.30,.74],[-.60,.76],[-.64,1.05],[-.34,.96]],'#1f6a5d',3);                                                 // tail plumes
-  cutout(g,[[-.30,.80],[-.62,1.02],[-.58,1.34],[-.40,1.12],[-.26,1.00]],'#2e9a86',4);
-  cutout(g,[[-.28,.86],[-.50,1.22],[-.40,1.45],[-.22,1.10]],'#4a5fb0',5);
-  cutout(g,[[-.12,.58],[-.04,.58],[-.04,.08],[.10,.08],[.10,0],[-.12,0]],'#e3a53a',6);                                    // legs
-  cutout(g,[[.08,.58],[.16,.58],[.16,.08],[.28,.08],[.28,0],[.08,0]],'#e3a53a',6);
-  cutout(g,[[-.32,.78],[-.12,.56],[.24,.56],[.40,.74],[.42,1.00],[.30,1.20],[.02,1.28],[-.26,1.16],[-.38,.96]],'#f0e1c2',7); // body
-  cutout(g,[[-.22,.92],[.06,.80],[.28,.90],[.22,1.12],[-.04,1.18],[-.26,1.08]],'#d98a3a',8);                              // wing
-  cutout(g,[[.04,1.18],[.36,1.14],[.46,1.42],[.34,1.62],[.12,1.62],[.02,1.40]],'#e8b04a',9);                              // neck feathers
-  cutout(g,[[.12,1.56],[.40,1.56],[.52,1.68],[.50,1.84],[.34,1.92],[.16,1.86],[.10,1.72]],'#f0e1c2',10);                  // head
-  cutout(g,[[.16,1.86],[.20,2.02],[.26,1.90],[.30,2.06],[.36,1.92],[.40,2.00],[.42,1.84]],'#d6402e',11);                  // comb
-  cutout(g,[[.50,1.74],[.70,1.70],[.50,1.64]],'#f0b03a',12);                                                              // beak
-  cutout(g,[[.42,1.62],[.50,1.60],[.48,1.50],[.42,1.54]],'#d6402e',13);                                                   // wattle
-  cutout(g,[[.34,1.74],[.40,1.74],[.40,1.80],[.34,1.80]],'#1b1a20',14);                                                   // eye
-  box(g,.02,.025,0,1.34,.05,.30,color('#9a7040',0,.9));                                                                   // base plate under the cut-out (it stands in a slot)
-}
 /** A low brown tufted couch on slim metal legs, with a seated raccoon and a blue jay perched on the backrest (world units; built facing +Z,
  *  x along its length). The animals are plain low-poly animals. */
 function tuftedCouch(parent:THREE.Object3D,x:number,z:number,rotY:number){
@@ -2386,44 +2335,6 @@ function tuftedCouch(parent:THREE.Object3D,x:number,z:number,rotY:number){
   box(jay,0,.075,.055,.07,.012,.03,ink);                          // necklace band
   for(const sx of [-1,1]){box(jay,sx*.045,.08,-.01,.015,.05,.09,blue2);box(jay,sx*.052,.085,-.01,.008,.01,.04,white);}   // wings with a white bar
   const tailBox=box(jay,0,.06,-.12,.045,.012,.14,blue);tailBox.rotation.x=.25;box(jay,0,.052,-.185,.045,.012,.025,white).rotation.x=.25;
-}
-/** A big sleeping bear curled on its side (world units, head towards +X): flat-shaded blobs that overlap so nothing floats. */
-function sleepingBear(parent:THREE.Object3D,x:number,z:number,rotY:number){
-  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;parent.add(g);
-  const fur=color('#8a5f43',0,.9),light=color('#d3b08a',0,.9),dk=color('#2a2023',0,.8),inner=color('#c79a74',0,.9);
-  const scaled=(px:number,py:number,pz:number,r:number,sx:number,sy:number,sz:number,m:THREE.Material)=>{const s=sphere(g,px,py,pz,r,m,1);s.scale.set(sx,sy,sz);return s;};
-  scaled(0,.40,0,.5,1.45,.95,1.05,fur);                 // body
-  scaled(-.36,.25,.42,.27,1.2,.9,.8,fur);                // folded hind leg
-  scaled(.58,.17,.34,.2,1.5,.8,.8,fur);                  // fore leg under the chin
-  sphere(g,.78,.30,.18,.30,fur,1);                       // head, resting on the paws
-  scaled(1.03,.24,.20,.15,1.2,.8,.9,light);              // snout
-  sphere(g,1.18,.27,.20,.045,dk,1);                      // nose
-  sphere(g,.72,.52,0,.10,fur,1);sphere(g,.72,.52,.36,.10,fur,1);   // ears
-  sphere(g,.72,.52,.03,.05,inner,1);sphere(g,.72,.52,.33,.05,inner,1);
-  box(g,.92,.36,.43,.10,.018,.012,dk,.3);box(g,.92,.36,-.07,.10,.018,.012,dk,-.3);   // closed eyes
-  sphere(g,-.70,.38,0,.10,fur,1);                        // tail
-}
-/** Little hanging bistro sign on a bracket on a lantern post (world units): a deep-green board with a pixel stew pot and the word BISTRO.
- *  Original artwork; the bracket points towards the plaza (-X) and the board faces the front (+Z). */
-function bistroSign(parent:THREE.Object3D,px:number,pz:number){
-  const armY=1.98,S=1.3,cxS=px-.38;
-  box(parent,px-.36,armY,pz,.72,.04,.04,iron);                       // arm
-  sphere(parent,px-.73,armY,pz,.03,brass,1);
-  for(const dx of [-.14*S,.14*S]){cyl(parent,cxS+dx,armY-.12,pz,.006,.006,.22,iron,5);}   // two short chains
-  const shape=new THREE.Shape();[[-.25,-.2],[.25,-.2],[.25,.12],[.12,.2],[-.12,.2],[-.25,.12]].forEach(([sx,sy],i)=>{if(i)shape.lineTo(sx,sy);else shape.moveTo(sx,sy);});shape.closePath();
-  const board=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.05,bevelEnabled:false}),color('#23392f',0,.8));
-  board.scale.set(S,S,1);board.position.set(cxS,armY-.2-.2*S,pz-.025);board.castShadow=true;parent.add(board);   // peak at armY - .18; the chains (armY - .21 .. armY - .01) end inside the board's top
-  const tex=texture((c,W,H)=>{
-    c.fillStyle='#23392f';c.fillRect(0,0,W,H);
-    c.strokeStyle='#e8c15a';c.lineWidth=7;c.strokeRect(10,10,W-20,H-20);
-    const rows=['....s..s....','...s..s..s..','....s..s....','.dddddddddd.','cccccccccccc','cchccccccccc','cccccccccccc','.cccccccccc.','..dd....dd..'];
-    const cell=11,ox=(W-12*cell)/2,oy=24;
-    rows.forEach((row,r)=>[...row].forEach((ch,i)=>{if(ch==='.')return;c.fillStyle=ch==='s'?'#f3ead2':ch==='d'?'#8a4a26':ch==='h'?'#e8a368':'#c9733a';c.fillRect(ox+i*cell,oy+r*cell,cell,cell);}));
-    c.fillStyle='#e8c15a';c.font='bold 40px monospace';c.textAlign='center';c.fillText('BISTRO',W/2,H-40);
-    c.fillStyle='#efe3c8';c.font='bold 14px monospace';c.fillText('OPEN LATE',W/2,H-18);
-  },256,208);
-  litPlane(parent,cxS,board.position.y,pz+.0255,.44*S,.36*S,tex,0,.3);
-  litPlane(parent,cxS,board.position.y,pz-.0255,.44*S,.36*S,tex,Math.PI,.3);
 }
 /** Ship in a bottle: a dark-sailed galleon on a little sea inside a glass bottle that lies in a wooden cradle. `y` is the table top; the bottle
  *  lies along X (neck towards +X). */
@@ -2480,7 +2391,6 @@ function endgameExterior(scene:THREE.Object3D){
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
   quetzal(scene,-1.75,ARCH.upperRoof+.25+.81+.0325,ARCH.upper.z+ARCH.upper.depth/2+.08);   // on the roof's front rail
   baseballSet(scene,2.15,4.0);
-  cardboardRooster(scene,3.45,-3.62);                                                     // standee against the back wall, right of the vending machine (vtest12)
   wallHoop(scene,-ARCH.ground.width/2,.85);                                               // left wall, in front of the parked truck
   chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
