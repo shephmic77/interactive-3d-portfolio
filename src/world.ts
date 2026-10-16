@@ -189,8 +189,12 @@ function facadeWindow(parent:THREE.Object3D,x:number,y:number,z:number,w:number,
   box(node,0,h/2-.045,0,w,.09,.10,trim);box(node,0,-h/2+.045,0,w,.09,.10,trim);
   box(node,0,0,0,.06,h,.08,dark);box(node,0,.12,0,w,.06,.08,dark);
   if(style==='dark'){
-    // Unlit room: dark glass set back in the opening.
-    box(node,0,0,-.19,w,h,.03,color('#283440',.12,.27));
+    // A quiet room with a lamp on behind curtains: dim warm glass, two curtain panels, a soft glow (vtest8).
+    box(node,0,0,-.19,w,h,.03,color('#4a3430',.1,.3,'#ff9f55',.3));
+    for(const sx of [-1,1])box(node,sx*(w/2-.16),.02,-.12,.30,h-.12,.04,color('#c9a98d',0,.9,'#8a6a50',.18));
+    halo(node,-w*.14,-h*.10,-.08,Math.max(w,h)*.8,'#ffb36a',.4);
+    glowPatch(node,0,-h*.04,-.04,w+1.5,h+1.3,'#ffbd6e',.07);
+    for(const xx of [-w*.28,w*.30])pot(node,xx,-h*.5-.07,.2,.2);   // two little pots on the sill
   }
   if(style==='blinds'){
     // A half-drawn blind creates a silhouette distinctly different from the lit shops.
@@ -952,10 +956,10 @@ function floor(scene:THREE.Object3D){
  box(scene,cx,-.16,cz,PLAZA.x1-PLAZA.x0+.4,.32,PLAZA.z1-PLAZA.z0+.4,color('#3a435d'));
  const paving=[color('#5e596d'),color('#746276'),color('#4d5368'),color('#686475')];
  for(let x=PLAZA.x0+.05;x<PLAZA.x1-.4;x+=.73)for(let z=PLAZA.z0+.05;z<PLAZA.z1-.4;z+=.74){let m=box(scene,x+.36,-.004,z+.36,.705,.055,.710,paving[Math.floor(random()*4)]);m.castShadow=false;}
- for(let x of [PLAZA.x0+.5,PLAZA.x1-.5])for(let z of [PLAZA.z0+.4,PLAZA.z1-.4])cyl(scene,x,.45,z,.11,.12,.92,dark);
+ // (the four corner bollards were replaced in vtest8 by lantern posts and hedges, see cozyWorld)
  // Thin curb edge and pavement joint reflections.
  box(scene,cx,.043,PLAZA.z1+.16,PLAZA.x1-PLAZA.x0+.05,.10,.20,stone);
- for(let i=0;i<8;i++)box(scene,3.0+i*.13,.036,PLAZA.z1-.55,.063,.025,.28,dark);
+ // (the black drain-grate bars at the front edge were removed in vtest8: they read as a stray glitch)
  // Front pavement stays clean so the building and signage carry the identity.
  // stylized reflected pools, no postprocessing required
  const glows:[string,number,number,number,number][]=[['#6f30cb',3.8,-5.6,11,5],['#2f97c6',5.2,-4.6,10,5],['#ef7c48',-4.2,-4.4,8,3]];
@@ -977,7 +981,17 @@ function nameSign(scene:THREE.Object3D){
  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;scene.add(g);
  for(const dx of [-w*.3,w*.3])box(g,dx,h/2+.12,0,.035,.30,.035,iron);   // hangers from the arm
  box(g,0,0,0,w,h,thick,dark);
- // Slim lit border on both faces; the middle stays an empty dark panel.
+ // The name, in two columns of stacked letters, on both faces (vtest8; the panel used to be empty).
+ const nameTex=texture((c,W,H)=>{
+  c.fillStyle='#17131f';c.fillRect(0,0,W,H);
+  c.fillStyle='#ffd9a0';c.shadowColor='#ffb56a';c.shadowBlur=16;c.textAlign='center';c.textBaseline='middle';c.font='bold 78px Georgia, "Times New Roman", serif';
+  [['M','I','C','H','A','E','L'],['S','H','E','P','H','E','R','D']].forEach((col,ci)=>{
+   const x=W*(ci?.69:.31),step=Math.min(98,(H-130)/col.length),y0=H/2-(col.length-1)*step/2;
+   col.forEach((ch,i)=>c.fillText(ch,x,y0+i*step));
+  });
+ },240,816);
+ for(const side of [1,-1])plane(g,0,0,side*(thick/2+.014),w-.2,h-.22,nameTex,side===1?0:Math.PI);
+ // Slim lit border on both faces around the lettering.
  const frame=neon(hex,.7),t=.05;
  for(const side of [1,-1]){
   const zf=side*(thick/2+.012);
@@ -2056,6 +2070,154 @@ function endgameInteriors(scene:THREE.Object3D){
   baggioPoster(scene,1.5,2.2,-2.835);
 }
 /** Building-level end-game pieces outside the walls (building-local units): the cat, the quetzal, the flag, the surfboard and the baseball kit. */
+// ---------------------------------------------------------------------------------------------
+// COZY PASS (vtest8): a hedged courtyard, small warm lights and lived-in props.
+// World-level pieces use world units; pieces on the building use its local (unscaled) units.
+// Every light here is faked (emissive mesh + halo + pool decal), see LIGHTING BUDGET: no new PointLights.
+// ---------------------------------------------------------------------------------------------
+/** Own generator, so this pass never disturbs the seeded scatter used by the plants above. */
+const cozyRandom=(()=>{let s=7771;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};})();
+const bulbMat=color('#ffecc0',0,.4,'#ffd08a',1.7);
+const lanternGlass=color('#ffd8a0',0,.3,'#ffb35a',1.3);
+const flowerCols=['#e86a7a','#f2c14e','#f4efe6','#b79bf0','#ee8f5a'].map(c=>color(c,0,.7));
+
+/** Festoon of little bulbs sagging between two points, with a bloom on each bulb. */
+function festoon(parent:THREE.Object3D,a:THREE.Vector3,b:THREE.Vector3,sag:number,n:number,hex='#ffc884'){
+  const pts:THREE.Vector3[]=[];
+  for(let i=0;i<=8;i++){const t=i/8;pts.push(V(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t-sag*4*t*(1-t),a.z+(b.z-a.z)*t));}
+  line(parent,pts,.011,dark);
+  const curve=new THREE.CatmullRomCurve3(pts);
+  for(let i=0;i<n;i++){const p=curve.getPoint((i+.5)/n);sphere(parent,p.x,p.y-.045,p.z,.04,bulbMat,1);halo(parent,p.x,p.y-.045,p.z,.5,hex,.5);}
+}
+/** A small glass-and-iron lantern standing on the paving, with a bloom and a light pool under it. */
+function groundLantern(parent:THREE.Object3D,x:number,z:number,s=1,y=PAVE){
+  const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(s);parent.add(g);
+  cyl(g,0,.02,0,.11,.12,.04,iron,8);
+  box(g,0,.15,0,.13,.21,.13,lanternGlass);
+  for(const sx of [-1,1])for(const sz of [-1,1])box(g,sx*.07,.15,sz*.07,.02,.23,.02,iron);
+  cyl(g,0,.285,0,.02,.13,.07,iron,4);
+  sphere(g,0,.335,0,.025,brass,1);
+  halo(g,0,.16,0,.95,'#ffbf75',.55);
+  glowPatch(g,0,.012,0,1.7,1.7,'#ffbd70',.15,0,true);
+  return g;
+}
+/** Candle in a glass jar (sits at y). */
+function candleJar(parent:THREE.Object3D,x:number,y:number,z:number){
+  cyl(parent,x,y+.035,z,.04,.04,.07,color('#ffd9a8',0,.25,'#ffb05a',.9),8);
+  halo(parent,x,y+.08,z,.42,'#ffbf75',.55);
+  glowPatch(parent,x,y+.005,z,.9,.9,'#ffbd70',.12,0,true);
+}
+/** Low clipped hedge with leafy blobs on top and a few fairy bulbs tucked into it. */
+function hedge(parent:THREE.Object3D,x:number,z:number,len:number,along:'x'|'z',h=.34){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);parent.add(g);
+  const d=.30;
+  box(g,0,h/2,0,along==='x'?len:d,h,along==='x'?d:len,moss);
+  const n=Math.max(2,Math.round(len/.2));
+  for(let i=0;i<n;i++){
+    const t=-len/2+(i+.5)*len/n,off=(i%2?1:-1)*.05,r=.15+cozyRandom()*.05;
+    const bx=along==='x'?t:off,bz=along==='x'?off:t;
+    sphere(g,bx,h-.02,bz,r,i%3?leaf:leaf2,1);
+    if(i%4===1){const bb=sphere(g,bx+(along==='x'?0:.14),h+r*.7,bz+(along==='x'?.14:0),.028,bulbMat,1);if(i%8===1)halo(g,bb.position.x,bb.position.y,bb.position.z,.45,'#ffc884',.5);}
+  }
+}
+/** Wooden flower trough for the curb. */
+function trough(parent:THREE.Object3D,x:number,z:number,len=.95,rotY=0){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;parent.add(g);
+  box(g,0,.15,0,len,.30,.26,wood);box(g,0,.31,0,len-.06,.03,.2,color('#3b2c2a'));
+  const n=Math.round(len/.17);
+  for(let i=0;i<n;i++){const fx=-len/2+.1+i*(len-.2)/(n-1);sphere(g,fx,.38+cozyRandom()*.04,(cozyRandom()-.5)*.1,.065,i%3===1?leaf:flowerCols[Math.floor(cozyRandom()*flowerCols.length)],1);}
+}
+/** Plain bicycle with a basket of flowers on the handlebars, drawn leaning on the hedge. Wheels roll along local Z. */
+function bicycle(parent:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;g.rotation.z=.09;parent.add(g);
+  const tire=color('#15181f',0,.9),frame=color('#2f6f78',.3,.5);
+  for(const wz of [-.55,.55]){
+    const w=new THREE.Mesh(new THREE.TorusGeometry(.33,.024,6,18),tire);w.rotation.y=Math.PI/2;w.position.set(0,.35,wz);g.add(w);
+    cyl(g,0,.35,wz,.03,.03,.05,iron,6).rotation.z=Math.PI/2;
+  }
+  rod(g,0,.35,-.55,.32,-.10,.016,frame);rod(g,0,.32,-.10,.84,-.22,.016,frame);
+  rod(g,0,.84,-.22,.80,.30,.016,frame);rod(g,0,.32,-.10,.78,.30,.016,frame);
+  rod(g,0,.35,.55,.84,.31,.016,frame);rod(g,0,.84,-.22,.35,-.55,.012,frame);
+  rod(g,0,.78,.30,.98,.30,.016,iron);box(g,0,.99,.30,.5,.03,.03,iron);
+  box(g,0,.88,-.24,.12,.04,.27,color('#5a3a2c'));
+  // basket with a bunch of flowers
+  box(g,0,.88,.52,.30,.16,.22,color('#8a6a48'));
+  for(let i=0;i<7;i++)sphere(g,(i-3)*.04,1.0+cozyRandom()*.05,.52+(cozyRandom()-.5)*.1,.06,i%2?leaf:flowerCols[i%flowerCols.length],1);
+}
+/** A cosy rug, bench, poufs, side table with a lantern and a floor lamp, facing the building. */
+function lounge(parent:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;g.scale.setScalar(.85);parent.add(g);
+  cyl(g,0,.011,0,1.25,1.25,.022,color('#7d4b44',0,.95),24);
+  cyl(g,0,.014,0,.95,.95,.022,color('#c9a37a',0,.95),24);
+  cyl(g,0,.017,0,.55,.55,.022,color('#7d4b44',0,.95),24);
+  bench(g,0,.02,-.92,0,0,1.5);
+  box(g,-.38,.56,-.84,.42,.12,.30,color('#b5584a'),.1);box(g,.30,.55,-.82,.38,.11,.28,color('#d9b45a'),-.15);   // cushions
+  box(g,.05,.50,-.92,.80,.04,.40,color('#4f6b86'),.04);                                                           // folded blanket
+  for(const [px,pz,c] of [[-.95,.25,'#6f7ea3'],[.95,.1,'#b36a58']] as const)cyl(g,px,.16,pz,.24,.26,.32,color(c,0,.9),12);
+  cyl(g,0,.40,.12,.30,.30,.045,wood,14);cyl(g,0,.2,.12,.05,.06,.38,iron,8);cyl(g,0,.03,.12,.22,.22,.05,iron,10);
+  tableLantern(g,0,.425,.12);
+  bookStack(g,-.14,.425,.20,.4);
+  candleJar(g,.16,.425,.04);
+  // floor lamp: slim pole, warm shade, a bloom and a pool of light on the rug
+  cyl(g,-1.15,.0,-.15,.1,.1,.05,iron,10);cyl(g,-1.15,.75,-.15,.017,.017,1.5,iron,6);
+  cyl(g,-1.15,1.52,-.15,.16,.24,.28,color('#f2d8a8',0,.8,'#ffbe70',.9),12);
+  halo(g,-1.15,1.5,-.15,1.4,'#ffc27a',.6);
+  glowPatch(g,-1.0,.03,0,2.6,2.6,'#ffbd70',.14,0,true);
+  pot(g,1.15,.02,-.75,.7,true);
+}
+/** The four corner lantern posts, their bulb strings, hedges, curb troughs and the small stuff that makes the courtyard lived in. */
+function cozyWorld(scene:THREE.Object3D){
+  const {x0,x1,z0,z1}=PLAZA,px0=x0+.3,px1=x1-.3,pz0=z0+.3,pz1=z1-.35,top=2.55;
+  // Posts with a lantern on top and a pool of light below.
+  for(const [x,z] of [[px0,pz0],[px1,pz0],[px0,pz1],[px1,pz1]] as const){
+    cyl(scene,x,top/2,z,.05,.07,top,dark,8);
+    box(scene,x,top+.1,z,.18,.2,.18,lanternGlass);cyl(scene,x,top+.26,z,.02,.15,.1,iron,4);sphere(scene,x,top+.34,z,.03,brass,1);
+    for(const sx of [-1,1])for(const sz of [-1,1])box(scene,x+sx*.095,top+.1,z+sz*.095,.02,.22,.02,iron);
+    halo(scene,x,top+.1,z,1.25,'#ffbf75',.6);
+    glowPatch(scene,x,PAVE+.012,z,3.4,3.4,'#ffbd70',.11,0,true);
+  }
+  // Bulb strings along the back and both sides; the front stays open so the shop front is never crossed.
+  const P=(x:number,z:number)=>V(x,top-.12,z);
+  // The back run goes from each corner post to a hook on the side wall, not straight across, so it never hangs in front of the
+  // vending machine and arcade cabinet when the camera looks at them.
+  const hookL=V(-ARCH.ground.width/2*BUILDING_SCALE-.04,2.95,-1.4),hookR=V(ARCH.ground.width/2*BUILDING_SCALE+.04,2.95,-1.4);
+  festoon(scene,P(px0,pz0),hookL,.35,14);festoon(scene,P(px1,pz0),hookR,.35,14);
+  for(const h of [hookL,hookR])box(scene,h.x,h.y,h.z,.08,.08,.08,iron);
+  festoon(scene,P(px0,pz0),P(px0,pz1),.5,15);
+  festoon(scene,P(px1,pz0),P(px1,pz1),.5,15);
+  // Hedges close the courtyard on the sides and back, with gaps for the machines, the truck and the heron.
+  hedge(scene,(px0+px0+0)/2-.05+.0,(pz0+1.0)/2,Math.abs(1.0-pz0)-.5,'z');          // left, behind the truck
+  hedge(scene,px1+.05,(pz0+3.2)/2,Math.abs(3.2-pz0)-.5,'z',.3);                   // right
+  hedge(scene,(px0+.4-2.4)/2,pz0,Math.abs(-2.4-(px0+.4)),'x');                      // back left
+  hedge(scene,(3.4+px1-.4)/2,pz0,Math.abs(px1-.4-3.4),'x');                         // back right
+  // Curb flower troughs and lanterns by the shop.
+  trough(scene,-2.45,4.95,1.0);trough(scene,.1,4.98,1.0);trough(scene,2.45,4.95,.9);
+  groundLantern(scene,-1.2,2.95,1.0);groundLantern(scene,1.2,2.95,1.0);groundLantern(scene,-3.15,4.35,.9);groundLantern(scene,4.2,4.3,.9);
+  // Right-hand corner: a place to sit with a book.
+  lounge(scene,5.3,1.15,-Math.PI/2);
+  bicycle(scene,6.2,-2.65,-.55);
+  groundLantern(scene,5.85,-.85,.9);
+  // Back: bench, lantern and a stack of crates with a plant.
+  const g=new THREE.Group();g.position.set(-4.2,PAVE,-3.75);g.scale.setScalar(.85);scene.add(g);
+  bench(g,0,.02,0,0,2,1.5);box(g,-.35,.56,.02,.42,.12,.3,color('#d9b45a'),.1);
+  for(const sx of [-1,1])box(g,sx*.9,.18,.45,.2,.2,.2,color('#4f3d38'));
+  groundLantern(g,1.25,.5,1.0,0);
+  crate(scene,-6.1,-3.7,.46,.2);crate(scene,-6.15,-3.2,.34,-.3);
+  pot(scene,-6.1,.02+.46+.03,-3.7,.5,true);
+  groundLantern(scene,2.95,-4.15,.9);
+}
+/** Details on the building itself, in its local units. */
+function cozyBuilding(b:THREE.Object3D){
+  // Ivy on the left wall and the back wall, hanging from the cornice like the existing vines.
+  const left=new THREE.Group();left.position.set(-ARCH.ground.width/2,0,0);left.rotation.y=-Math.PI/2;b.add(left);
+  addVines(left,'z',0,2.05,4.1,2.1);addVines(left,'z',0,-2.35,4.0,1.5);
+  const back=new THREE.Group();back.position.set(0,0,-ARCH.ground.depth/2);back.rotation.y=Math.PI;b.add(back);
+  addVines(back,'z',0,1.35,4.0,1.5);
+  const upBack=new THREE.Group();upBack.position.set(0,0,ARCH.upper.z-ARCH.upper.depth/2-.01);upBack.rotation.y=Math.PI;b.add(upBack);
+  addVines(upBack,'z',0,1.85,7.7,2.3);addVines(upBack,'z',0,-1.55,7.7,1.7);
+  // Candle jars on the shop-front crates.
+  candleJar(b,-3.70,.52+.03+GROUND,4.22);candleJar(b,-3.12,.40+.03+GROUND,4.14);
+}
 function endgameExterior(scene:THREE.Object3D){
   const bt={x:2.95,z:1.45};
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
@@ -2103,6 +2265,8 @@ export function buildWorld():World{
  // Interiors come last so they never shift the random sequence used by the plants and paving above.
  interiors(building);
  endgameInteriors(building);
+ // Last, so the seeded scatter used by every plant above is untouched.
+ cozyBuilding(building);cozyWorld(scene);
  const lightCount=keyLights.length;
  if(import.meta.env.DEV&&lightCount>POINT_LIGHT_BUDGET)console.warn(`Point-light budget exceeded: ${lightCount} real lights (budget ${POINT_LIGHT_BUDGET}). Use halo()/glowPatch() for new lamps.`);
  // Everything solid and visible can hide a hit target. Invisible hit boxes and see-through decals (glow patches,
