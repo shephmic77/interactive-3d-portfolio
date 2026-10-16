@@ -1,4 +1,4 @@
-import { categories, engineeringWorks, profile, projects, type Category, type Project } from './content';
+import { categories, engineeringWorks, profile, projects, resume as cv, type Category, type Project } from './content';
 import { bookTabbables, closeBook, openBook } from './book';
 export type Section = 'projects' | 'about' | 'contact' | 'resume' | 'credits';
 type NavHandler = (section:Section | 'home', projectId?:string) => void;
@@ -76,14 +76,18 @@ function contact(){
     <div class="note">The vending machine is on the back of the building, beside the credits arcade cabinet. Rotate the scene to find both.</div>`;
 }
 function resume(){
-  return heading('resume')+`<p class="panel-copy">A concise, printable overview of my background. This is an editable in-site resume summary, <strong>not a replacement for an uploaded official PDF</strong>.</p>
-  <div class="resume-paper" id="resume-paper"><h3>${html(profile.name)}</h3><p>${html(profile.title)}<br>${html(profile.email)} · ${html(profile.github.replace('https://',''))}</p>
-    <h4>EDUCATION</h4><p><strong>${html(profile.school)}</strong><br>${html(profile.degree)} · ${html(profile.graduation)}</p>
-    <h4>TECHNICAL SKILLS</h4><p>Python, R, SQL, machine learning, data analysis, Git/GitHub, FastAPI, PostgreSQL, Docker and TypeScript.</p>
-    <h4>SELECTED EXPERIENCE</h4><p><strong>Geospatial Agentic Services</strong><br>Contributed to NOAA flood alert and travel hazard assessment agent workflows.</p>
-    <h4>SELECTED PROJECTS</h4><p>FutWAR · NBA All-Star Prediction · Basketball RAG Assistant · NBA Moneyball · NBA Player Archetypes</p></div>
-    <button type="button" id="print-resume" class="primary-action">PRINT / SAVE AS PDF <span>↗</span></button>
-    <p class="footnote">To add your real resume PDF later, put it in <code>public/</code> and replace this action with a link in <code>src/ui.ts</code>.</p>`;
+  const jobs=cv.experience.map(j=>`<div class="rp-job"><div class="rp-row"><strong>${html(j.org)}</strong><span>${html(j.place)}</span></div><div class="rp-row rp-role"><em>${html(j.role)}</em><span>${html(j.dates)}</span></div><ul>${j.bullets.map(t=>`<li>${html(t)}</li>`).join('')}</ul></div>`).join('');
+  const works=cv.projects.map(p=>`<div class="rp-job"><div class="rp-row"><strong>${html(p.name)}</strong></div><div class="rp-tools">${html(p.tools)}</div><ul>${p.bullets.map(t=>`<li>${html(t)}</li>`).join('')}</ul></div>`).join('');
+  const skills=cv.skills.map(k=>`<div class="rp-skill"><dt>${html(k.label)}</dt><dd>${html(k.items)}</dd></div>`).join('');
+  return heading('resume')+`<p class="panel-copy">My resume, in full. The PDF is the official copy; the page below carries the same wording so it is easy to read here.</p>
+  <a class="primary-action" href="${html(cv.pdf)}" target="_blank" rel="noopener noreferrer" aria-label="Open the resume as a PDF in a new tab"><span class="pa-text">OPEN THE PDF</span> <span aria-hidden="true">↗</span></a>
+  <div class="resume-paper" id="resume-paper"><h3>${html(profile.name)}</h3><p class="rp-contact">${html(profile.email)} · ${html(cv.site)} · linkedin.com/in/michael-shepherd7 · ${html(profile.github.replace('https://',''))}</p>
+    <h4>EDUCATION</h4><div class="rp-row"><strong>${html(cv.school.name)}</strong><span>${html(cv.school.place)}</span></div><p class="rp-degree"><em>${html(cv.school.degree)}</em><br>${html(cv.school.when)}</p>
+    <h4>TECHNICAL SKILLS</h4><dl class="rp-skills">${skills}</dl>
+    <h4>EXPERIENCE</h4>${jobs}
+    <h4>PROJECTS</h4>${works}
+    <h4>CERTIFICATES</h4><p>${cv.certificates.map(html).join(' | ')}</p></div>
+  <button type="button" id="print-resume" class="ghost-action">PRINT THIS PAGE</button>`;
 }
 function credits(){
  return heading('credits')+`<div class="arcade-banner"><span class="pixel-stars">✦  ✷  ✦</span><strong>THANKS FOR PLAYING</strong><span>INSERT CURIOSITY TO CONTINUE</span></div>

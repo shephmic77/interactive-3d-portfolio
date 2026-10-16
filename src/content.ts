@@ -66,12 +66,52 @@ export const profile = {
   name: 'Michael Shepherd',
   title: 'Data Science · Sports Analytics',
   school: 'Penn State University',
-  degree: 'B.S. in Data Science',
-  graduation: 'Expected May 2027',
+  degree: 'B.S. in Applied Data Science',
+  graduation: 'Anticipated graduation May 2027',
   location: 'United States',
   email: 'mrs7065@psu.edu',
   github: 'https://github.com/shephmic77',
   linkedin: 'https://www.linkedin.com/in/michael-shepherd7/',
+};
+
+/** The in-site resume. Mirrors public/Michael_Shepherd_Resume.pdf (supplied 2026-10-15); wording follows the PDF. The phone number is left out on purpose. */
+export type ResumeJob={org:string;place:string;role:string;dates:string;bullets:string[]};
+export type ResumeProject={name:string;tools:string;bullets:string[]};
+export const resume={
+  pdf:'Michael_Shepherd_Resume.pdf',
+  site:'michael-shepherd.vercel.app',
+  school:{name:'The Pennsylvania State University',place:'University Park, PA',degree:'B.S. in Applied Data Science, College of Information Sciences and Technology',when:'Anticipated graduation: May 2027'},
+  skills:[
+    {label:'Programming languages',items:'Python | R | SQL | JavaScript | HTML/CSS'},
+    {label:'Libraries and frameworks',items:'Pandas | NumPy | scikit-learn | Matplotlib | Beautiful Soup | FastAPI | Streamlit'},
+    {label:'Programs and tools',items:'PostgreSQL (pgvector) | Docker | Git | GitHub | Vercel | Jupyter Notebook | Alteryx Designer | Autodesk Fusion | Ollama | ChatGPT | Codex | Claude'},
+    {label:'Methods',items:'Machine Learning | RAG | Data Cleaning and Auditing | Web Scraping | Data Visualization | Unit Testing'},
+    {label:'Spoken language',items:'Spanish (Fluent)'},
+  ],
+  experience:[
+    {org:'Geoinformation and Big Data Research Laboratory (GIBD)',place:'University Park, PA',role:'Undergraduate Research Assistant',dates:'May 2026 – Aug 2026',bullets:[
+      'Built two Python-based agents, a Travel Hazard Assessment Agent and a NOAA Flood Alert Agent, for the Geospatial Agentic Services (GAS) multi-agent workflow, which fans requests out to hazard-data agents and renders the combined results on an interactive web map.',
+      'Flood Alert Agent: takes a location, search radius and time range, filters National Weather Service alerts to flood-related hazards, calculates distance from the requested location, classifies risk level and returns GeoJSON for downstream GAS agents.',
+      'Travel Hazard Assessment Agent: standardized fields across GeoJSON and CSV hazard datasets, assigned Low, Medium, High or Critical risk levels, removed duplicate records, rejected unsupported geometry and produced one unified point-based GeoJSON dataset.',
+      'Wrote 13 unit tests across both agents and validated the full workflow through the GAS client, covering agent registration, artifact passing and map generation; a Houston demo combined 12 earthquake and flood records within 300 km.',
+      'Collaborated with graduate researchers and independently studied technical documentation to implement and refine agent features.']},
+    {org:'Made By Design Lab',place:'University Park, PA',role:'Undergraduate Research Assistant',dates:'August 2023 – May 2025',bullets:[
+      'Developed a working multi-material 3D printing process (Mosaic hardware, Chroma software) through iterative CAD designs and test prints, and documented it in an instruction manual that gave future lab members a repeatable workflow.']},
+    {org:'American Society of Mechanical Engineers (ASME) Design Team',place:'University Park, PA',role:'Team Lead',dates:'January 2023 – May 2025',bullets:[
+      'Led the chassis subsystem of a fully 3D-printed RC car, collaborating with 5 subsystem leads and designing the gear differential casing and drivetrain components in Autodesk Fusion for PLA and resin 3D printing.',
+      "Trained 8 team members in Autodesk Fusion, providing CAD guidance for the RC car's design and development."]},
+  ] as ResumeJob[],
+  projects:[
+    {name:'Basketball RAG Assistant',tools:'Python, FastAPI, PostgreSQL (pgvector), Ollama, Docker',bullets:[
+      'Built a retrieval-augmented generation (RAG) app that answers basketball questions from a sample game dataset: a FastAPI backend loads game records into PostgreSQL, writes a natural-language summary of each game and stores its vector embedding in pgvector.',
+      'At query time the question is embedded, pgvector retrieves similar games and only those records go to a local Llama 3.2 model through Ollama, so answers stay grounded; the chat UI shows the retrieved evidence, and the app runs as three Docker Compose services.']},
+    {name:'NBA All-Star Prediction and Snub Exploration',tools:'Python, Jupyter Notebook',bullets:[
+      'Built random forest and logistic regression models (scikit-learn) to predict All-Star selections across approximately 3,800 NBA player seasons from 2015–2025, reaching about 0.949 accuracy, and iterated through five versions that used Pandas and NumPy to add True Shooting Percentage and team wins as efficiency and team-context features.',
+      'Analyzed high-confidence prediction errors to find players whose box score profiles diverged from their selection, such as James Harden in 2023 (85.4% predicted, not selected) and Andrew Wiggins in 2022 (2.4% predicted, selected).']},
+    {name:'Penn State DS 310 Kaggle Regression Competition',tools:'Python, Jupyter Notebook',bullets:[
+      'Built regression models on 242 training rows and 64 predictors, from ridge baselines through feature engineering, PCA regression, SVR and stacked blends in scikit-learn, and ranked first on the private leaderboard (MSE 2058.85).']},
+  ] as ResumeProject[],
+  certificates:['IBM Data Analyst Professional Certificate','Alteryx Designer Core Certification'],
 };
 
 /** 7 data science projects + 2 software/AI + 1 hardware + 1 grouped engineering book. */
