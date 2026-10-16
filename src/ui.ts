@@ -100,6 +100,7 @@ function markResumeScroller(){
 function credits(){
  return heading('credits')+`<div class="arcade-banner"><span class="pixel-stars">✦  ✷  ✦</span><strong>THANKS FOR PLAYING</strong><span>INSERT CURIOSITY TO CONTINUE</span></div>
   <p class="panel-copy">A small arcade hidden behind the building, reserved for the credits and a look at how this little world was built.</p>
+  <div class="section-rule">INSPIRATION</div><div class="credit-row"><strong>Jesse Zhou</strong><span>Inspiration for this project</span></div>
   <div class="section-rule">BUILT WITH</div><div class="credit-row"><strong>Three.js</strong><span>3D scene, camera and object interactions</span></div><div class="credit-row"><strong>TypeScript</strong><span>Application logic</span></div><div class="credit-row"><strong>Vite</strong><span>Development and production build</span></div><div class="credit-row"><strong>CSS + Canvas</strong><span>Interface and procedural graphic textures</span></div>
   <div class="section-rule">A NOTE ABOUT THE ART</div><p class="panel-copy">The 3D building in this starter is made from original procedural geometry, not a purchased scene or a hidden background image. The models, positions and interactions are editable in the source.</p>
   <div class="note">This credits panel covers the supplied prototype. Add required asset and music attributions here if you incorporate third-party files in the future.</div>`;

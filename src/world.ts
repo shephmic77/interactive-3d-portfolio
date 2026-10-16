@@ -641,14 +641,21 @@ function terraceFurnishings(scene:THREE.Object3D){
   glowPatch(scene,bt.x,4.455,bt.z,4.2,3.6,'#ffbf7a',.12,0,true);
   // Small drainage outlet at the terrace low point, piped through the slab edge into a downspout.
   gutter(scene,[V(4.12,T+.025,-2.94),V(4.33,T+.025,-2.94),V(4.34,3.80,-2.94),V(4.34,.03,-2.94)],.055,{axis:'x',value:ARCH.ground.width/2});
-  // String of terrace bulbs between two slim poles (it used to hang from nothing).
-  const poleA=V(1.95,T,2.90),poleB=V(4.05,T,.65);
-  const terraceBulbs=[V(poleA.x,T+1.72,poleA.z),V(2.65,T+1.50,2.24),V(3.36,T+1.52,1.57),V(poleB.x,T+1.70,poleB.z)];
-  for(const [pole,top] of [[poleA,terraceBulbs[0]],[poleB,terraceBulbs[3]]] as const){
-    cyl(scene,pole.x,(T+top.y)/2,pole.z,.03,.04,top.y-T,iron,7);cyl(scene,pole.x,T+.03,pole.z,.11,.13,.06,iron,8);sphere(scene,pole.x,top.y+.02,pole.z,.045,brass,1);
+  // String of terrace bulbs in a right angle: three slim poles (front, corner, right) and two runs that follow the front and right rails
+  // instead of cutting diagonally across the corner.
+  const poleA=V(1.95,T,2.90),poleC=V(4.06,T,2.90),poleB=V(4.06,T,.65),topY=T+1.72;
+  for(const pole of [poleA,poleC,poleB]){
+    cyl(scene,pole.x,(T+topY)/2,pole.z,.03,.04,topY-T,iron,7);cyl(scene,pole.x,T+.03,pole.z,.11,.13,.06,iron,8);sphere(scene,pole.x,topY+.02,pole.z,.045,brass,1);
   }
-  line(scene,terraceBulbs,.018,dark);
-  terraceBulbs.slice(1,-1).forEach(b=>{sphere(scene,b.x,b.y-.09,b.z,.08,bright,1);halo(scene,b.x,b.y-.09,b.z,.85,'#ffc172',.55);});
+  const run=(from:THREE.Vector3,to:THREE.Vector3)=>{
+    const pts:THREE.Vector3[]=[];
+    for(let i=0;i<=8;i++){const t=i/8;pts.push(V(from.x+(to.x-from.x)*t,topY-.26*4*t*(1-t),from.z+(to.z-from.z)*t));}
+    line(scene,pts,.018,dark);
+    const curve=new THREE.CatmullRomCurve3(pts);
+    for(const t of [.25,.5,.75]){const p=curve.getPoint(t);sphere(scene,p.x,p.y-.09,p.z,.08,bright,1);halo(scene,p.x,p.y-.09,p.z,.85,'#ffc172',.55);}
+  };
+  run(V(poleA.x,topY,poleA.z),V(poleC.x,topY,poleC.z));
+  run(V(poleC.x,topY,poleC.z),V(poleB.x,topY,poleB.z));
 }
 function roofFurnishings(scene:THREE.Object3D){
   const R=ARCH.upperRoof+.165;               // roof surface (slab top 7.945)
@@ -711,22 +718,19 @@ function terraceFloor(scene:THREE.Object3D){
  // Wide uncovered terrace wrapping the FRONT and RIGHT of the upper cube.
  // Rear-left upper block starts at x=-3.90 and ends at +1.70.
  const walkY=ARCH.groundRoof+.124;
- for(let x=1.96;x<=4.05;x+=.43){
-  for(let z=-2.82;z<=2.77;z+=.43){
-   const m=box(scene,x,walkY,z,.401,.022,.401,((Math.floor(x*4)+Math.floor(z*3))%4===0)?tile:slab);m.castShadow=false;
-  }
- }
- for(let x=-3.82;x<1.86;x+=.43){
-  for(let z=1.40;z<=2.75;z+=.43){
-   const m=box(scene,x,walkY,z,.40,.021,.40,slab);m.castShadow=false;
-  }
- }
+ // One tile lattice for the whole terrace (right side and front strip) with one colour rule, so the pattern runs across the join
+ // (the two areas used to sit on different grids, and only the right-hand one had the lighter tiles).
+ const tileAt=(x:number,z:number)=>{const m=box(scene,x,walkY,z,.401,.022,.401,((Math.floor(x*4)+Math.floor(z*3))%4===0)?tile:slab);m.castShadow=false;};
+ for(let i=0;i<=4;i++)for(let k=0;k<=13;k++)tileAt(1.96+.43*i,-2.82+.43*k);        // right terrace, x 1.96 .. 3.68, z -2.82 .. 2.77
+ for(let i=1;i<=13;i++)for(let k=10;k<=13;k++)tileAt(1.96-.43*i,-2.82+.43*k);      // front strip on the same lattice, x 1.53 .. -3.63, z 1.48 .. 2.77
  // A warm seam along the setback edge, showing two legible terraces from title view.
  box(scene,1.77,ARCH.groundRoof+.12,-.94,.08,.04,4.12,joints);
  box(scene,-1.08,ARCH.groundRoof+.12,1.14,5.62,.04,.075,joints);
  // The FRONT and RIGHT outer edges remain open behind the railings.
  perimeterRail(scene,'x',3.23,-4.31,4.00,ARCH.groundRoof,trim,.56,.11);
- perimeterRail(scene,'z',4.31,-2.95,3.20,ARCH.groundRoof,trim,.52,.11);
+ // The right rail has a .6 gap at z = -1.85 where the spiral stair arrives (see terraceStair).
+ perimeterRail(scene,'z',4.31,-2.95,-2.15,ARCH.groundRoof,trim,.52,.11);
+ perimeterRail(scene,'z',4.31,-1.55,3.20,ARCH.groundRoof,trim,.52,.11);
  perimeterRail(scene,'x',-3.22,1.82,4.18,ARCH.groundRoof,trim,.57,.11);
  // LEFT edge (was open) and the rear strip behind the upper block close the terrace all the way round.
  perimeterRail(scene,'z',-4.31,-3.22,3.23,ARCH.groundRoof,trim,.56,.11);
@@ -779,17 +783,7 @@ function upperRoofTerrace(scene:THREE.Object3D){
  for(const [px,pz,r] of [[-3.30,-1.75,.53],[-3.62,.50,.47],[1.38,.82,.43]] as const){
   pot(scene,px,y+.165,pz,r,true);
  }
- // Warm patio bulbs strung across the edge, subtly chaotic rather than crowded.
- const roofTop=y+.165;
- const bulbs=[V(-3.19,y+1.44,.74),V(-2.15,y+1.21,.86),V(-1.18,y+1.09,.86),V(-.18,y+1.13,.85),V(.70,y+1.38,.75)];
- // Two slim poles carry the string (it used to start and end in mid-air).
- for(const e of [bulbs[0],bulbs[4]]){cyl(scene,e.x,(roofTop+e.y)/2,e.z,.03,.04,e.y-roofTop,iron,7);cyl(scene,e.x,roofTop+.03,e.z,.11,.13,.06,iron,8);sphere(scene,e.x,e.y+.02,e.z,.045,brass,1);}
- line(scene,bulbs,.019,dark);
- for(let i=1;i<bulbs.length-1;i++){
-  const b=bulbs[i];sphere(scene,b.x,b.y-.11,b.z,.105,bright,1);
-  halo(scene,b.x,b.y-.11,b.z,1.05,'#ffbc72',.6);
-  if(i===2)glowPatch(scene,b.x,y+.165,b.z-.2,4.6,3.0,'#ffbc72',.10,0,true);
- }
+ // (The bulb string across the roof, with its two poles, was removed in vtest12; the roof is lit by two lantern posts, see cozyBuilding.)
 }
 
 function storefront(scene:THREE.Object3D){
@@ -1992,16 +1986,26 @@ function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,c
   for(const sx of [-.15,.15]){const top=.09,len=ceilingY-y-top;box(g,sx,top+len/2,.02,.014,len,.014,color('#d9cfb9',0,.9));}   // twine up to the ceiling, thick and pale enough to read from the street
 }
 /** A framed poster that shows a supplied picture from public/posters (a flat colour until it loads). Faces +Z; w x h in metres. */
-function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,file:string,fallback:string){
-  const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
+function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,file:string,fallback:string,pix=0,glow=.22,rotY=0){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
   box(g,0,0,.02,w+.06,h+.06,.04,color('#15171d',0,.7));
   const tex=texture((c,W,H)=>{c.fillStyle=fallback;c.fillRect(0,0,W,H);},512,Math.round(512*h/w));
   if(typeof Image!=='undefined'){
     const im=new Image();
-    im.onload=()=>{const cv=tex.image as HTMLCanvasElement;const c=cv.getContext('2d');if(!c)return;c.drawImage(im,0,0,cv.width,cv.height);tex.needsUpdate=true;};
+    im.onload=()=>{
+      const cv=tex.image as HTMLCanvasElement;const c=cv.getContext('2d');if(!c)return;
+      if(pix>0){
+        // 8-bit look: shrink the picture to `pix` pixels across, then blow it back up without smoothing.
+        const s=document.createElement('canvas');s.width=pix;s.height=Math.max(1,Math.round(pix*cv.height/cv.width));
+        const sc=s.getContext('2d');
+        if(sc){sc.drawImage(im,0,0,s.width,s.height);c.imageSmoothingEnabled=false;c.drawImage(s,0,0,cv.width,cv.height);}
+        else c.drawImage(im,0,0,cv.width,cv.height);
+      }else c.drawImage(im,0,0,cv.width,cv.height);
+      tex.needsUpdate=true;
+    };
     im.src=`${import.meta.env.BASE_URL}posters/${file}`;
   }
-  litPlane(g,0,0,.0405,w,h,tex,0,.22);
+  litPlane(g,0,0,.0405,w,h,tex,0,glow);
   return g;
 }
 /** Small gaming corner against the ground-floor back wall (building-local units): a CRT on a low open cabinet, three unbranded consoles in
@@ -2100,12 +2104,22 @@ function endgameInteriors(scene:THREE.Object3D){
   cyl(scene,-1.7,tt+.05,-.9,.03,.03,.1,cream,8);
   sphere(scene,-1.7,tt+.115,-.9,.014,bright,0);halo(scene,-1.7,tt+.12,-.9,.5,'#ffb866',.5);
   soccerBall(scene,-.7,uf+.11,-2.5);
+  shipInBottle(scene,-1.25,tt,-.9);                                 // on the coffee table, bottle lying along x (vtest12)
   // Six framed pictures in a 2 wide x 3 tall grid (top row: two supplied pictures; below: four record sleeves) on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
   ([['','','#2d6fb8','#ffffff','skydive.jpg'],['','','#c9371f','#ffffff','red-pool.jpg'],['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,6.6-Math.floor(i/2)*.4,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
   // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
   baggioPoster(scene,1.5,2.2,-2.835);
   // Supplied desert poster, further right on the same wall (same inner face), clear of the Baggio poster.
   imagePoster(scene,2.85,2.2,-2.835,.94,1.28,'desert-poster.jpg','#d9b27a');
+  // vtest12: four supplied pictures, pixelated for the 8-bit look. Left wall (inner face x = -4.01, turned to face +X), clear of the dark
+  // window (z -1.98 .. -.54) and the plant (z 2.2); the fourth on the back wall above the counter, between the window and the Baggio poster.
+  imagePoster(scene,-4.01,2.55,.10,.86,1.29,'battlefront2.jpg','#16202e',120,.22,Math.PI/2);
+  imagePoster(scene,-4.01,2.55,1.15,.90,1.20,'xbalanque.jpg','#4a6a3a',80,.22,Math.PI/2);
+  imagePoster(scene,-4.01,2.55,2.20,.90,1.20,'joker.jpg','#3a55b0',90,.22,Math.PI/2);
+  imagePoster(scene,-.55,2.45,-2.835,.90,1.27,'kafka.jpg','#ece8e0',110,.12);
+  // vtest12: a workbench and a storage chest along the left wall under the pictures.
+  workbench(scene,-3.54,.07,.10,Math.PI/2);
+  woodChest(scene,-3.62,.07,1.20,Math.PI/2);
 }
 /** Building-level end-game pieces outside the walls (building-local units): the cat, the quetzal, the flag, the surfboard and the baseball kit. */
 // ---------------------------------------------------------------------------------------------
@@ -2207,6 +2221,10 @@ function cozyWorld(scene:THREE.Object3D){
   for(const sx of [-1,1])box(g,sx*.9,.18,.45,.2,.2,.2,color('#4f3d38'));
   crate(scene,-6.1,-3.7,.46,.2);crate(scene,-6.15,-3.2,.34,-.3);
   pot(scene,-6.1,.02+.46+.03,-3.7,.5,true);
+  // vtest12: second couch on the right with a raccoon and a blue jay, a big sleeping bear behind it, a bistro sign on the front-right post.
+  tuftedCouch(scene,6.18,-1.5,-Math.PI/2);
+  sleepingBear(scene,4.85,-3.55,.3);
+  bistroSign(scene,px1,pz1);
 }
 /** Details on the building itself, in its local units. */
 function cozyBuilding(b:THREE.Object3D){
@@ -2219,18 +2237,250 @@ function cozyBuilding(b:THREE.Object3D){
   addVines(upBack,'z',0,1.85,7.7,2.3);addVines(upBack,'z',0,-1.55,7.7,1.7);
   // Candle jars on the shop-front crates.
   candleJar(b,-3.70,.52+.03+GROUND,4.22);candleJar(b,-3.12,.40+.03+GROUND,4.14);
-  // Bracket lamp on the left wall by the front corner: it lights the corner where the tall name sign used to stand (vtest10).
-  const lx=-ARCH.ground.width/2,lz=1.95;
-  box(b,lx-.04,3.9,lz,.06,.34,.14,iron);                       // wall plate
-  box(b,lx-.30,3.98,lz,.58,.06,.06,iron);                      // arm out from the wall
-  rodX(b,lz,lx-.02,3.52,lx-.52,3.95,.02,iron);                 // brace under the arm
-  hangingLamp(b,lx-.54,3.42,lz,1.5,3.98+.03);
+  // Bracket lamp on the second-floor left wall, on the blank stretch to the right of the window (vtest12: moved up from the
+  // ground-floor corner at your request). The upper block's left wall face is x = -3.90.
+  const ux=ARCH.upper.x-ARCH.upper.width/2,uz=.10,uy=6.45;
+  box(b,ux-.04,uy-.08,uz,.06,.34,.14,iron);                    // wall plate
+  box(b,ux-.30,uy,uz,.58,.06,.06,iron);                        // arm out from the wall
+  rodX(b,uz,ux-.02,uy-.46,ux-.52,uy-.03,.02,iron);             // brace under the arm
+  const lampX=ux-.54,lampY=uy-.56;
+  line(b,[V(lampX,uy+.03,uz),V(lampX,lampY+.14,uz)],.025,dark); // cord from the arm
+  cyl(b,lampX,lampY+.05,uz,.19,.29,.22,brass);                 // shade
+  sphere(b,lampX,lampY-.08,uz,.16,bright);                     // bulb
+  halo(b,lampX,lampY-.06,uz,1.55,'#ffc78f',.65);
+  glowPatch(b,ux-.012,uy-.45,uz,2.6,3.0,'#ffc27a',.13,-Math.PI/2);   // warm wash on the wall (no floor pool: nothing is below it but the roof edge)
+  // Lights where they were asked for (vtest12): two lantern posts on the roof terrace (back-left near the climbers' exit, and behind the
+  // water tank), one at the left end of the terrace by the upper block's corner, and a wall lamp at the back end of the upper right wall.
+  terraceLantern(b,-3.45,7.945,-2.55);
+  terraceLantern(b,.62,7.945,-2.90);
+  terraceLantern(b,-3.72,4.455,1.55);
+  wallLight(b,ARCH.upper.x+ARCH.upper.width/2+.057,6.2,-2.72,Math.PI/2,1.1);
+  terraceStair(b);
+}
+// ---------------------------------------------------------------------------------------------
+// VTEST12: a spiral stair up to the side terrace, a cardboard surfer-rooster standee, a second couch with a raccoon and a blue jay,
+// a big sleeping bear, a hanging bistro sign, and indoors a ship in a bottle, a workbench and a chest.
+// Everything is generic low-poly. No characters, logos or copied designs: where a request named one, a generic stand-in is built.
+// None of it uses the seeded generators, so nothing built earlier moves.
+// ---------------------------------------------------------------------------------------------
+/** Short lantern post for the terraces and the roof (building-local units): post, foot plate, lantern, bloom and a warm pool on the floor.
+ *  Fake light only (halo + decal), no real PointLight. `floorY` is the walking surface. */
+function terraceLantern(parent:THREE.Object3D,x:number,floorY:number,z:number,h=1.25){
+  cyl(parent,x,floorY+h/2,z,.032,.042,h,dark,7);
+  cyl(parent,x,floorY+.03,z,.11,.13,.06,iron,8);
+  box(parent,x,floorY+h+.1,z,.17,.2,.17,lanternGlass);
+  for(const sx of [-1,1])for(const sz of [-1,1])box(parent,x+sx*.085,floorY+h+.1,z+sz*.085,.02,.22,.02,iron);
+  cyl(parent,x,floorY+h+.26,z,.02,.14,.1,iron,4);sphere(parent,x,floorY+h+.33,z,.03,brass,1);
+  halo(parent,x,floorY+h+.1,z,1.2,'#ffbf75',.6);
+  glowPatch(parent,x,floorY+.012,z,3.0,3.0,'#ffbd70',.11,0,true);
+}
+/** Spiral stair from the courtyard up to the side terrace (building-local units): one turn of 15 treads plus a top landing, 16 equal
+ *  risers from the pavement (.03) to the terrace tile top (4.455). The landing faces the wall, crosses the cornice on a short bridge and
+ *  meets the terrace slab through the gap in the right-hand rail (z = -2.15 .. -1.55). The terrace door on the upper block then leads
+ *  into the second floor. */
+function terraceStair(b:THREE.Object3D){
+  const cx=5.5,cz=-1.85,R=.95,y0=.03,yTop=4.455,N=16,rise=(yTop-y0)/N,dA=Math.PI*2/N;
+  const stepMat=color('#59627a',.3,.55),edgeMat=color('#d4a574',.2,.5);
+  const theta=(k:number)=>Math.PI-(N-k)*dA;               // tread 16 (the landing) faces the wall; tread 1 starts 22.5 deg past it
+  const top=(k:number)=>y0+k*rise;
+  cyl(b,cx,.045,cz,.22,.24,.03,iron,12);                    // base plate on the pavement
+  cyl(b,cx,5.25/2,cz,.075,.075,5.25,iron,10);               // centre pole, up to the rail height so the landing rail can meet it
+  for(let k=1;k<=N;k++){
+    const a=theta(k),landing=k===N,w=landing?.64:.44,rc=(R+.04)/2;
+    box(b,cx+rc*Math.cos(a),top(k)-.03,cz+rc*Math.sin(a),R-.04,.06,w,stepMat,-a);   // radial plank, tangential width w
+    box(b,cx+(R-.02)*Math.cos(a),top(k)-.03,cz+(R-.02)*Math.sin(a),.04,.075,w,edgeMat,-a);   // lighter edge guard on the outer end
+  }
+  // Bridge from the landing over the cornice to the terrace slab (slab edge x = 4.395).
+  box(b,4.48,4.4275,cz,.24,.055,.6,stepMat);
+  // Hand rail on the outer edge: a post at every tread from 2 to 15, a top rail and a mid rail through the post tops.
+  const Rr=.92,tops:THREE.Vector3[]=[],mids:THREE.Vector3[]=[];
+  for(let k=2;k<N;k++){
+    const a=theta(k),px=cx+Rr*Math.cos(a),pz=cz+Rr*Math.sin(a);
+    cyl(b,px,top(k)+.385,pz,.022,.022,.83,iron,6);
+    tops.push(V(px,top(k)+.8,pz));mids.push(V(px,top(k)+.4,pz));
+  }
+  line(b,tops,.028,trim);line(b,mids,.016,trim);
+  // From the last post to the terrace rail post at the gap, and along the landing's open side from the wall to the pole.
+  line(b,[tops[tops.length-1],V(4.31,ARCH.groundRoof+.80,-1.55)],.028,trim);
+  line(b,[mids[mids.length-1],V(4.31,ARCH.groundRoof+.38,-1.55)],.016,trim);
+  perimeterRail(b,'x',-2.15,4.31,5.40,ARCH.groundRoof,trim,.55,.11);
+  // A small lantern on the pole top lights the landing (halo only: no real light).
+  sphere(b,cx,5.27,cz,.07,brass,1);
+  box(b,cx,5.40,cz,.2,.22,.2,lanternGlass);
+  for(const sx of [-1,1])for(const sz of [-1,1])box(b,cx+sx*.1,5.40,cz+sz*.1,.02,.24,.02,iron);
+  cyl(b,cx,5.57,cz,.02,.15,.1,iron,4);
+  halo(b,cx,5.40,cz,1.5,'#ffbf75',.6);
+  glowPatch(b,cx,.045,cz,3.6,3.6,'#ffbd70',.12,0,true);
+}
+/** Flat painted piece of the cardboard standee: a coloured layer over a slightly larger cardboard-brown backing (the cut edge). */
+function cutout(g:THREE.Group,pts:[number,number][],hex:string,layer:number){
+  const shape=new THREE.Shape();pts.forEach(([x,y],i)=>{if(i)shape.lineTo(x,y);else shape.moveTo(x,y);});shape.closePath();
+  const paint=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.006,bevelEnabled:false}),color(hex,0,.85));
+  paint.position.z=.001+layer*.0045;paint.castShadow=true;g.add(paint);
+  let mx=0,my=0;for(const [x,y] of pts){mx+=x;my+=y;}mx/=pts.length;my/=pts.length;
+  const grown=new THREE.Shape();pts.forEach(([x,y],i)=>{const gx=mx+(x-mx)*1.06,gy=my+(y-my)*1.06;if(i)grown.lineTo(gx,gy);else grown.moveTo(gx,gy);});grown.closePath();
+  const back=new THREE.Mesh(new THREE.ExtrudeGeometry(grown,{depth:.03,bevelEnabled:false}),color('#b58a58',0,.9));
+  back.position.z=-.03;back.castShadow=true;g.add(back);
+}
+/** Cardboard standee of a laid-back surfer rooster (a profile cut-out with a plain striped board behind its tail), stood on a flat base
+ *  plate against the back wall. Building-local; faces -Z (towards the back lane). Generic: not a copy of any film character. */
+function cardboardRooster(parent:THREE.Object3D,x:number,z:number){
+  const g=new THREE.Group();g.position.set(x,GROUND+.008,z);g.rotation.y=Math.PI;parent.add(g);
+  cutout(g,[[-.60,.04],[-.20,.04],[-.15,.90],[-.24,1.50],[-.40,1.96],[-.56,1.50],[-.65,.90]],'#1f9aa6',0);            // board
+  cutout(g,[[-.45,.10],[-.35,.10],[-.34,1.45],[-.40,1.80],[-.46,1.45]],'#f1e6c8',1);                                   // board stripe
+  cutout(g,[[-.62,.30],[-.18,.30],[-.18,.40],[-.62,.40]],'#ee6a4d',2);                                                  // board band
+  cutout(g,[[-.30,.74],[-.60,.76],[-.64,1.05],[-.34,.96]],'#1f6a5d',3);                                                 // tail plumes
+  cutout(g,[[-.30,.80],[-.62,1.02],[-.58,1.34],[-.40,1.12],[-.26,1.00]],'#2e9a86',4);
+  cutout(g,[[-.28,.86],[-.50,1.22],[-.40,1.45],[-.22,1.10]],'#4a5fb0',5);
+  cutout(g,[[-.12,.58],[-.04,.58],[-.04,.08],[.10,.08],[.10,0],[-.12,0]],'#e3a53a',6);                                    // legs
+  cutout(g,[[.08,.58],[.16,.58],[.16,.08],[.28,.08],[.28,0],[.08,0]],'#e3a53a',6);
+  cutout(g,[[-.32,.78],[-.12,.56],[.24,.56],[.40,.74],[.42,1.00],[.30,1.20],[.02,1.28],[-.26,1.16],[-.38,.96]],'#f0e1c2',7); // body
+  cutout(g,[[-.22,.92],[.06,.80],[.28,.90],[.22,1.12],[-.04,1.18],[-.26,1.08]],'#d98a3a',8);                              // wing
+  cutout(g,[[.04,1.18],[.36,1.14],[.46,1.42],[.34,1.62],[.12,1.62],[.02,1.40]],'#e8b04a',9);                              // neck feathers
+  cutout(g,[[.12,1.56],[.40,1.56],[.52,1.68],[.50,1.84],[.34,1.92],[.16,1.86],[.10,1.72]],'#f0e1c2',10);                  // head
+  cutout(g,[[.16,1.86],[.20,2.02],[.26,1.90],[.30,2.06],[.36,1.92],[.40,2.00],[.42,1.84]],'#d6402e',11);                  // comb
+  cutout(g,[[.50,1.74],[.70,1.70],[.50,1.64]],'#f0b03a',12);                                                              // beak
+  cutout(g,[[.42,1.62],[.50,1.60],[.48,1.50],[.42,1.54]],'#d6402e',13);                                                   // wattle
+  cutout(g,[[.34,1.74],[.40,1.74],[.40,1.80],[.34,1.80]],'#1b1a20',14);                                                   // eye
+  box(g,.02,.025,0,1.34,.05,.30,color('#9a7040',0,.9));                                                                   // base plate under the cut-out (it stands in a slot)
+}
+/** A low brown tufted couch on slim metal legs, with a seated raccoon and a blue jay perched on the backrest (world units; built facing +Z,
+ *  x along its length). The animals are plain low-poly animals. */
+function tuftedCouch(parent:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;parent.add(g);
+  const leather=color('#8e5a33',0,.7),deep=color('#6a4025',0,.75),btn=color('#2a170d',0,.6),metal=color('#9aa3b2',.7,.35);
+  const L=1.5,D=.62;
+  for(const sx of [-1,1])for(const sz of [-1,1])cyl(g,sx*(L/2-.1),.07,sz*(D/2-.1),.016,.02,.15,metal,6);   // legs, floor to the frame
+  box(g,0,.22,0,L,.16,D,deep);                                    // frame .14 - .30
+  box(g,-.305,.35,.05,.6,.10,.5,leather);box(g,.305,.35,.05,.6,.10,.5,leather);   // two seat cushions, top at .40
+  box(g,0,.52,-.24,L-.02,.46,.14,leather);                        // backrest, top at .75
+  for(const sx of [-1,1])box(g,sx*(L/2-.07),.42,0,.14,.26,D,leather);   // arms, top at .55
+  for(let r=0;r<2;r++)for(let i=0;i<6-r;i++)box(g,-.525+i*.21+r*.105,r?.45:.63,-.165,.03,.03,.02,btn);   // tufting buttons on the backrest face
+  // Raccoon, sitting on the left cushion and facing out of the couch.
+  const rac=new THREE.Group();rac.position.set(-.25,.40,.04);rac.rotation.y=.25;g.add(rac);
+  const fur=color('#8c8780',0,.9),lightFur=color('#cfc9bd',0,.9),mask=color('#26252a',0,.8),paw=color('#3a3639',0,.85);
+  const body=sphere(rac,0,.13,0,.12,fur,1);body.scale.set(1,1.2,.9);
+  const belly=sphere(rac,0,.12,.07,.08,lightFur,1);belly.scale.set(.9,1.1,.5);
+  const head=sphere(rac,0,.30,.04,.085,fur,1);head.scale.set(1.15,.95,1);
+  const muzzle=sphere(rac,0,.275,.115,.04,lightFur,1);muzzle.scale.set(1,.8,1.1);
+  sphere(rac,0,.282,.150,.014,mask,0);
+  for(const sx of [-1,1]){
+    box(rac,sx*.04,.315,.108,.06,.035,.02,mask);                // eye mask
+    box(rac,sx*.04,.318,.12,.012,.012,.008,color('#f3f1ea'));   // eye glint
+    sphere(rac,sx*.06,.37,.01,.03,paw,1);                       // ears
+    box(rac,sx*.06,.07,.09,.045,.12,.05,fur);sphere(rac,sx*.06,.018,.11,.028,paw,1);   // front leg and paw
+    const hip=sphere(rac,sx*.095,.07,-.01,.075,fur,1);hip.scale.set(.8,1,1.1);          // haunch
+  }
+  const tail:[number,number,number][]=[[-.12,.05,-.11],[-.20,.045,-.06],[-.26,.045,0],[-.28,.045,.07],[-.26,.045,.14]];
+  tail.forEach(([tx,ty,tz],i)=>sphere(rac,tx,ty,tz,.05,i%2?mask:fur,1));   // ringed tail curling on the seat
+  // Blue jay perched on the top of the backrest (top at .75), turned a little towards the seat.
+  const jay=new THREE.Group();jay.position.set(.30,.75,-.24);jay.rotation.y=.6;g.add(jay);
+  const blue=color('#3f78c4',0,.8),blue2=color('#2d5fa8',0,.8),white=color('#e8ecf2',0,.8),ink=color('#1a1c26',0,.7);
+  for(const sx of [-1,1]){box(jay,sx*.02,.02,0,.012,.04,.012,ink);box(jay,sx*.02,.004,.008,.02,.012,.03,ink);}   // legs and feet
+  const jb=sphere(jay,0,.075,-.01,.05,blue,1);jb.scale.set(1,1.1,1.5);jb.rotation.x=-.35;
+  const jw=sphere(jay,0,.062,.02,.04,white,1);jw.scale.set(.9,.9,1.2);
+  sphere(jay,0,.115,.04,.035,blue,1);
+  sphere(jay,0,.105,.068,.02,white,1);
+  const crest=new THREE.Mesh(new THREE.ConeGeometry(.02,.05,4),blue);crest.position.set(0,.15,.0);crest.rotation.x=-.4;jay.add(crest);
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(.012,.04,4),ink);beak.position.set(0,.112,.085);beak.rotation.x=Math.PI/2;jay.add(beak);
+  box(jay,0,.075,.055,.07,.012,.03,ink);                          // necklace band
+  for(const sx of [-1,1]){box(jay,sx*.045,.08,-.01,.015,.05,.09,blue2);box(jay,sx*.052,.085,-.01,.008,.01,.04,white);}   // wings with a white bar
+  const tailBox=box(jay,0,.06,-.12,.045,.012,.14,blue);tailBox.rotation.x=.25;box(jay,0,.052,-.185,.045,.012,.025,white).rotation.x=.25;
+}
+/** A big sleeping bear curled on its side (world units, head towards +X): flat-shaded blobs that overlap so nothing floats. */
+function sleepingBear(parent:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;parent.add(g);
+  const fur=color('#8a5f43',0,.9),light=color('#d3b08a',0,.9),dk=color('#2a2023',0,.8),inner=color('#c79a74',0,.9);
+  const scaled=(px:number,py:number,pz:number,r:number,sx:number,sy:number,sz:number,m:THREE.Material)=>{const s=sphere(g,px,py,pz,r,m,1);s.scale.set(sx,sy,sz);return s;};
+  scaled(0,.40,0,.5,1.45,.95,1.05,fur);                 // body
+  scaled(-.36,.25,.42,.27,1.2,.9,.8,fur);                // folded hind leg
+  scaled(.58,.17,.34,.2,1.5,.8,.8,fur);                  // fore leg under the chin
+  sphere(g,.78,.30,.18,.30,fur,1);                       // head, resting on the paws
+  scaled(1.03,.24,.20,.15,1.2,.8,.9,light);              // snout
+  sphere(g,1.18,.27,.20,.045,dk,1);                      // nose
+  sphere(g,.72,.52,0,.10,fur,1);sphere(g,.72,.52,.36,.10,fur,1);   // ears
+  sphere(g,.72,.52,.03,.05,inner,1);sphere(g,.72,.52,.33,.05,inner,1);
+  box(g,.92,.36,.43,.10,.018,.012,dk,.3);box(g,.92,.36,-.07,.10,.018,.012,dk,-.3);   // closed eyes
+  sphere(g,-.70,.38,0,.10,fur,1);                        // tail
+}
+/** Little hanging bistro sign on a bracket on a lantern post (world units): a deep-green board with a pixel stew pot and the word BISTRO.
+ *  Original artwork; the bracket points towards the plaza (-X) and the board faces the front (+Z). */
+function bistroSign(parent:THREE.Object3D,px:number,pz:number){
+  const armY=1.98,S=1.3,cxS=px-.38;
+  box(parent,px-.36,armY,pz,.72,.04,.04,iron);                       // arm
+  sphere(parent,px-.73,armY,pz,.03,brass,1);
+  for(const dx of [-.14*S,.14*S]){cyl(parent,cxS+dx,armY-.12,pz,.006,.006,.22,iron,5);}   // two short chains
+  const shape=new THREE.Shape();[[-.25,-.2],[.25,-.2],[.25,.12],[.12,.2],[-.12,.2],[-.25,.12]].forEach(([sx,sy],i)=>{if(i)shape.lineTo(sx,sy);else shape.moveTo(sx,sy);});shape.closePath();
+  const board=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.05,bevelEnabled:false}),color('#23392f',0,.8));
+  board.scale.set(S,S,1);board.position.set(cxS,armY-.2-.2*S,pz-.025);board.castShadow=true;parent.add(board);   // peak at armY - .18; the chains (armY - .21 .. armY - .01) end inside the board's top
+  const tex=texture((c,W,H)=>{
+    c.fillStyle='#23392f';c.fillRect(0,0,W,H);
+    c.strokeStyle='#e8c15a';c.lineWidth=7;c.strokeRect(10,10,W-20,H-20);
+    const rows=['....s..s....','...s..s..s..','....s..s....','.dddddddddd.','cccccccccccc','cchccccccccc','cccccccccccc','.cccccccccc.','..dd....dd..'];
+    const cell=11,ox=(W-12*cell)/2,oy=24;
+    rows.forEach((row,r)=>[...row].forEach((ch,i)=>{if(ch==='.')return;c.fillStyle=ch==='s'?'#f3ead2':ch==='d'?'#8a4a26':ch==='h'?'#e8a368':'#c9733a';c.fillRect(ox+i*cell,oy+r*cell,cell,cell);}));
+    c.fillStyle='#e8c15a';c.font='bold 40px monospace';c.textAlign='center';c.fillText('BISTRO',W/2,H-40);
+    c.fillStyle='#efe3c8';c.font='bold 14px monospace';c.fillText('OPEN LATE',W/2,H-18);
+  },256,208);
+  litPlane(parent,cxS,board.position.y,pz+.0255,.44*S,.36*S,tex,0,.3);
+  litPlane(parent,cxS,board.position.y,pz-.0255,.44*S,.36*S,tex,Math.PI,.3);
+}
+/** Ship in a bottle: a dark-sailed galleon on a little sea inside a glass bottle that lies in a wooden cradle. `y` is the table top; the bottle
+ *  lies along X (neck towards +X). */
+function shipInBottle(parent:THREE.Object3D,x:number,y:number,z:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=Math.PI/2;parent.add(g);   // local +Z becomes +X
+  const glassMat=new THREE.MeshStandardMaterial({color:'#bfe3ee',transparent:true,opacity:.26,roughness:.12,metalness:0,depthWrite:false});
+  const axis=.125;
+  for(const dz of [-.1,.1])box(g,0,.025,dz,.14,.05,.045,wood);       // cradle blocks, top at .05
+  const lay=(m:THREE.Mesh)=>{m.rotation.x=Math.PI/2;return m;};
+  lay(cyl(g,0,axis,0,.085,.085,.26,glassMat,12));                     // body, z -.13 .. .13
+  lay(cyl(g,0,axis,.165,.035,.085,.07,glassMat,12));                  // shoulder
+  lay(cyl(g,0,axis,.25,.035,.035,.10,glassMat,10));                   // neck
+  lay(cyl(g,0,axis,.32,.033,.04,.05,color('#b9895a',0,.9),8));        // cork
+  // The scene inside.
+  const seaMat=color('#2d7f93',0,.5);                                  // sea: three stacked slabs that follow the curve of the glass
+  box(g,0,.052,-.01,.05,.011,.22,seaMat);box(g,0,.0625,-.01,.09,.011,.22,seaMat);box(g,0,.074,-.01,.12,.011,.22,seaMat);
+  for(const [wx,wz] of [[-.03,.06],[.025,-.05],[0,-.1]] as const)box(g,wx,.081,wz,.025,.008,.03,color('#d8eef0',0,.6));   // wave tips
+  const black=color('#1c1a22',0,.7),mast=color('#3a2a20',0,.8),sail=color('#17151d',0,.9);
+  box(g,0,.095,-.01,.05,.035,.20,black);                              // hull
+  box(g,0,.122,-.085,.05,.03,.05,black);                              // stern castle
+  box(g,0,.113,.095,.03,.02,.04,black);                               // bow
+  box(g,0,.118,.13,.01,.01,.06,mast).rotation.x=-.3;                  // bowsprit
+  for(const [mz,mh,sw] of [[.05,.07,.08],[-.01,.085,.09],[-.07,.06,.07]] as const){
+    cyl(g,0,.115+mh/2-.005,mz,.004,.004,mh,mast,5);                   // mast from the deck up (tops stay under the glass at .21)
+    box(g,0,.115+mh*.55,mz+.006,sw,mh*.6,.004,sail);                  // square sail
+    box(g,0,.115+mh*.55+mh*.3+.002,mz+.006,sw,.006,.006,mast);   // yard
+  }
+}
+/** Chunky wooden workbench: a cube body with plank lines, a dark top with a raised 3 x 3 inlay, and a saw and hammer hung on the front.
+ *  Faces +Z; `gfy` is the floor height. */
+function workbench(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,gfy,z);g.rotation.y=rotY;parent.add(g);
+  const planks=color('#a8794a',0,.85),seam=color('#7d5530',0,.9),topDark=color('#5e3d22',0,.85),inlay=color('#d1a46c',0,.8);
+  box(g,0,.30,0,.76,.60,.76,planks);
+  box(g,0,.64,0,.84,.07,.84,topDark);
+  for(let ix=-1;ix<=1;ix++)for(let iz=-1;iz<=1;iz++)box(g,ix*.19,.678,iz*.19,.17,.012,.17,inlay);
+  for(const sy of [.15,.30,.45]){
+    box(g,0,sy,.382,.76,.014,.006,seam);box(g,0,sy,-.382,.76,.014,.006,seam);
+    box(g,.382,sy,0,.006,.014,.76,seam);box(g,-.382,sy,0,.006,.014,.76,seam);
+  }
+  box(g,-.17,.36,.386,.30,.08,.008,color('#b9c0cc',.5,.5));box(g,-.35,.36,.388,.07,.06,.014,color('#6b4528',0,.9));   // saw: blade and handle
+  box(g,.17,.32,.388,.035,.24,.014,color('#6b4528',0,.9));box(g,.17,.46,.39,.13,.06,.022,color('#4a4f5a',.4,.5));    // hammer: handle and head
+}
+/** Wooden storage chest with iron straps and a brass lock. Faces +Z. */
+function woodChest(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,gfy,z);g.rotation.y=rotY;parent.add(g);
+  box(g,0,.17,0,.80,.34,.50,color('#8b5a2b',0,.85));
+  box(g,0,.40,0,.82,.12,.52,color('#7a4c22',0,.85));
+  for(const sx of [-.28,.28])box(g,sx,.23,0,.06,.46,.54,iron);
+  box(g,0,.33,.265,.09,.10,.03,brass);
 }
 function endgameExterior(scene:THREE.Object3D){
   const bt={x:2.95,z:1.45};
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
   quetzal(scene,-1.75,ARCH.upperRoof+.25+.81+.0325,ARCH.upper.z+ARCH.upper.depth/2+.08);   // on the roof's front rail
   baseballSet(scene,2.15,4.0);
+  cardboardRooster(scene,3.45,-3.62);                                                     // standee against the back wall, right of the vending machine (vtest12)
   wallHoop(scene,-ARCH.ground.width/2,.85);                                               // left wall, in front of the parked truck
   chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
