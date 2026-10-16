@@ -1138,7 +1138,7 @@ function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group
 /** The paved plaza (world units). Kept tight around the building so the whole scene reads from the default view. */
 const PLAZA={x0:-7.2,x1:7.2,z0:-4.9,z1:5.2};
 function floor(scene:THREE.Object3D){
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(170,170),GHIBLI_SURROUNDINGS?new THREE.MeshStandardMaterial({map:grassTexture(),color:'#ffffff',metalness:0,roughness:1}):new THREE.MeshStandardMaterial({color:'#0b1124',metalness:0,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.28;ground.receiveShadow=true;scene.add(ground);  // matte: a glossy ground turned every point light into a huge white-blue specular blob
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(170,170),GHIBLI_SURROUNDINGS?new THREE.MeshStandardMaterial({map:grassTexture(),color:'#ffffff',metalness:0,roughness:1}):new THREE.MeshStandardMaterial({color:'#0b1124',metalness:0,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=GHIBLI_SURROUNDINGS&&KNOLL?FAR_GROUND-.02:-.28;ground.receiveShadow=true;scene.add(ground);  // matte: a glossy ground turned every point light into a huge white-blue specular blob
  const cx=(PLAZA.x0+PLAZA.x1)/2,cz=(PLAZA.z0+PLAZA.z1)/2;
  box(scene,cx,-.16,cz,PLAZA.x1-PLAZA.x0+.4,.32,PLAZA.z1-PLAZA.z0+.4,color('#3a435d'));
  const paving=[color('#5e596d'),color('#746276'),color('#4d5368'),color('#686475')];
@@ -2900,7 +2900,226 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
   for(const pz of [zA,zB])for(const px of [xL,xR]){rodX(b,pz,px+(px<cxC?.02:-.02),eave-.62,px+(px<cxC?.42:-.42),eave-.1,.03,timberWarm,5);}   // knee braces
   hangingLamp(b,cxC,9.1,(zA+zB)/2,1.0,eave-.1);
   chimney(b);
+  exteriorExtras(b,ground,upper);cozyInterior(b);   // vtest24
   return chimneySmoke(b,reduced);
+}
+// ---------------------------------------------------------------------------------------------
+// VTEST24: a hilltop. The plaza now sits on a stone-walled plateau on a knoll: a retaining wall all round, a broad stone stair down the
+// front into a winding path, rocks, shrubs and a few big trees behind. The ground falls away from the plaza (see terrainY), and every
+// plant, tree and hill follows it. On the building: timber corbels under the slab edges, a tile cone roof over the spiral-stair landing, a
+// weathervane on the cabana, and inside both floors timber ceiling beams, hanging planters, swag lights, wall shelves, prints, a clock and
+// a runner rug. Nothing that was on or in the building moved. KNOLL=false puts the old flat meadow back.
+// ---------------------------------------------------------------------------------------------
+const KNOLL=true;
+const WALL_BASE=-.80,HILL_DROP=2.4;
+const plazaDist=(x:number,z:number)=>{const dx=Math.max(PLAZA.x0-x,0,x-PLAZA.x1),dz=Math.max(PLAZA.z0-z,0,z-PLAZA.z1);return Math.hypot(dx,dz);};
+/** Ground height around the plaza: flat just below the retaining wall, then falling away like a hill. */
+const terrainY=(x:number,z:number)=>KNOLL?WALL_BASE-HILL_DROP*(1-Math.exp(-Math.max(0,plazaDist(x,z)-.45)/4.5)):-.28;
+const FAR_GROUND=KNOLL?WALL_BASE-HILL_DROP:-.28;
+const STAIR={x:0,w:3.0,z0:PLAZA.z1+.2,z1:PLAZA.z1+.2+6.6,n:12};
+const PATH_CTRL:[number,number][]=[[0,12.1],[1.2,14.4],[3.4,17.2],[6.6,19.2],[10.6,20.8]];
+let pathPts:THREE.Vector3[]|null=null;
+function pathPoints(){
+  if(!pathPts){const curve=new THREE.CatmullRomCurve3(PATH_CTRL.map(([x,z])=>V(x,0,z)));pathPts=[];for(let i=0;i<=30;i++)pathPts.push(curve.getPoint(i/30));}
+  return pathPts;
+}
+/** True when (x,z) is clear of the stair and the path (plus a margin), so grass and rocks keep off them. */
+function offPath(x:number,z:number,m:number){
+  if(Math.abs(x-STAIR.x)<STAIR.w/2+m&&z>PLAZA.z1&&z<STAIR.z1+.6)return false;
+  for(const p of pathPoints())if(Math.hypot(p.x-x,p.z-z)<m+1.2)return false;
+  return true;
+}
+/** The hill itself: a displaced grid around the plaza with the same painted grass, and the stone terrace wall and stair that hold the plaza up. */
+function knoll(scene:THREE.Object3D,mobile:boolean){
+  if(!KNOLL)return;
+  const cell=mobile?2.2:1.4,xa=-46,xb=46,za=-46,zb=50,nx=Math.ceil((xb-xa)/cell),nz=Math.ceil((zb-za)/cell);
+  const pos=new Float32Array((nx+1)*(nz+1)*3),uv=new Float32Array((nx+1)*(nz+1)*2),idx:number[]=[];
+  for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){const x=xa+i*cell,z=za+j*cell,k=j*(nx+1)+i;pos[k*3]=x;pos[k*3+1]=terrainY(x,z);pos[k*3+2]=z;uv[k*2]=x/6.5;uv[k*2+1]=z/6.5;}
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;idx.push(a,c,b,b,c,d);}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+  const tex=grassTexture();tex.repeat.set(1,1);
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:tex,color:'#ffffff',roughness:1,metalness:0,emissive:'#ffffff',emissiveMap:tex,emissiveIntensity:.2}));mesh.receiveShadow=true;scene.add(mesh);   // a little self-light so the hillside reads at night
+  // Retaining wall round the plaza (the stair opens the front), with a coping stone on top and a few courses.
+  const wall=color('#6f6b78',0,.96),cap=color('#948fa0',0,.9),joint=color('#4d4a58',0,1);
+  const T=.26,off=.2+T/2,top=-.02,bot=-1.7,hh=top-bot,cy=(top+bot)/2;
+  const xl=PLAZA.x0-off,xr=PLAZA.x1+off,zb2=PLAZA.z0-off,zf=PLAZA.z1+off;
+  const run=(x0:number,x1:number,z0:number,z1:number,alongX:boolean)=>{
+    const cx=(x0+x1)/2,cz=(z0+z1)/2,len=alongX?x1-x0:z1-z0;
+    box(scene,cx,cy,cz,alongX?len:T,hh,alongX?T:len,wall);
+    box(scene,cx,top+.03,cz,alongX?len+.04:T+.08,.07,alongX?T+.08:len+.04,cap);
+    for(const cyy of [-.3,-.58,-.9]){const m=box(scene,cx,cyy,cz,alongX?len:T+.03,.025,alongX?T+.03:len,joint);m.castShadow=false;}
+  };
+  const gap=STAIR.w/2+.15;
+  run(xl-T/2,xr+T/2,zb2,zb2,true);
+  run(xl-T/2,-gap,zf,zf,true);run(gap,xr+T/2,zf,zf,true);
+  run(xl,xl,zb2,zf,false);run(xr,xr,zb2,zf,false);
+  // Buttress blocks every few metres so the wall is not one flat slab.
+  for(let x=xl+1.4;x<xr;x+=3.1){if(Math.abs(x)<gap+.3)continue;box(scene,x,cy+.1,zf+.1,.34,hh-.2,.2,wall);box(scene,x,cy+.1,zb2-.1,.34,hh-.2,.2,wall);}
+  for(let z=zb2+1.6;z<zf;z+=3.2){box(scene,xl-.1,cy+.1,z,.2,hh-.2,.34,wall);box(scene,xr+.1,cy+.1,z,.2,hh-.2,.34,wall);}
+  // The stair: twelve broad stone treads that follow the slope, with low cheek walls.
+  const tread=(STAIR.z1-STAIR.z0)/STAIR.n,topN=terrainY(0,STAIR.z1)+.14,top0=-.17,stone2=color('#7d7987',0,.92),nosing=color('#a6a1ae',0,.88);
+  for(let k=0;k<STAIR.n;k++){
+    const zc=STAIR.z0+tread*(k+.5),tY=top0+(topN-top0)*k/(STAIR.n-1),bY=Math.min(tY-.45,terrainY(0,zc+tread/2)-.25);
+    box(scene,STAIR.x,(tY+bY)/2,zc,STAIR.w,tY-bY,tread+.02,stone2);
+    box(scene,STAIR.x,tY-.015,zc+tread/2-.03,STAIR.w+.04,.05,.09,nosing);
+    for(const s of [-1,1])box(scene,STAIR.x+s*(STAIR.w/2+.12),(tY+.42+bY)/2,zc,.24,tY+.42-bY,tread+.02,wall);
+  }
+  // Rocks scattered on the slope: grey boulders with a mossy cap, never on the stair or path.
+  const rockA=new THREE.MeshStandardMaterial({color:'#6c6a76',roughness:1,flatShading:true}),rockB=new THREE.MeshStandardMaterial({color:'#7b7884',roughness:1,flatShading:true});
+  const moss2=new THREE.MeshStandardMaterial({color:'#3f7a54',roughness:1,flatShading:true});
+  let placed=0;const want=mobile?20:34;
+  for(let i=0;placed<want&&i<600;i++){
+    const x=(hg(i*7+501)-.5)*56,z=-24+hg(i*7+502)*56,d=plazaDist(x,z);
+    if(d<1.0||d>13||!offPath(x,z,.8))continue;
+    placed++;
+    const s=.28+hg(i*7+503)*.75,y=terrainY(x,z);
+    const g=new THREE.Group();g.position.set(x,y-.05*s,z);g.rotation.y=hg(i*7+504)*6.28;scene.add(g);
+    const r=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),i%2?rockA:rockB);r.scale.set(s*1.25,s*.72,s);r.position.y=s*.4;r.castShadow=false;g.add(r);
+    if(s>.45){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),moss2);m.scale.set(s*.85,s*.3,s*.72);m.position.set(s*.08,s*.82,0);m.castShadow=false;g.add(m);}
+    if(s>.7){const r2=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),rockB);r2.scale.set(s*.6,s*.42,s*.5);r2.position.set(s*1.0,s*.18,s*.5);r2.castShadow=false;g.add(r2);}
+  }
+  // Round shrubs hugging the foot of the wall on the sides and back (not at the stair).
+  const shrubMats=[new THREE.MeshStandardMaterial({color:'#2d7a58',roughness:.9,flatShading:true}),new THREE.MeshStandardMaterial({color:'#3f9468',roughness:.9,flatShading:true}),new THREE.MeshStandardMaterial({color:'#24634f',roughness:.9,flatShading:true})];
+  const shrub=(x:number,z:number,s:number,k:number)=>{
+    const y=terrainY(x,z);
+    for(let j=0;j<3;j++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),shrubMats[(k+j)%3]);m.scale.set(s*(1-j*.12),s*.78*(1-j*.1),s*(1-j*.12));m.position.set(x+(j-1)*s*.7,y+s*.55,z+(j%2?.25:-.2)*s);m.castShadow=false;scene.add(m);}
+  };
+  let k=0;
+  for(let x=xl-.8;x<xr+.8;x+=2.4+hg(k+700)){shrub(x,zb2-.95-hg(k+710)*.5,.5+hg(k+720)*.35,k);k++;}
+  for(let z=zb2;z<zf;z+=2.4+hg(k+700)){shrub(xl-.95-hg(k+710)*.5,z,.5+hg(k+720)*.35,k);k++;shrub(xr+.95+hg(k+711)*.5,z+1.1,.5+hg(k+721)*.35,k);k++;}
+  for(let x=xl-.8;x<-gap-.5;x+=2.5){shrub(x,zf+.9+hg(k+712)*.4,.45+hg(k+722)*.3,k);k++;}
+  for(let x=gap+.7;x<xr+.8;x+=2.5){shrub(x,zf+.9+hg(k+713)*.4,.45+hg(k+723)*.3,k);k++;}
+  // The path from the foot of the stair, wide and sandy, with a few stepping stones beside it.
+  const pts=pathPoints(),verts:number[]=[],pidx:number[]=[];
+  pts.forEach((p,i)=>{
+    const n=pts[Math.min(i+1,pts.length-1)],q=pts[Math.max(i-1,0)];let tx=n.x-q.x,tz=n.z-q.z;const l=Math.hypot(tx,tz)||1;tx/=l;tz/=l;
+    const w=1.35+i*.035,y=terrainY(p.x,p.z)+.03;
+    verts.push(p.x+tz*w,terrainY(p.x+tz*w,p.z-tx*w)+.03,p.z-tx*w,p.x-tz*w,terrainY(p.x-tz*w,p.z+tx*w)+.03,p.z+tx*w);
+    if(i<pts.length-1){const a=i*2;pidx.push(a,a+2,a+1,a+1,a+2,a+3);}
+    void y;
+  });
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));pg.setIndex(pidx);pg.computeVertexNormals();
+  const pm=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({color:'#5f5140',roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,side:THREE.DoubleSide}));pm.receiveShadow=true;scene.add(pm);
+  for(let i=0;i<(mobile?10:18);i++){
+    const p=pts[Math.min(pts.length-1,Math.floor(hg(i+900)*pts.length))],side=hg(i+910)<.5?-1:1,x=p.x+side*(1.9+hg(i+920)*.5),z=p.z+(hg(i+930)-.5)*1.2,s=.2+hg(i+940)*.16;
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(s,s*1.08,.1,7),rockB);m.position.set(x,terrainY(x,z)+.04,z);m.rotation.y=hg(i+950)*6;m.castShadow=false;scene.add(m);
+  }
+}
+
+/** Timber corbels under the slab edges and a tile cone roof over the stair landing, a weathervane and a wind chime on the cabana. */
+function exteriorExtras(b:THREE.Object3D,ground:WallDef[],upper:WallDef[]){
+  const corbel=(w:WallDef,lx:number,y:number)=>{
+    const g=new THREE.Group();g.position.set(w.x,w.y,w.z);g.rotation.y=w.rot;b.add(g);
+    box(g,lx,y-w.y,.1,.13,.26,.2,timberMat);box(g,lx,y-w.y+.1,.17,.15,.07,.32,timberWarm);
+    rod(g,lx,y-w.y-.12,.03,y-w.y-.02,.3,.025,timberMat,5);
+  };
+  // Ground slab (bottom 4.265): right, left and back walls; the front has the awning.
+  for(const w of ground.slice(1))for(let lx=-w.W/2+.55;lx<w.W/2-.3;lx+=1.05)if(wallFree(w,lx,3.95-w.y,.14,.32))corbel(w,lx,4.12);
+  // Roof slab (bottom 7.725): left, right and back walls of the upper floor.
+  for(const w of upper.slice(1))for(let lx=-w.W/2+.55;lx<w.W/2-.3;lx+=1.05)if(wallFree(w,lx,7.30-w.y,.14,.32))corbel(w,lx,7.52);
+  // Cone roof over the spiral-stair landing, carried on a thin rod above the landing lantern.
+  const cx=5.5,cz=-1.85;
+  cyl(b,cx,5.85,cz,.03,.03,.5,iron,6);
+  const cone=cyl(b,cx,6.2,cz,.04,.95,.62,iron,14);cone.material=tileMat(8,2.2);cone.castShadow=true;
+  cyl(b,cx,5.9,cz,.97,.97,.07,timberMat,14);sphere(b,cx,6.56,cz,.06,brass,1);
+  // Weathervane on the cabana ridge.
+  const wx=-3.05,wz=-.85,wy=10.36;
+  cyl(b,wx,wy+.4,wz,.02,.02,.8,iron,6);
+  box(b,wx,wy+.62,wz,.55,.04,.04,iron);box(b,wx+.31,wy+.62,wz,.14,.12,.03,iron).rotation.z=.0;box(b,wx-.27,wy+.62,wz,.12,.14,.03,iron);
+  box(b,wx,wy+.45,wz,.04,.04,.34,iron);box(b,wx,wy+.45,wz,.34,.04,.04,iron);
+  // Wind chime hanging from the cabana's front plate.
+  const chx=-3.55,chz=.58,chy=9.7;
+  cyl(b,chx,chy-.02,chz,.09,.09,.02,timberWarm,8);
+  for(let i=0;i<5;i++){const a=i/5*Math.PI*2,r=.055,len=.22+(i%3)*.07;cyl(b,chx+Math.cos(a)*r,chy-.1-len/2,chz+Math.sin(a)*r,.009,.009,len,color('#cfd6de',.8,.3),5);}
+  cyl(b,chx,chy-.2,chz,.02,.02,.2,iron,5);sphere(b,chx,chy-.42,chz,.035,brass,1);
+}
+
+/** A hanging planter: terracotta pot on a cord from a beam, a leafy crown and trailing vines. */
+function hangingPlanter(b:THREE.Object3D,x:number,y:number,z:number,beamY:number){
+  line(b,[V(x,beamY,z),V(x,y+.22,z)],.014,dark);
+  cyl(b,x,y+.1,z,.2,.13,.2,color('#a8593a',0,.85),9);cyl(b,x,y+.21,z,.215,.215,.035,color('#8d4a30',0,.85),9);
+  for(const [dx,dy,dz,r] of [[0,.38,0,.2],[.15,.3,.07,.14],[-.15,.3,-.05,.14],[0,.3,.17,.12]] as const){const s=sphere(b,x+dx,y+dy,z+dz,r,(dx>0||dz>0)?leaf2:leaf,1);s.castShadow=false;}
+  for(let i=0;i<4;i++){
+    const a=i*1.6+.4,vx=x+Math.cos(a)*.16,vz=z+Math.sin(a)*.16,len=.45+(i%3)*.2;
+    line(b,[V(vx,y+.03,vz),V(vx+Math.cos(a)*.03,y-len*.55,vz+Math.sin(a)*.03),V(vx,y-len,vz)],.01,moss);
+    for(let j=0;j<5;j++){const t=(j+.6)/5.4,lf=new THREE.Mesh(new THREE.OctahedronGeometry(.045,0),(i+j)%2?leaf:leaf2);lf.position.set(vx+(j%2?.025:-.025),y+.03-len*t,vz);lf.scale.set(.9,1.4,.4);lf.userData.foliage=true;b.add(lf);}
+  }
+}
+/** Floating wall shelf with a few props. `rot` turns local +Z (out of the wall) to the world; the shelf runs along local X. */
+function wallShelf(b:THREE.Object3D,x:number,y:number,z:number,len:number,rot:number,kit:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot;b.add(g);
+  box(g,0,0,.11,len,.05,.22,timberWarm);
+  for(const s of [-1,1])box(g,s*(len/2-.12),-.07,.06,.04,.14,.12,iron);
+  const jar=color('#cfe3e0',0,.25),books=['#7a3f4a','#3e5a6b','#c9a56b','#5b7a4a','#b8643a'].map(c=>color(c,0,.8));
+  if(kit===0){
+    for(let i=0;i<5;i++)box(g,-len/2+.15+i*.07,.12,.1,.055,.2-(i%2)*.03,.15,books[i%5]);
+    cyl(g,.1,.1,.11,.07,.07,.2,jar,8);cyl(g,.3,.075,.11,.05,.05,.15,color('#e0b679',0,.4),8);
+    cyl(g,len/2-.2,.07,.11,.06,.075,.09,color('#a8593a',0,.85),8);sphere(g,len/2-.2,.2,.11,.1,leaf,1).castShadow=false;
+  }else if(kit===1){
+    cyl(g,-len/2+.18,.07,.11,.07,.08,.12,color('#a8593a',0,.85),8);sphere(g,-len/2+.18,.2,.11,.11,leaf2,1).castShadow=false;
+    for(let i=0;i<3;i++)box(g,-.05+i*.08,.12,.1,.06,.2,.15,books[(i+2)%5]);
+    box(g,.3,.05,.11,.14,.05,.14,books[1]);cyl(g,.3,.12,.11,.045,.05,.12,color('#d8d0c0',0,.5),8);
+    cyl(g,len/2-.12,.06,.11,.035,.035,.1,color('#f3ead2',0,.6),8);sphere(g,len/2-.12,.135,.11,.015,bright,0);halo(g,len/2-.12,.14,.13,.45,'#ffb866',.5);
+  }else{
+    for(let i=0;i<3;i++)cyl(g,-len/2+.15+i*.17,.08+(i%2)*.02,.11,.06,.06,.17+(i%2)*.04,jar,8);
+    box(g,.12,.06,.11,.3,.12,.18,books[0]);box(g,.12,.15,.11,.26,.05,.17,books[3]);
+    cyl(g,len/2-.17,.07,.11,.07,.08,.1,color('#a8593a',0,.85),8);sphere(g,len/2-.17,.17,.11,.09,leaf,1).castShadow=false;
+  }
+  return g;
+}
+/** A framed picture of an invented, generic scene (hills, a moon and a lamp-lit window), drawn on a canvas. */
+function framedPrint(b:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,rot:number,kind:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot;b.add(g);
+  const tex=texture((c,W,H)=>{
+    const sky=c.createLinearGradient(0,0,0,H);
+    if(kind===0){sky.addColorStop(0,'#2b3a6b');sky.addColorStop(1,'#e8b27a');}else{sky.addColorStop(0,'#6fa6c4');sky.addColorStop(1,'#f3e2b6');}
+    c.fillStyle=sky;c.fillRect(0,0,W,H);
+    c.fillStyle=kind===0?'#f6e7b8':'#fff3c8';c.beginPath();c.arc(W*.7,H*.3,W*.09,0,7);c.fill();
+    c.fillStyle=kind===0?'#25405a':'#4f8a6a';c.beginPath();c.moveTo(0,H);c.lineTo(0,H*.62);c.quadraticCurveTo(W*.3,H*.4,W*.55,H*.66);c.quadraticCurveTo(W*.8,H*.5,W,H*.7);c.lineTo(W,H);c.fill();
+    c.fillStyle=kind===0?'#162a3c':'#356b50';c.beginPath();c.moveTo(0,H);c.lineTo(0,H*.8);c.quadraticCurveTo(W*.4,H*.62,W,H*.86);c.lineTo(W,H);c.fill();
+    c.fillStyle='#ffcf7a';c.fillRect(W*.28,H*.72,W*.07,W*.07);
+  },256,Math.round(256*h/w));
+  box(g,0,0,.03,w+.1,h+.1,.05,timberMat);
+  const m=new THREE.Mesh(planeGeometry,new THREE.MeshStandardMaterial({map:tex,roughness:.8,emissive:'#ffffff',emissiveMap:tex,emissiveIntensity:.12,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  m.scale.set(w,h,1);m.position.set(0,0,.058);g.add(m);
+  return g;
+}
+/** Wall clock: a round face and two hands, facing local +Z. */
+function wallClock(b:THREE.Object3D,x:number,y:number,z:number,rot:number){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot;b.add(g);
+  const face=texture((c,W,H)=>{c.fillStyle='#f1e6cc';c.beginPath();c.arc(W/2,H/2,W/2,0,7);c.fill();c.fillStyle='#3a2a20';for(let i=0;i<12;i++){const a=i/12*Math.PI*2;c.save();c.translate(W/2,H/2);c.rotate(a);c.fillRect(-3,-W/2+8,6,i%3?10:20);c.restore();}},128,128);
+  const ring=cyl(g,0,0,.03,.3,.3,.06,timberMat,20);ring.rotation.x=Math.PI/2;
+  const m=new THREE.Mesh(new THREE.CircleGeometry(.27,24),new THREE.MeshStandardMaterial({map:face,roughness:.7,emissive:'#ffffff',emissiveMap:face,emissiveIntensity:.1}));m.position.z=.065;g.add(m);
+  box(g,0,.07,.075,.02,.15,.008,iron);const h2=box(g,.05,0,.08,.12,.02,.008,iron);h2.rotation.z=.5;
+}
+/** Everything indoors that is new in vtest24; coordinates are building-local. Nothing here sits where existing furniture, posters or lamps do. */
+function cozyInterior(b:THREE.Object3D){
+  // Timber ceiling beams, matching the frame outside (ground ceiling 4.22, upper ceiling 7.66).
+  for(const z of [-2.2,-.35,1.2,2.6])box(b,0,4.13,z,7.98,.17,.2,timberMat);
+  for(const x of [-3.93,3.93])box(b,x,4.13,0,.16,.17,5.6,timberMat);
+  for(const z of [-1.9,-.2,.55])box(b,-1.1,7.56,z,5.0,.17,.2,timberMat);
+  for(const x of [-3.58,1.38])box(b,x,7.56,-1.0,.16,.17,3.5,timberMat);
+  // Swag lights along the beams.
+  festoon(b,V(-3.85,4.02,2.45),V(3.85,4.02,2.45),.34,12);
+  festoon(b,V(-3.85,4.02,-1.55),V(-.5,4.02,-1.55),.28,7);
+  festoon(b,V(-3.5,7.45,-.9),V(1.3,7.45,-.9),.3,10);
+  // Hanging planters in the windows, ground floor and upper floor.
+  hangingPlanter(b,-3.3,3.05,2.6,4.05);hangingPlanter(b,3.2,3.05,2.6,4.05);
+  hangingPlanter(b,-2.6,6.75,.55,7.47);hangingPlanter(b,.35,6.75,.55,7.47);
+  // Wall shelves with books, jars and plants (clear walls only), a clock over the bookshelf, framed prints.
+  wallShelf(b,-4.01,2.15,2.35,.8,Math.PI/2,0);wallShelf(b,-4.01,2.7,2.35,.8,Math.PI/2,1);
+  wallShelf(b,-.15,2.1,-2.835,1.0,0,2);framedPrint(b,-.15,2.95,-2.835,.55,.7,0,0);
+  wallClock(b,4.0,3.45,.7,-Math.PI/2);
+  wallShelf(b,1.46,6.95,-2.0,1.0,-Math.PI/2,0);framedPrint(b,1.46,6.2,-2.0,.62,.8,-Math.PI/2,1);
+  // Paper lanterns hanging in the upper room's back-right corner (fake glow only).
+  const paper=color('#ffd9a0',0,.5,'#ffa852',.9);
+  for(const [x,y,z,r] of [[.85,6.95,-2.4,.2],[.5,7.2,-2.15,.16],[1.1,7.15,-2.15,.14]] as const){
+    line(b,[V(x,7.6,z),V(x,y+r,z)],.01,dark);const s=sphere(b,x,y,z,r,paper,1);s.scale.y=1.15;halo(b,x,y,z,1.1,'#ffb866',.5);
+  }
+  // A striped runner by the shop door.
+  const rug=color('#8a3b2e',0,.95,'#ff8f45',.05*tuning.room),stripe=color('#e3c58a',0,.95);
+  box(b,.06,.085,2.2,1.15,.014,1.15,rug).castShadow=false;
+  for(const dz of [-.4,-.22,.3,.48])box(b,.06,.094,2.2+dz,1.15,.004,.07,stripe).castShadow=false;
 }
 // ---------------------------------------------------------------------------------------------
 // VTEST22: the Porco Rosso / Ghibli pass. A painted night sky with drifting clouds and a low moon, layered hills, a grassy meadow with
@@ -2998,12 +3217,12 @@ function meadow(scene:THREE.Object3D,mobile:boolean){
   for(let i=0;i<(mobile?12:18);i++){
     const a=hg(i*5+11)*Math.PI*2,R=36+hg(i*5+12)*34,ry=5+hg(i*5+13)*9,rx=15+hg(i*5+14)*14,rz=11+hg(i*5+15)*8;
     const h=new THREE.Mesh(new THREE.SphereGeometry(1,14,8),new THREE.MeshStandardMaterial({color:hillCols[Math.min(3,Math.floor((R-36)/9))],roughness:1,flatShading:true}));
-    h.scale.set(rx,ry,rz);h.position.set(Math.cos(a)*R,-ry*.42,Math.sin(a)*R);h.rotation.y=a;scene.add(h);
+    h.scale.set(rx,ry,rz);h.position.set(Math.cos(a)*R,-ry*.42+(KNOLL?-FAR_GROUND-.28:0),Math.sin(a)*R);h.rotation.y=a;scene.add(h);
   }
   // trees: round, layered canopies on short trunks. Only to the sides and behind, so the front camera view stays open.
-  const spots:[number,number,number][]=[[-23,-3,1.15],[-25,4,1],[-24,11,.9],[24,-5,1.15],[26,2,1],[25,9,.9],[-12,-20,1.3],[-3,-23,1.5],[6,-22,1.35],[15,-19,1.25],[-21,-14,1.35],[23,-13,1.3],[0,-28,1.8],[-14,-26,1.6],[12,-26,1.65]];
+  const spots:[number,number,number][]=[[-23,-3,1.15],[-25,4,1],[-24,11,.9],[24,-5,1.15],[26,2,1],[25,9,.9],[-12,-20,1.3],[-3,-23,1.5],[6,-22,1.35],[15,-19,1.25],[-21,-14,1.35],[23,-13,1.3],[0,-28,1.8],[-14,-26,1.6],[12,-26,1.65],[-7,-11.5,2.1],[9,-13,1.7]];
   spots.forEach(([x,z,s],i)=>{
-    const g=new THREE.Group();g.position.set(x,-.28,z);g.scale.setScalar(s);g.rotation.y=hg(i+40)*6.28;scene.add(g);
+    const g=new THREE.Group();g.position.set(x,terrainY(x,z)-.05,z);g.scale.setScalar(s);g.rotation.y=hg(i+40)*6.28;scene.add(g);
     cyl(g,0,.9,0,.22,.34,1.8,bark,6).castShadow=false;
     const blobs:[number,number,number,number,THREE.Material][]=[[0,2.9,0,1.9,leafA],[-1.15,2.3,.4,1.35,leafB],[1.1,2.5,-.3,1.5,leafC],[.2,4.1,.2,1.3,leafB],[-.3,3.4,-1.0,1.2,leafC],[.5,3.3,1.0,1.1,leafA]];
     for(const [bx,by,bz,br,bm] of blobs){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(br,1),bm);m.position.set(bx,by,bz);m.castShadow=false;g.add(m);}
@@ -3014,25 +3233,25 @@ function meadow(scene:THREE.Object3D,mobile:boolean){
   const flowerMats=[new THREE.MeshStandardMaterial({color:'#f08aa8',roughness:.7,emissive:'#f08aa8',emissiveIntensity:.18}),new THREE.MeshStandardMaterial({color:'#f6e8b4',roughness:.7,emissive:'#f6e8b4',emissiveIntensity:.18}),new THREE.MeshStandardMaterial({color:'#ffc84a',roughness:.7,emissive:'#ffc84a',emissiveIntensity:.2})];
   let placed=0;
   for(let i=0;placed<(mobile?150:260)&&i<2000;i++){
-    const x=(hg(i*3+1)-.5)*40,z=-17+hg(i*3+2)*33;
-    if(insidePlaza(x,z,.7))continue;
-    if(z>9.5&&Math.abs(x)<9)continue;                                // keep the foreground in front of the shop open
+    const x=(hg(i*3+1)-.5)*44,z=-18+hg(i*3+2)*42;
+    if(insidePlaza(x,z,.7)||!offPath(x,z,.3))continue;               // keep the stair and the path clear
     placed++;
-    const t=new THREE.Mesh(tuftGeo,tuftMats[i%3]);const s=.7+hg(i*3)*.9;t.position.set(x,-.28,z);t.scale.set(s,s*(.8+hg(i)*.6),s);t.rotation.y=hg(i+7)*6.28;t.castShadow=false;scene.add(t);
-    if(i%4===0){const fx=x+.12,fz=z+.05,fh=.34*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(fx,-.28+fh/2,fz);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.075,0),flowerMats[(i>>2)%3]);f.position.set(fx,-.28+fh,fz);f.castShadow=false;scene.add(f);}
+    const t=new THREE.Mesh(tuftGeo,tuftMats[i%3]);const s=.7+hg(i*3)*.9;t.position.set(x,terrainY(x,z),z);t.scale.set(s,s*(.8+hg(i)*.6),s);t.rotation.y=hg(i+7)*6.28;t.castShadow=false;scene.add(t);
+    if(i%4===0){const fx=x+.12,fz=z+.05,fh=.34*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(fx,terrainY(x,z)+fh/2,fz);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.075,0),flowerMats[(i>>2)%3]);f.position.set(fx,terrainY(x,z)+fh,fz);f.castShadow=false;scene.add(f);}
   }
   // flower patches right at the plaza edge, as in the reference gardens
   for(let i=0;i<(mobile?26:48);i++){
     const side=i%4,t=hg(i+300);let x:number,z:number;
-    if(side===0){x=PLAZA.x0-.35-hg(i+310)*.7;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
-    else if(side===1){x=PLAZA.x1+.35+hg(i+310)*.7;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
-    else if(side===2){x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z0-.35-hg(i+310)*.7;}
-    else{x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z1+.45+hg(i+310)*.9;}
+    if(side===0){x=PLAZA.x0-.8-hg(i+310)*.8;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
+    else if(side===1){x=PLAZA.x1+.8+hg(i+310)*.8;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
+    else if(side===2){x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z0-.8-hg(i+310)*.8;}
+    else{x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z1+.85+hg(i+310)*.9;if(!offPath(x,z,.2))continue;}
     const s=.5+hg(i+320)*.5;
-    const tf=new THREE.Mesh(tuftGeo,tuftMats[i%3]);tf.position.set(x,-.28,z);tf.scale.set(s,s,s);tf.castShadow=false;scene.add(tf);
-    const fh=.5*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(x+.04,-.28+fh/2,z);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.085,0),flowerMats[i%3]);f.position.set(x+.04,-.28+fh,z);f.castShadow=false;scene.add(f);
+    const tf=new THREE.Mesh(tuftGeo,tuftMats[i%3]);tf.position.set(x,terrainY(x,z),z);tf.scale.set(s,s,s);tf.castShadow=false;scene.add(tf);
+    const fh=.5*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(x+.04,terrainY(x,z)+fh/2,z);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.085,0),flowerMats[i%3]);f.position.set(x+.04,terrainY(x,z)+fh,z);f.castShadow=false;scene.add(f);
   }
-  // A sandy path winding from the plaza's front curb toward the viewer, as in the hilltop-house reference.
+  // A sandy path winding from the plaza's front curb toward the viewer, as in the hilltop-house reference (vtest24 replaces it with the stair and a longer path).
+  if(KNOLL)return;
   const pathPts=[[0,5.5],[.3,7.2],[1.6,9.3],[3.8,11.6],[6.6,14],[10,16.5]] as const,left:number[]=[],right:number[]=[];
   pathPts.forEach(([px,pz],i)=>{
     const n=pathPts[Math.min(i+1,pathPts.length-1)],p=pathPts[Math.max(i-1,0)];let tx=n[0]-p[0],tz=n[1]-p[1];const l=Math.hypot(tx,tz);tx/=l;tz/=l;
@@ -3049,7 +3268,7 @@ function fireflies(scene:THREE.Object3D,mobile:boolean,reduced:boolean){
   const n=mobile?36:64,base=new Float32Array(n*3),ph=new Float32Array(n);
   for(let i=0;i<n;i++){
     let x:number,z:number,k=0;do{x=(hg(i*4+k)-.5)*30;z=-12+hg(i*4+k+500)*22;k++;}while(insidePlaza(x,z,-.5)&&k<30);
-    base[i*3]=x;base[i*3+1]=.5+hg(i*4+2)*2.6;base[i*3+2]=z;ph[i]=hg(i*4+3);
+    base[i*3]=x;base[i*3+1]=(insidePlaza(x,z,1)?0:terrainY(x,z)+.28)+.5+hg(i*4+2)*2.6;base[i*3+2]=z;ph[i]=hg(i*4+3);
   }
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(base,3));geo.setAttribute('phase',new THREE.Float32BufferAttribute(ph,1));
   const uniforms={uTime:{value:0},uPx:{value:Math.min(window.devicePixelRatio||1,mobile?1.25:1.5)},uStill:{value:reduced?1:0}};
@@ -3066,7 +3285,7 @@ function ghibliWorld(scene:THREE.Object3D,reduced:boolean){
   if(!GHIBLI_SURROUNDINGS)return (_e:number)=>{};
   const mobile=typeof window.matchMedia==='function'&&window.matchMedia('(max-width: 750px)').matches;
   applyWindToLeaves();windAmp.value=reduced?0:1;
-  const sky=paintedSky(scene,mobile);meadow(scene,mobile);const fly=fireflies(scene,mobile,reduced);
+  const sky=paintedSky(scene,mobile);meadow(scene,mobile);knoll(scene,mobile);const fly=fireflies(scene,mobile,reduced);
   return (elapsed:number)=>{windU.value=elapsed;sky(reduced?0:elapsed);fly(elapsed);};
 }
 /** vtest21 (performance): the scene was ~3,400 separate meshes, i.e. ~3,400 draw calls (plus the same again for the shadow map on every frame).
