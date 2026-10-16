@@ -2018,6 +2018,19 @@ function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,c
   box(g,0,0,.2,.012,.18,.012,metal);box(g,0,0,.2,.18,.012,.012,metal);          // propeller
   for(const sx of [-.15,.15]){const top=.09,len=ceilingY-y-top;box(g,sx,top+len/2,.02,.014,len,.014,color('#d9cfb9',0,.9));}   // twine up to the ceiling, thick and pale enough to read from the street
 }
+/** A framed poster that shows a supplied picture from public/posters (a flat colour until it loads). Faces +Z; w x h in metres. */
+function imagePoster(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,file:string,fallback:string){
+  const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
+  box(g,0,0,.02,w+.06,h+.06,.04,color('#15171d',0,.7));
+  const tex=texture((c,W,H)=>{c.fillStyle=fallback;c.fillRect(0,0,W,H);},512,Math.round(512*h/w));
+  if(typeof Image!=='undefined'){
+    const im=new Image();
+    im.onload=()=>{const cv=tex.image as HTMLCanvasElement;const c=cv.getContext('2d');if(!c)return;c.drawImage(im,0,0,cv.width,cv.height);tex.needsUpdate=true;};
+    im.src=`${import.meta.env.BASE_URL}posters/${file}`;
+  }
+  litPlane(g,0,0,.0405,w,h,tex,0,.22);
+  return g;
+}
 function endgameInteriors(scene:THREE.Object3D){
   const gf=.07,uf=4.425,counter=gf+1.15;   // counter top
   const copper=color('#b9683a',.5,.4),cream=color('#efe3c8',0,.7);
@@ -2064,10 +2077,12 @@ function endgameInteriors(scene:THREE.Object3D){
   box(scene,-1.02,tt+.015,-1.05,.2,.03,.28,color('#425e6c'),.2);box(scene,-1.02,tt+.04,-1.05,.19,.02,.27,color('#d9cfb9'),.15);
   box(scene,-1.55,tt+.012,-.72,.17,.024,.25,color('#965857'),-.3);
   soccerBall(scene,-.7,uf+.11,-2.5);
-  // Four framed record sleeves in a 2 x 2 grid on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
-  ([['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,i<2?6.2:5.8,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
+  // Six framed pictures in a 2 wide x 3 tall grid (top row: two supplied pictures; below: four record sleeves) on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
+  ([['','','#2d6fb8','#ffffff','skydive.jpg'],['','','#c9371f','#ffffff','red-pool.jpg'],['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,6.6-Math.floor(i/2)*.4,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
   // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
   baggioPoster(scene,1.5,2.2,-2.835);
+  // Supplied desert poster, further right on the same wall (same inner face), clear of the Baggio poster.
+  imagePoster(scene,2.85,2.2,-2.835,.94,1.28,'desert-poster.jpg','#d9b27a');
 }
 /** Building-level end-game pieces outside the walls (building-local units): the cat, the quetzal, the flag, the surfboard and the baseball kit. */
 // ---------------------------------------------------------------------------------------------

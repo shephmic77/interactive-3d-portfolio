@@ -42,7 +42,7 @@ npm run preview   # serve the production build locally
 │   ├── content.ts        # text and links shown in the portfolio
 │   └── style.css         # interface styling
 ├── docs/
-│   └── changelog/        # notes for each iteration (V7 → VTEST8)
+│   └── changelog/        # notes for each iteration (V7 → VTEST9)
 ├── package.json
 └── tsconfig.json
 ```
