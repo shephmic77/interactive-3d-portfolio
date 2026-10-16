@@ -1138,7 +1138,7 @@ function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group
 /** The paved plaza (world units). Kept tight around the building so the whole scene reads from the default view. */
 const PLAZA={x0:-7.2,x1:7.2,z0:-4.9,z1:5.2};
 function floor(scene:THREE.Object3D){
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(170,170),new THREE.MeshStandardMaterial({color:'#0b1124',metalness:0,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.28;ground.receiveShadow=true;scene.add(ground);  // matte: a glossy ground turned every point light into a huge white-blue specular blob
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(170,170),GHIBLI_SURROUNDINGS?new THREE.MeshStandardMaterial({map:grassTexture(),color:'#ffffff',metalness:0,roughness:1}):new THREE.MeshStandardMaterial({color:'#0b1124',metalness:0,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.28;ground.receiveShadow=true;scene.add(ground);  // matte: a glossy ground turned every point light into a huge white-blue specular blob
  const cx=(PLAZA.x0+PLAZA.x1)/2,cz=(PLAZA.z0+PLAZA.z1)/2;
  box(scene,cx,-.16,cz,PLAZA.x1-PLAZA.x0+.4,.32,PLAZA.z1-PLAZA.z0+.4,color('#3a435d'));
  const paving=[color('#5e596d'),color('#746276'),color('#4d5368'),color('#686475')];
@@ -2691,6 +2691,173 @@ function endgameExterior(scene:THREE.Object3D){
   chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
+// ---------------------------------------------------------------------------------------------
+// VTEST22: the Porco Rosso / Ghibli pass. A painted night sky with drifting clouds and a low moon, layered hills, a grassy meadow with
+// tufts, flowers and round-canopy trees around the plaza, fireflies, and a gentle wind in every leaf. Nothing here moves any existing
+// object, and nothing uses the shared seeded random() (so no existing plant, vine or tile moves): it has its own hash-based generator.
+// Set GHIBLI_SURROUNDINGS to false to get the old empty dark ground back.
+// ---------------------------------------------------------------------------------------------
+const GHIBLI_SURROUNDINGS=true;
+const windU={value:0},windAmp={value:1};
+/** Makes a leaf-like material ruffle in the wind: a small, height-weighted sway added in the vertex shader (works on merged geometry). */
+function windy(mat:THREE.MeshStandardMaterial,strength=.05):THREE.MeshStandardMaterial{
+  mat.onBeforeCompile=(shader:any)=>{
+    shader.uniforms.uWind=windU;shader.uniforms.uWindAmp=windAmp;
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float uWind;\nuniform float uWindAmp;').replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+      float wh=clamp(transformed.y*.45,0.,1.);
+      transformed.x+=sin(uWind*1.6+transformed.z*.9+transformed.y*1.2)*${strength.toFixed(3)}*wh*uWindAmp;
+      transformed.z+=cos(uWind*1.25+transformed.x*.8+transformed.y*.7)*${(strength*.8).toFixed(3)}*wh*uWindAmp;`);
+  };
+  mat.customProgramCacheKey=()=>`wind${strength}`;
+  return mat;
+}
+let windApplied=false;
+function applyWindToLeaves(){if(windApplied)return;windApplied=true;windy(leaf as THREE.MeshStandardMaterial,.035);windy(leaf2 as THREE.MeshStandardMaterial,.035);}
+const hg=(n:number)=>hash1(n*1.618+.37);
+const insidePlaza=(x:number,z:number,pad:number)=>x>PLAZA.x0-pad&&x<PLAZA.x1+pad&&z>PLAZA.z0-pad&&z<PLAZA.z1+pad;
+function grassTexture(){
+  const t=texture((c,W,H)=>{
+    c.fillStyle='#143a33';c.fillRect(0,0,W,H);
+    const tones=['#1b4a3b','#0f2f2c','#235a43','#1a4440','#2b6a46'];
+    for(let i=0;i<2600;i++){                                      // painted grass strokes in soft, uneven patches
+      c.strokeStyle=tones[i%tones.length];c.globalAlpha=.16+hg(i+5)*.18;c.lineWidth=1+hg(i+9)*2.2;
+      const x=hg(i)*W,y=hg(i+1000)*H,len=5+hg(i+2000)*14,a=-Math.PI/2+(hg(i+3000)-.5)*1.1;
+      c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);c.stroke();
+    }
+    c.globalAlpha=1;
+  },512,512);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(26,26);return t;
+}
+/** One painted night sky: gradient dome, stars, a low moon, two drifting cloud bands. Everything ignores fog and tone mapping so the colours stay as painted. */
+function paintedSky(scene:THREE.Object3D,mobile:boolean){
+  const skyTex=texture((c,W,H)=>{
+    const g=c.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#060b22');g.addColorStop(.30,'#0a1a3c');g.addColorStop(.52,'#12305a');g.addColorStop(.68,'#1c4a68');g.addColorStop(.80,'#2f6d70');g.addColorStop(.88,'#6f8a78');g.addColorStop(.93,'#c79a6e');g.addColorStop(1,'#1a2a3a');
+    c.fillStyle=g;c.fillRect(0,0,W,H);
+  },16,512);
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(100,24,16),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,fog:false,toneMapped:false,depthWrite:false}));
+  dome.renderOrder=-10;scene.add(dome);
+  // stars: two sizes, upper sky only
+  for(const [count,size,op] of [[mobile?140:260,1.5,.75],[mobile?10:22,2.6,.95]] as const){
+    const pts=new Float32Array(count*3);
+    for(let i=0;i<count;i++){const a=hg(i*3+size)*Math.PI*2,e=.12+hg(i*3+1+size)*1.2,r=96;pts[i*3]=Math.cos(a)*Math.cos(e)*r;pts[i*3+1]=Math.sin(e)*r;pts[i*3+2]=Math.sin(a)*Math.cos(e)*r;}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+    const stars=new THREE.Points(geo,new THREE.PointsMaterial({color:'#dfe8ff',size,sizeAttenuation:false,transparent:true,opacity:op,fog:false,toneMapped:false,depthWrite:false}));
+    stars.renderOrder=-9;stars.frustumCulled=false;scene.add(stars);
+  }
+  // moon: a soft disc with a halo, low over the hills
+  const moonTex=texture((c,W,H)=>{
+    const g=c.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);g.addColorStop(0,'rgba(255,248,226,1)');g.addColorStop(.20,'rgba(255,244,214,1)');g.addColorStop(.23,'rgba(255,238,200,.55)');g.addColorStop(.5,'rgba(190,210,255,.16)');g.addColorStop(1,'rgba(190,210,255,0)');
+    c.clearRect(0,0,W,H);c.fillStyle=g;c.fillRect(0,0,W,H);
+    c.fillStyle='rgba(200,190,160,.35)';for(const [x,y,r] of [[.46,.44,.035],[.54,.52,.025],[.5,.38,.02]] as const){c.beginPath();c.arc(W*x,H*y,W*r,0,7);c.fill();}
+  },256,256);
+  const moon=new THREE.Sprite(new THREE.SpriteMaterial({map:moonTex,fog:false,toneMapped:false,depthWrite:false,transparent:true}));
+  moon.position.set(-38,16,-70);moon.scale.set(30,30,1);moon.renderOrder=-8;scene.add(moon);
+  // cloud bands: soft painted cumulus, lit pale lilac on top and shaded blue below, drifting at two speeds in opposite directions
+  const clouds:THREE.Texture[]=[];
+  for(const [radius,yMid,height,seed,op] of [[84,30,30,1,.85],[92,44,34,2,.6]] as const){
+    const tex=texture((c,W,H)=>{
+      c.clearRect(0,0,W,H);
+      for(let i=0;i<22;i++){
+        const cx=hg(i+seed*50)*W,cy=H*(.3+hg(i+seed*70)*.45),bw=90+hg(i+seed*90)*150,bh=bw*.28;
+        for(const ox of [-W,0,W]){
+          for(let k=0;k<6;k++){
+            const px=cx+ox+(k-2.5)*bw*.22,py=cy+(hg(i*7+k+seed)-.5)*bh*.5,r=bw*(.22+hg(i*3+k)*.14);
+            const sh=c.createRadialGradient(px,py+r*.25,0,px,py+r*.25,r);sh.addColorStop(0,'rgba(34,58,104,.55)');sh.addColorStop(1,'rgba(34,58,104,0)');c.fillStyle=sh;c.beginPath();c.arc(px,py+r*.25,r,0,7);c.fill();
+            const hi=c.createRadialGradient(px,py-r*.18,0,px,py-r*.18,r*.8);hi.addColorStop(0,'rgba(176,194,236,.65)');hi.addColorStop(1,'rgba(176,194,236,0)');c.fillStyle=hi;c.beginPath();c.arc(px,py-r*.18,r*.8,0,7);c.fill();
+          }
+        }
+      }
+    },1024,256);
+    tex.wrapS=THREE.RepeatWrapping;tex.repeat.set(2,1);clouds.push(tex);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,48,1,true),new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide,transparent:true,opacity:op,fog:false,toneMapped:false,depthWrite:false}));
+    band.position.y=yMid;band.renderOrder=-7;scene.add(band);
+  }
+  return (elapsed:number)=>{clouds[0].offset.x=elapsed*.0035;clouds[1].offset.x=-elapsed*.0022;};
+}
+/** Meadow, hills, trees, tufts and flowers around the plaza. */
+function meadow(scene:THREE.Object3D,mobile:boolean){
+  const leafA=windy(new THREE.MeshStandardMaterial({color:'#2d7a58',roughness:.9,flatShading:true}),.05);
+  const leafB=windy(new THREE.MeshStandardMaterial({color:'#3f9468',roughness:.9,flatShading:true}),.05);
+  const leafC=windy(new THREE.MeshStandardMaterial({color:'#24634f',roughness:.9,flatShading:true}),.05);
+  const bark=new THREE.MeshStandardMaterial({color:'#4a3a38',roughness:1,flatShading:true});
+  // layered hills: dark, rounded domes that fade into the haze with distance
+  const hillCols=['#1c4a44','#1b4450','#1d3f58','#22405e'];
+  for(let i=0;i<(mobile?12:18);i++){
+    const a=hg(i*5+11)*Math.PI*2,R=36+hg(i*5+12)*34,ry=5+hg(i*5+13)*9,rx=15+hg(i*5+14)*14,rz=11+hg(i*5+15)*8;
+    const h=new THREE.Mesh(new THREE.SphereGeometry(1,14,8),new THREE.MeshStandardMaterial({color:hillCols[Math.min(3,Math.floor((R-36)/9))],roughness:1,flatShading:true}));
+    h.scale.set(rx,ry,rz);h.position.set(Math.cos(a)*R,-ry*.42,Math.sin(a)*R);h.rotation.y=a;scene.add(h);
+  }
+  // trees: round, layered canopies on short trunks. Only to the sides and behind, so the front camera view stays open.
+  const spots:[number,number,number][]=[[-23,-3,1.15],[-25,4,1],[-24,11,.9],[24,-5,1.15],[26,2,1],[25,9,.9],[-12,-20,1.3],[-3,-23,1.5],[6,-22,1.35],[15,-19,1.25],[-21,-14,1.35],[23,-13,1.3],[0,-28,1.8],[-14,-26,1.6],[12,-26,1.65]];
+  spots.forEach(([x,z,s],i)=>{
+    const g=new THREE.Group();g.position.set(x,-.28,z);g.scale.setScalar(s);g.rotation.y=hg(i+40)*6.28;scene.add(g);
+    cyl(g,0,.9,0,.22,.34,1.8,bark,6).castShadow=false;
+    const blobs:[number,number,number,number,THREE.Material][]=[[0,2.9,0,1.9,leafA],[-1.15,2.3,.4,1.35,leafB],[1.1,2.5,-.3,1.5,leafC],[.2,4.1,.2,1.3,leafB],[-.3,3.4,-1.0,1.2,leafC],[.5,3.3,1.0,1.1,leafA]];
+    for(const [bx,by,bz,br,bm] of blobs){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(br,1),bm);m.position.set(bx,by,bz);m.castShadow=false;g.add(m);}
+  });
+  // grass tufts and flowers, scattered over the meadow outside the plaza
+  const tuftGeo=mergeGeometries([0,1,2,3,4].map(i=>{const g=new THREE.ConeGeometry(.055,.3+(i%3)*.08,3);g.translate(0,(.3+(i%3)*.08)/2,0);g.rotateZ(((i%2)?1:-1)*(.25+.12*(i%3)));g.rotateY(i*1.26);return g.toNonIndexed();}))!;
+  const tuftMats=[leafA,leafB,leafC];
+  const flowerMats=[new THREE.MeshStandardMaterial({color:'#f08aa8',roughness:.7,emissive:'#f08aa8',emissiveIntensity:.18}),new THREE.MeshStandardMaterial({color:'#f6e8b4',roughness:.7,emissive:'#f6e8b4',emissiveIntensity:.18}),new THREE.MeshStandardMaterial({color:'#ffc84a',roughness:.7,emissive:'#ffc84a',emissiveIntensity:.2})];
+  let placed=0;
+  for(let i=0;placed<(mobile?150:260)&&i<2000;i++){
+    const x=(hg(i*3+1)-.5)*40,z=-17+hg(i*3+2)*33;
+    if(insidePlaza(x,z,.7))continue;
+    if(z>9.5&&Math.abs(x)<9)continue;                                // keep the foreground in front of the shop open
+    placed++;
+    const t=new THREE.Mesh(tuftGeo,tuftMats[i%3]);const s=.7+hg(i*3)*.9;t.position.set(x,-.28,z);t.scale.set(s,s*(.8+hg(i)*.6),s);t.rotation.y=hg(i+7)*6.28;t.castShadow=false;scene.add(t);
+    if(i%4===0){const fx=x+.12,fz=z+.05,fh=.34*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(fx,-.28+fh/2,fz);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.075,0),flowerMats[(i>>2)%3]);f.position.set(fx,-.28+fh,fz);f.castShadow=false;scene.add(f);}
+  }
+  // flower patches right at the plaza edge, as in the reference gardens
+  for(let i=0;i<(mobile?26:48);i++){
+    const side=i%4,t=hg(i+300);let x:number,z:number;
+    if(side===0){x=PLAZA.x0-.35-hg(i+310)*.7;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
+    else if(side===1){x=PLAZA.x1+.35+hg(i+310)*.7;z=PLAZA.z0+t*(PLAZA.z1-PLAZA.z0);}
+    else if(side===2){x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z0-.35-hg(i+310)*.7;}
+    else{x=PLAZA.x0+t*(PLAZA.x1-PLAZA.x0);z=PLAZA.z1+.45+hg(i+310)*.9;}
+    const s=.5+hg(i+320)*.5;
+    const tf=new THREE.Mesh(tuftGeo,tuftMats[i%3]);tf.position.set(x,-.28,z);tf.scale.set(s,s,s);tf.castShadow=false;scene.add(tf);
+    const fh=.5*s;const st=new THREE.Mesh(new THREE.CylinderGeometry(.01,.012,fh,3),tuftMats[0]);st.position.set(x+.04,-.28+fh/2,z);st.castShadow=false;scene.add(st);const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.085,0),flowerMats[i%3]);f.position.set(x+.04,-.28+fh,z);f.castShadow=false;scene.add(f);
+  }
+  // A sandy path winding from the plaza's front curb toward the viewer, as in the hilltop-house reference.
+  const pathPts=[[0,5.5],[.3,7.2],[1.6,9.3],[3.8,11.6],[6.6,14],[10,16.5]] as const,left:number[]=[],right:number[]=[];
+  pathPts.forEach(([px,pz],i)=>{
+    const n=pathPts[Math.min(i+1,pathPts.length-1)],p=pathPts[Math.max(i-1,0)];let tx=n[0]-p[0],tz=n[1]-p[1];const l=Math.hypot(tx,tz);tx/=l;tz/=l;
+    const w=.85+i*.16;left.push(px+tz*w,pz-tx*w);right.push(px-tz*w,pz+tx*w);
+  });
+  const verts:number[]=[],idx:number[]=[];
+  for(let i=0;i<pathPts.length;i++){verts.push(left[i*2],-.265,left[i*2+1],right[i*2],-.265,right[i*2+1]);if(i<pathPts.length-1){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));pg.setIndex(idx);pg.computeVertexNormals();
+  const pathMesh=new THREE.Mesh(pg,new THREE.MeshStandardMaterial({color:'#5f5140',roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,side:THREE.DoubleSide}));
+  pathMesh.receiveShadow=true;scene.add(pathMesh);
+}
+/** Fireflies: a few dozen soft green-gold points that drift and blink. Positions and blinking are computed in the vertex shader (no per-frame JS work). */
+function fireflies(scene:THREE.Object3D,mobile:boolean,reduced:boolean){
+  const n=mobile?36:64,base=new Float32Array(n*3),ph=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    let x:number,z:number,k=0;do{x=(hg(i*4+k)-.5)*30;z=-12+hg(i*4+k+500)*22;k++;}while(insidePlaza(x,z,-.5)&&k<30);
+    base[i*3]=x;base[i*3+1]=.5+hg(i*4+2)*2.6;base[i*3+2]=z;ph[i]=hg(i*4+3);
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(base,3));geo.setAttribute('phase',new THREE.Float32BufferAttribute(ph,1));
+  const uniforms={uTime:{value:0},uPx:{value:Math.min(window.devicePixelRatio||1,mobile?1.25:1.5)},uStill:{value:reduced?1:0}};
+  const mat=new THREE.ShaderMaterial({uniforms,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:`attribute float phase;uniform float uTime;uniform float uPx;uniform float uStill;varying float vB;
+      void main(){float t=uTime*(1.0-uStill);vec3 p=position+vec3(sin(t*.37+phase*6.28)*.9,sin(t*.51+phase*9.0)*.35,cos(t*.29+phase*5.0)*.9);
+      vec4 mv=modelViewMatrix*vec4(p,1.0);gl_Position=projectionMatrix*mv;
+      vB=mix(.85,smoothstep(.35,1.0,sin(t*1.5+phase*20.0)*.5+.5),1.0-uStill);gl_PointSize=(1.0+vB)*5.0*uPx*(14.0/(-mv.z));}`,
+    fragmentShader:`varying float vB;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,.0,d);a*=a;gl_FragColor=vec4(vec3(.82,1.0,.45)*a*vB*1.6,a*vB);}`});
+  const pts=new THREE.Points(geo,mat);pts.frustumCulled=false;pts.renderOrder=5;scene.add(pts);
+  return (elapsed:number)=>{uniforms.uTime.value=elapsed;};
+}
+function ghibliWorld(scene:THREE.Object3D,reduced:boolean){
+  if(!GHIBLI_SURROUNDINGS)return (_e:number)=>{};
+  const mobile=typeof window.matchMedia==='function'&&window.matchMedia('(max-width: 750px)').matches;
+  applyWindToLeaves();windAmp.value=reduced?0:1;
+  const sky=paintedSky(scene,mobile);meadow(scene,mobile);const fly=fireflies(scene,mobile,reduced);
+  return (elapsed:number)=>{windU.value=elapsed;sky(reduced?0:elapsed);fly(elapsed);};
+}
 /** vtest21 (performance): the scene was ~3,400 separate meshes, i.e. ~3,400 draw calls (plus the same again for the shadow map on every frame).
  *  Nothing in it moves except the hover-scaled target groups, so every solid, opaque, non-interactive mesh is baked into world space and merged
  *  with the others that share its material, shadow flags and a 12-unit cell of the scene. The picture is identical; the draw-call count drops
@@ -2730,7 +2897,7 @@ function mergeStaticMeshes(root:THREE.Object3D,protect:Set<THREE.Object3D>){
 }
 export function buildWorld():World{
  keyLights.length=0;openings.length=0;
- const scene=new THREE.Scene();scene.background=new THREE.Color('#080b19');scene.fog=new THREE.FogExp2('#080b19',.013);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#080b19');scene.fog=new THREE.FogExp2(GHIBLI_SURROUNDINGS?'#0c1a2e':'#080b19',.013);
  scene.add(new THREE.HemisphereLight('#b1c1e2','#2a2038',.78));
  const smallScreen=typeof window.matchMedia==='function'&&window.matchMedia('(max-width: 750px)').matches;
  const key=new THREE.DirectionalLight('#d2d6f3',1.08);key.position.set(-6,10,6);key.castShadow=true;key.shadow.mapSize.set(smallScreen?1024:2048,smallScreen?1024:2048);key.shadow.camera.left=-13;key.shadow.camera.right=13;key.shadow.camera.top=13;key.shadow.camera.bottom=-13;key.shadow.bias=-.0004;scene.add(key);
@@ -2767,6 +2934,8 @@ export function buildWorld():World{
  endgameInteriors(building);
  // Last, so the seeded scatter used by every plant above is untouched.
  cozyBuilding(building);cozyWorld(scene);
+ const reducedMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const ghibliTick=ghibliWorld(scene,reducedMotion);   // sky, meadow, trees, fireflies and wind (own generator; touches nothing above)
  const lightCount=keyLights.length;
  if(import.meta.env.DEV&&lightCount>POINT_LIGHT_BUDGET)console.warn(`Point-light budget exceeded: ${lightCount} real lights (budget ${POINT_LIGHT_BUDGET}). Use halo()/glowPatch() for new lamps.`);
  // Everything solid and visible can hide a hit target. Invisible hit boxes and see-through decals (glow patches,
@@ -2787,6 +2956,7 @@ export function buildWorld():World{
  const reduced=typeof window.matchMedia==='function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  return {scene,hits,occluders,setHovered:(hit:HitTarget|null)=>{currentHover=hit?.visual??null;},animate:(elapsed:number)=>{
    let moved=false;
+   ghibliTick(elapsed);
    for(const visual of hoverVisuals){
      const isHover=visual===currentHover;
      const target=isHover?1.045:1;
