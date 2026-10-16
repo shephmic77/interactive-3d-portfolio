@@ -467,8 +467,8 @@ function boulderRoute(scene:THREE.Object3D){
   // T-nut lattice (four columns, one row every 20 cm); a soft contact shadow sits under each hold; there are grade tags, quickdraws on
   // bolt hangers and two top-out anchors. The route positions, colours and the monkey are the ones you already approved.
   const PXM=380,TW=Math.round((w-.02)*PXM),TH=Math.round((h-.02)*PXM);
-  const LAT=.2,LAT0=bottom+.10,COLS=[-.3,-.1,.1,.3];
-  const latX=(x:number)=>+Math.max(-.3,Math.min(.3,Math.round((x+.1)/LAT)*LAT-.1)).toFixed(3);
+  const LAT=.2,LAT0=bottom+.10,COLS=[-.27,-.09,.09,.27];   // four columns, 18 cm apart, so even the outer holds stay inside the panel
+  const latX=(x:number)=>+Math.max(-.27,Math.min(.27,Math.round((x+.09)/.18)*.18-.09)).toFixed(3);
   const latY=(y:number)=>+(Math.round((y-LAT0)/LAT)*LAT+LAT0).toFixed(3);
   const px=(lx:number)=>TW/2+lx*PXM,py=(y:number)=>TH*(1-(y-(bottom+.01))/(h-.02));
   const faceTex=texture((c,W,H)=>{
@@ -539,6 +539,11 @@ function boulderRoute(scene:THREE.Object3D){
     const sh=new THREE.Mesh(new THREE.CircleGeometry(1,10),shadeMat);sh.scale.set(sx*1.05,sy*1.05,1);sh.position.set(x+.012,y-.02,.0085);sh.rotation.z=spin;g.add(sh);   // contact shadow
     const chalk=new THREE.Mesh(new THREE.CircleGeometry(1,8),chalkMat);chalk.scale.set(sx*.8,sy*.8,1);chalk.position.set(x,y+.035,.0092);chalk.rotation.z=spin;g.add(chalk);                              // chalk smudge
     const m=new THREE.Mesh(rockGeo(kind,seedN++%4),mat);m.position.set(x,y,.0095);m.rotation.z=spin;g.add(m);
+    const reach=Math.abs(Math.cos(spin))*sx+Math.abs(Math.sin(spin))*sy,room=.325-Math.abs(x);                    // never clip the side trim of the panel
+    if(reach>room){
+      const k=Math.max(.7,room/reach);m.scale.multiplyScalar(k);sh.scale.multiplyScalar(k);chalk.scale.multiplyScalar(k);   // shrink a little...
+      const over=reach*k-room;if(over>0){const d=-Math.sign(x)*over;m.position.x+=d;sh.position.x+=d;chalk.position.x+=d;}      // ...then slide it in off the edge
+    }
     if(kind==='pocket'){const hole=new THREE.Mesh(new THREE.CircleGeometry(.04,8),pocketDark);hole.position.set(0,0,SHAPE.pocket[2]+.0005);m.add(hole);}                       // the finger hole
     else{const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(0,0,SHAPE[kind][2]*(kind==='horn'?.2:.88));m.add(b);}                                    // the bolt
     placed.push({x,y});
@@ -555,28 +560,28 @@ function boulderRoute(scene:THREE.Object3D){
   // THE hard one: a V4-5 boulder problem in gold, placed first so nothing else takes its holds. Two taped starts (a pinch and a sloper), a long
   // reach to a crimp, a lock-off to a side pocket, a rail, a dyno from a sloper to the prism and a horn, then a finish jug. Feet are gold chips.
   const hard:[number,number,Kind,number][]=[[.1,.94,'pinch',.1],[-.1,1.14,'sloper',-.2],[.1,1.74,'crimp',.15],[-.3,2.14,'pocket',0],[.1,2.54,'rail',-.25],[.3,3.14,'sloper',.25],[-.1,3.54,'horn',0],[-.3,3.74,'jug',.2]];
-  for(const [hx,hy,hk,hs] of hard){const m=hold(hx,hy,hk,gold,hs);if(m&&hk==='jug')m.scale.multiplyScalar(1.2);}
-  for(const [fx,fy] of [[-.1,.54],[.3,.74],[-.3,1.34],[.3,1.54],[.1,2.14],[-.3,2.54],[.1,2.94],[-.1,3.34]] as const)hold(fx,fy,'chip',gold);
+  for(const [hx,hy,hk,hs] of hard)hold(hx,hy,hk,gold,hs);
+  for(const [fx,fy] of [[-.1,.54],[.3,1.34],[.1,2.14],[-.1,3.34]] as const)hold(fx,fy,'chip',gold);
   for(const sx of [.1,-.1])box(g,sx,sx>0?.80:1.00,.0105,.17,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
-  box(g,-.3,3.58,.0105,.2,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
+  box(g,-.27,3.58,.0105,.12,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
   // Coral warm-up route, much sparser than before: big jugs and a horn or two, all the way up to the finish jug under the roof edge.
   const COR=[-.3,-.1,-.3,.1,-.3,-.1,.1,-.3],kinds:Kind[]=['jug','horn','jug','rail','jug','prism'];
   let n=0;
-  for(let y=1.4;y<7.45;y+=.95,n++){hold(COR[n%8],y+(n%3)*.04,kinds[n%6],n%3===1?wood:coral,((n*37)%7-3)*.09);}
-  const finish=hold(.1,7.74,'jug',coral);if(finish)finish.scale.multiplyScalar(1.3);box(g,.1,7.58,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
+  for(let y=1.6;y<7.45;y+=1.85,n++){hold(COR[n%8],y+(n%3)*.04,kinds[n%6],n%3===1?wood:coral,((n*37)%7-3)*.09);}
+  hold(.09,7.74,'jug',coral);box(g,.1,7.58,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
   // Cyan problem down the right edge and a pink one down the left, a few holds each, in other shapes.
-  n=0;for(let y=1.0;y<7.4;y+=1.2,n++){hold(.3,y+(n%2)*.07,(['pocket','pinch','sloper','prism'] as Kind[])[n%4],cyan2,(n%2?-.2:.15));}
+  n=0;for(let y=1.0;y<7.4;y+=2.4,n++){hold(.3,y+(n%2)*.07,(['pocket','pinch','sloper','prism'] as Kind[])[n%4],cyan2,(n%2?-.2:.15));}
   hold(.3,7.62,'jug',cyan2);
-  n=0;for(let y=1.9;y<7.3;y+=1.3,n++){hold(-.3,y+(n%2)*.08,(['crimp','horn','sloper','pocket'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
+  n=0;for(let y=1.9;y<7.3;y+=2.7,n++){hold(-.3,y+(n%2)*.08,(['crimp','horn','sloper','pocket'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
   // Grade tags on tape at the starts.
   const tag=(x:number,y:number,txt:string,hex:string)=>{
     const t=texture((c,W,H)=>{c.fillStyle='#f4f1e8';c.fillRect(0,0,W,H);c.fillStyle=hex;c.fillRect(0,0,W*.2,H);c.fillStyle='#1c1f2a';c.font='bold 38px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W*.6,H*.52);},128,64);
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(.15,.075),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(.13,.065),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
     m.position.set(x,y,.0115);g.add(m);
   };
-  tag(0,.40,'V4-5','#ffd23f');tag(.3,.46,'V2','#3fd0e8');tag(-.3,1.55,'V3','#ff6fae');tag(-.3,.40,'V0','#ff7a59');
+  tag(0,.40,'V4-5','#ffd23f');tag(.25,.46,'V2','#3fd0e8');tag(-.25,1.55,'V3','#ff6fae');tag(-.25,.40,'V0','#ff7a59');
   // Neutral foot chips scattered over the whole board, kept clear of the other holds.
-  for(let y=.45;y<7.9;y+=.62){
+  for(let y=.45;y<7.9;y+=1.4){
     const x=(hash1(y)-.5)*.56;
     if(placed.some(p=>Math.hypot(p.x-latX(x),p.y-latY(y))<.4))continue;
     hold(x,y,'chip',chip);
