@@ -21,4 +21,5 @@ One file per iteration, newest last. Earlier iterations (V1–V6 and the two liv
 - [VTEST13](VTEST13_CHANGES.md)
 - [VTEST14](VTEST14_CHANGES.md)
 - [VTEST15](VTEST15_CHANGES.md)
-- [VTEST16](VTEST16_CHANGES.md) (latest)
+- [VTEST16](VTEST16_CHANGES.md)
+- [VTEST17](VTEST17_CHANGES.md) (latest)

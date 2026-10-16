@@ -72,7 +72,7 @@ function haloMaterial(hex:string,opacity:number){
 }
 function patchMaterial(hex:string,opacity:number){
  const key=`p:${hex}:${opacity}`;let m=glowMaterials.get(key) as THREE.MeshBasicMaterial|undefined;
- if(!m){m=new THREE.MeshBasicMaterial({map:glowTexture(),color:hex,opacity:Math.min(1,opacity*tuning.glow),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});glowMaterials.set(key,m);}
+ if(!m){m=new THREE.MeshBasicMaterial({map:glowTexture(),color:hex,opacity:Math.min(1,opacity*tuning.glow),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4});glowMaterials.set(key,m);}
  return m;
 }
 /** Soft camera-facing bloom around a bulb or neon tube. */
@@ -129,9 +129,9 @@ type Opening={x:number;y:number;z:number;w:number;h:number;rot:number};
 const openings:Opening[]=[];
 const WALL_T=.24, WALL_IN=.05;   // wall thickness, and the inner plaster layer within it
 /** Warm interior surfaces. They glow gently (emissive) so rooms read as lit from inside; `?room=` scales this. */
-const plasterMat=()=>color('#cdb08c',0,.92,'#ff9a52',.30*tuning.room);
-const ceilingMat=()=>color('#a98f78',0,.95,'#ff9a52',.22*tuning.room);
-const floorMat=()=>color('#8a6a4c',0,.85,'#ff8a40',.16*tuning.room);
+const plasterMat=()=>color('#b99b76',0,.92,'#ff8f45',.13*tuning.room);   // vtest17: dimmer, warmer fill; the lamps do the lighting
+const ceilingMat=()=>color('#8f7660',0,.95,'#ff8f45',.08*tuning.room);
+const floorMat=()=>color('#7a5c40',0,.85,'#ff8a40',.06*tuning.room);
 /** True when something small at (x,y,z) would sit across a registered opening (keeps brick joints out of windows). */
 function overlapsOpening(x:number,y:number,z:number,reach:number){
  for(const o of openings){
@@ -172,7 +172,7 @@ function hollowWall(parent:THREE.Object3D,x:number,y:number,z:number,rot:number,
 }
 /** Wall-thickness lining of an opening, so you see a proper reveal rather than a paper-thin hole. */
 function reveal(node:THREE.Object3D,w:number,h:number,bottom=true){
- const mat=color('#8a7a6c',0,.9,'#ff9a52',.12*tuning.room),face=-.108,d=WALL_T,z=face-d/2;
+ const mat=color('#8a7a6c',0,.9,'#ff8f45',.06*tuning.room),face=-.108,d=WALL_T,z=face-d/2;
  box(node,-w/2+.02,0,z,.04,h,d,mat);box(node,w/2-.02,0,z,.04,h,d,mat);box(node,0,h/2-.02,z,w,.04,d,mat);
  if(bottom)box(node,0,-h/2+.02,z,w,.04,d,mat);
 }
@@ -263,6 +263,9 @@ function pot(parent:THREE.Object3D,x:number,y:number,z:number,s=.4,trail=false,_
   }
   if(trail){for(let i=0;i<3;i++){const a=lean+.8+i*2.09;blob(Math.cos(a)*s*.30,s*.53,Math.sin(a)*s*.30,s*.12,i);}}
 }
+/** vtest17: stands in for a removed floor pot. It consumes exactly the seeded random() values pot() would have, so every plant, vine and
+ *  tile that is generated afterwards stays exactly as it was. */
+function skipPot(){const tall=random()<.4;random();if(!tall)for(let i=0;i<4;i++)random();}
 /** Ivy clinging to a wall: three slim stems hung from a ledge, each with pairs of pointed leaves lying flat on the face.
  *  `wall` says which face: 'z' = a wall facing +Z at z=`face`, 'x' = a wall facing +X at x=`face`. `at` is the position
  *  along the wall, `top` the height the ivy hangs from (a ledge, awning or cornice). */
@@ -596,8 +599,7 @@ function storefrontDetails(scene:THREE.Object3D){
   crate(scene,-3.12,4.14,.40,-.2);
   // A single waiting chair beside the door, turned to face the street.
   patioChair(scene,-1.92,GROUND,4.2,-1.92,6);
-  pot(scene,-1.45,.0,4.04,.34,false);
-  pot(scene,1.86,.0,4.10,.36,false);
+  skipPot();skipPot();   // vtest17: the two floor pots by the entrance were removed
   box(scene,.03,.04,4.34,1.56,.03,.55,color('#d09354'));
   // The lamps illuminate nearby practical objects rather than washing the facade.
   wallLight(scene,-ARCH.ground.width/2-.057,2.26,2.95,-Math.PI/2,.86);
@@ -630,7 +632,7 @@ function terraceFurnishings(scene:THREE.Object3D){
   // Lounge corner against the upper wall: a bench and a chair face each other across a low table.
   bench(scene,2.0,T-.005,-1.9,2.85,-1.9,1.05);
   sideTable(scene,2.85,T-.005,-1.9);
-  patioChair(scene,3.52,h,-1.9,2.85,-1.9);
+  patioChair(scene,2.85,h,-2.45,2.85,-1.9);   // vtest17: moved to the back side of the little table, clear of the stair landing and the terrace door
   // Window-box planters sit on the railing's top rail.
   railingPlanter(scene,2.92,3.23,'x',ARCH.groundRoof);
   railingPlanter(scene,-.70,3.23,'x',ARCH.groundRoof);
@@ -638,7 +640,7 @@ function terraceFurnishings(scene:THREE.Object3D){
   railingPlanter(scene,4.31,.60,'z',ARCH.groundRoof);
   // Soft practical lantern on the terrace table (table top is h+.765).
   tableLantern(scene,bt.x,h+.765,bt.z);
-  glowPatch(scene,bt.x,4.455,bt.z,4.2,3.6,'#ffbf7a',.12,0,true);
+  glowPatch(scene,bt.x,4.462,bt.z,4.2,3.6,'#ffbf7a',.12,0,true);
   // Small drainage outlet at the terrace low point, piped through the slab edge into a downspout.
   gutter(scene,[V(4.12,T+.025,-2.94),V(4.33,T+.025,-2.94),V(4.34,3.80,-2.94),V(4.34,.03,-2.94)],.055,{axis:'x',value:ARCH.ground.width/2});
   // String of terrace bulbs in a right angle: three slim poles (front, corner, right) and two runs that follow the front and right rails
@@ -679,7 +681,7 @@ function roofFurnishings(scene:THREE.Object3D){
   const frontRail=ARCH.upper.z+ARCH.upper.depth/2+.08;
   railingPlanter(scene,-2.95,frontRail,'x',ARCH.upperRoof+.25);
   railingPlanter(scene,-.55,frontRail,'x',ARCH.upperRoof+.25);
-  pot(scene,1.64,R,.94,.30,true);
+  skipPot();   // vtest17: roof floor pot removed
 }
 // Architectural dimensions, in scene units (one unit is approximately one metre).
 // A wide ground-floor block carries a smaller, rear-left offset upper floor.
@@ -724,8 +726,8 @@ function terraceFloor(scene:THREE.Object3D){
  for(let i=0;i<=4;i++)for(let k=0;k<=13;k++)tileAt(1.96+.43*i,-2.82+.43*k);        // right terrace, x 1.96 .. 3.68, z -2.82 .. 2.77
  for(let i=1;i<=13;i++)for(let k=10;k<=13;k++)tileAt(1.96-.43*i,-2.82+.43*k);      // front strip on the same lattice, x 1.53 .. -3.63, z 1.48 .. 2.77
  // A warm seam along the setback edge, showing two legible terraces from title view.
- box(scene,1.77,ARCH.groundRoof+.12,-.94,.08,.04,4.12,joints);
- box(scene,-1.08,ARCH.groundRoof+.12,1.14,5.62,.04,.075,joints);
+ box(scene,1.77,ARCH.groundRoof+.126,-.94,.08,.04,4.12,joints);
+ box(scene,-1.08,ARCH.groundRoof+.126,1.14,5.62,.04,.075,joints);
  // The FRONT and RIGHT outer edges remain open behind the railings.
  perimeterRail(scene,'x',3.23,-4.31,4.00,ARCH.groundRoof,trim,.56,.11);
  // The right rail has a .6 gap at z = -1.85 where the spiral stair arrives (see terraceStair).
@@ -739,7 +741,7 @@ function terraceFloor(scene:THREE.Object3D){
  // A few terrace plants and a restrained seating arrangement provide structure,
  // not any end-game memorabilia or new personal items.
  for(const [x,z,r] of [[3.64,2.53,.56],[3.88,-2.52,.47],[1.86,2.46,.46],[-3.50,2.70,.50]] as const){
-  pot(scene,x,ARCH.groundRoof+.13,z,r,true);   // base sits on the tile top (4.455)
+  skipPot();   // vtest17: the four floor pots on the terrace were removed (they crowded the stair landing and the door)
  }
 }
 
@@ -781,7 +783,7 @@ function upperRoofTerrace(scene:THREE.Object3D){
  // Rooftop terrace is intentionally a single outdoor area, not another storey.
  patioTable(scene,-1.17,y+.15,-.30,.36);
  for(const [px,pz,r] of [[-3.30,-1.75,.53],[-3.62,.50,.47],[1.38,.82,.43]] as const){
-  pot(scene,px,y+.165,pz,r,true);
+  skipPot();   // vtest17: floor pots on the roof removed
  }
  // (The bulb string across the roof, with its two poles, was removed in vtest12; the roof is lit by two lantern posts, see cozyBuilding.)
 }
@@ -812,7 +814,7 @@ function storefront(scene:THREE.Object3D){
  // Door to the right terrace: its sill sits just above the tiles (door leaf is local +Z outward along +X).
  doorway(scene,u.x+u.width/2+.11,5.78,-.45,1.15,2.66,Math.PI/2);
  glowPatch(scene,u.x+u.width/2+.07,5.78,-.45,2.5,3.7,'#ffbd6e',.11,Math.PI/2);
- glowPatch(scene,u.x+u.width/2+1.25,4.455,-.45,2.6,2.3,'#ffbd6e',.12,Math.PI/2,true);
+ glowPatch(scene,u.x+u.width/2+1.25,4.462,-.45,2.6,2.3,'#ffbd6e',.12,Math.PI/2,true);
  // 2) Hollow walls: outer brick + inner plaster, cut around the openings above.
  const T=WALL_T,plaster=plasterMat();
  hollowWall(scene,0,0,gd.depth/2,0,gd.width,gd.height,brick,plaster);
@@ -866,7 +868,7 @@ function storefront(scene:THREE.Object3D){
   [-3.50,.02,3.65,.60,false],[3.58,.02,3.71,.58,false],
   [4.58,.02,-1.10,.62,true],[-4.52,.02,-2.30,.59,false],
   [-3.78,4.47,1.50,.50,true]
- ] as const)pot(scene,xx,yy,zz,size,trail);
+ ] as const)skipPot();   // vtest17: floor pots around the building removed (their positions stay in this list for reference)
  addVines(scene,'z',ARCH.ground.depth/2,-3.97,3.74,1.65);         // under the awning, front-left corner
  addVines(scene,'x',ARCH.ground.width/2,-2.70,4.10,2.2);          // hanging from the side cornice, rear right
  addVines(scene,'z',ARCH.upper.z+ARCH.upper.depth/2,1.50,7.69,2.5); // hanging from the roof edge, upper front right
@@ -1096,8 +1098,7 @@ function serviceBack(scene:THREE.Object3D,hits:HitTarget[]){
  // a few subtle back-of-building details
  hvacUnit(scene,3.78,2.02,-ARCH.ground.depth/2-.165,Math.PI,.72);   // back face .01 from the wall, arms reach into it
  electricBox(scene,2.96,1.16,-3.12,Math.PI);
- pot(scene,3.52,0,-4.50,.60,true);
- pot(scene,-4.80,0,-4.15,.38,false);
+ skipPot();skipPot();   // vtest17: floor pots at the back removed
 }
 // ---------------------------------------------------------------------------------------------
 // INTERIORS: deliberately simple furnishings seen through the real window openings. Nothing here is
@@ -1109,14 +1110,14 @@ function pendant(scene:THREE.Object3D,x:number,ceilingY:number,z:number,lampY:nu
  cyl(scene,x,lampY+.1,z,.09*size,.27*size,.2*size,brass);
  sphere(scene,x,lampY-.04,z,.11*size,bright,1);
  halo(scene,x,lampY-.04,z,1.5*size,'#ffc78f',.6);
- glowPatch(scene,x,floorY+.012,z,3.3*size,3.3*size,'#ffc27a',.10,0,true);
+ glowPatch(scene,x,floorY+.012,z,3.3*size,3.3*size,'#ffb866',.17,0,true);
 }
 function floorLamp(scene:THREE.Object3D,x:number,floorY:number,z:number){
  cyl(scene,x,floorY+.03,z,.18,.2,.06,iron,10);
  cyl(scene,x,floorY+.8,z,.022,.022,1.5,iron,6);
  cyl(scene,x,floorY+1.58,z,.16,.26,.32,bright,10);
  halo(scene,x,floorY+1.55,z,1.7,'#ffc78f',.6);
- glowPatch(scene,x,floorY+.012,z,3.0,3.0,'#ffc27a',.10,0,true);
+ glowPatch(scene,x,floorY+.012,z,3.0,3.0,'#ffb866',.17,0,true);
 }
 function bookshelf(scene:THREE.Object3D,x:number,floorY:number,z:number,len:number,height:number,rot:number){
  // Local +Z faces into the room. Back panel, two ends, shelves, and a row of books on each shelf.
@@ -1139,7 +1140,7 @@ function bookshelf(scene:THREE.Object3D,x:number,floorY:number,z:number,len:numb
 }
 function interiors(scene:THREE.Object3D){
  const u=ARCH.upper,gf=.07,uf=4.425,top=ARCH.ground.height,roof=u.bottom+u.height;
- const rug=(hex:string)=>color(hex,0,.95,'#ff7a60',.10*tuning.room);
+ const rug=(hex:string)=>color(hex,0,.95,'#ff8f45',.05*tuning.room);
  // ---- Ground floor: a small shop/studio. Shelves sit on the right wall, an 80s reading nook fills the back-left corner,
  // a table with stools between the display windows and the door, and a plant by the left display.
  // vtest16: the counter is gone; the back-left corner is now an 80s reading nook (see readingNook).
@@ -2328,7 +2329,7 @@ function cozyBuilding(b:THREE.Object3D){
   glowPatch(b,ux-.012,uy-.45,uz,2.6,3.0,'#ffc27a',.13,-Math.PI/2);   // warm wash on the wall (no floor pool: nothing is below it but the roof edge)
   // Lights where they were asked for (vtest12): two lantern posts on the roof terrace (back-left near the climbers' exit, and behind the
   // water tank), one at the left end of the terrace by the upper block's corner, and a wall lamp at the back end of the upper right wall.
-  terraceLantern(b,-3.45,7.945,-2.55);
+  railLantern(b,-2.45,ARCH.upperRoof+.25+.8425,-3.10,7.945);   // vtest17: was a free-standing post in the climbers' exit; now a lamp on the back rail beside it
   terraceLantern(b,.62,7.945,-2.90);
   terraceLantern(b,-3.72,4.455,1.55);
   wallLight(b,ARCH.upper.x+ARCH.upper.width/2+.057,6.2,-2.72,Math.PI/2,1.1);
@@ -2342,6 +2343,15 @@ function cozyBuilding(b:THREE.Object3D){
 // ---------------------------------------------------------------------------------------------
 /** Short lantern post for the terraces and the roof (building-local units): post, foot plate, lantern, bloom and a warm pool on the floor.
  *  Fake light only (halo + decal), no real PointLight. `floorY` is the walking surface. */
+/** Small lantern sitting on top of a rail (so it never stands in a walkway), with a halo and a warm pool on the floor below. */
+function railLantern(parent:THREE.Object3D,x:number,railTop:number,z:number,floorY:number){
+  box(parent,x,railTop+.02,z,.13,.035,.13,iron);
+  box(parent,x,railTop+.155,z,.15,.22,.15,lanternGlass);
+  for(const sx of [-1,1])for(const sz of [-1,1])box(parent,x+sx*.075,railTop+.155,z+sz*.075,.02,.24,.02,iron);
+  cyl(parent,x,railTop+.31,z,.02,.13,.09,iron,4);sphere(parent,x,railTop+.37,z,.028,brass,1);
+  halo(parent,x,railTop+.16,z,1.25,'#ffbf75',.6);
+  glowPatch(parent,x,floorY+.012,z+.5,2.8,2.8,'#ffbd70',.12,0,true);
+}
 function terraceLantern(parent:THREE.Object3D,x:number,floorY:number,z:number,h=1.25){
   cyl(parent,x,floorY+h/2,z,.032,.042,h,dark,7);
   cyl(parent,x,floorY+.03,z,.11,.13,.06,iron,8);
@@ -2474,32 +2484,50 @@ function workbench(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:numbe
   box(g,-.17,.36,.386,.30,.08,.008,color('#b9c0cc',.5,.5));box(g,-.35,.36,.388,.07,.06,.014,color('#6b4528',0,.9));   // saw: blade and handle
   box(g,.17,.32,.388,.035,.24,.014,color('#6b4528',0,.9));box(g,.17,.46,.39,.13,.06,.022,color('#4a4f5a',.4,.5));    // hammer: handle and head
 }
-/** 80s reading nook (vtest16): the back-left corner of the ground floor, where the counter used to stand. A chunky teal armchair turned
- *  toward the room, a round black-lacquer coffee table with a pink under-glow, a geometric "Memphis" rug and a halogen torchiere.
+/** 80s reading nook (vtest16): the back-left corner of the ground floor, where the counter used to stand. A chunky light-brown armchair turned
+ *  toward the room, a round black-lacquer coffee table with a warm under-glow, a round terracotta rug and a halogen torchiere.
  *  All light is faked (emissive bowl, halo, wall and floor decals); no PointLights. Building-local units, `gf` is the floor height. */
 function readingNook(scene:THREE.Object3D,gf:number){
- // rug: purple ground, teal and pink borders, scattered triangles, squiggles and dots (fixed positions, nothing random)
+ // round rug in terracotta and cream with soft flowing waves (vtest17, after the reference picture)
  const rt=texture((c,W,H)=>{
-  c.fillStyle='#2b2147';c.fillRect(0,0,W,H);
-  c.strokeStyle='#2fb3b0';c.lineWidth=14;c.strokeRect(14,14,W-28,H-28);
-  c.strokeStyle='#f26a9b';c.lineWidth=5;c.strokeRect(38,38,W-76,H-76);
-  const tri=(x:number,y:number,s:number,hex:string,rot:number)=>{c.save();c.translate(x,y);c.rotate(rot);c.fillStyle=hex;c.beginPath();c.moveTo(0,-s);c.lineTo(s*.9,s*.7);c.lineTo(-s*.9,s*.7);c.closePath();c.fill();c.restore();};
-  const zig=(x:number,y:number,n:number,hex:string)=>{c.strokeStyle=hex;c.lineWidth=9;c.lineJoin='round';c.beginPath();c.moveTo(x,y);for(let i=1;i<=n;i++)c.lineTo(x+i*22,y+(i%2?-16:16));c.stroke();};
-  tri(120,130,38,'#f6c445',.3);tri(520,110,34,'#f26a9b',-.5);tri(300,200,44,'#2fb3b0',.15);tri(150,380,34,'#f26a9b',.8);tri(470,360,42,'#f6c445',-.2);tri(330,420,30,'#2fb3b0',-.9);
-  zig(190,70,8,'#2fb3b0');zig(380,300,7,'#f6c445');zig(70,260,5,'#f26a9b');zig(430,450,6,'#2fb3b0');zig(220,300,5,'#f26a9b');
-  c.fillStyle='#fff3d6';for(let i=0;i<6;i++)for(let j=0;j<4;j++){c.beginPath();c.arc(90+i*95+(j%2)*40,150+j*80,5,0,Math.PI*2);c.fill();}
-  c.fillStyle='#f26a9b';c.beginPath();c.arc(560,260,28,0,Math.PI*2);c.fill();c.fillStyle='#f6c445';c.beginPath();c.arc(90,470,22,0,Math.PI*2);c.fill();
- },640,512);
- const rugMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.5,2.0),new THREE.MeshStandardMaterial({map:rt,roughness:.95,emissive:'#ffffff',emissiveMap:rt,emissiveIntensity:.14}));
- rugMesh.rotation.x=-Math.PI/2;rugMesh.position.set(-2.7,gf+.03,-1.7);rugMesh.receiveShadow=true;scene.add(rugMesh);
+  c.clearRect(0,0,W,H);
+  c.fillStyle='#efe0c6';c.beginPath();c.arc(W/2,H/2,W/2,0,Math.PI*2);c.fill();
+  c.save();c.beginPath();c.arc(W/2,H/2,W/2-70,0,Math.PI*2);c.clip();
+  // tapered, flowing ribbons along cubic curves (centre line p0..p3, widest in the middle)
+  const ribbon=(p0:number[],p1:number[],p2:number[],p3:number[],w:number,col:string)=>{
+   const n=56,pts:number[][]=[];
+   for(let i=0;i<=n;i++){const t=i/n,u=1-t;
+    const x=u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],y=u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1];
+    const dx=3*u*u*(p1[0]-p0[0])+6*u*t*(p2[0]-p1[0])+3*t*t*(p3[0]-p2[0]),dy=3*u*u*(p1[1]-p0[1])+6*u*t*(p2[1]-p1[1])+3*t*t*(p3[1]-p2[1]);
+    const l=Math.hypot(dx,dy)||1,hw=w/2*Math.pow(Math.sin(Math.PI*t),.55);
+    pts.push([x,y,-dy/l*hw,dx/l*hw]);}
+   c.fillStyle=col;c.beginPath();
+   for(let i=0;i<=n;i++){if(i)c.lineTo(pts[i][0]+pts[i][2],pts[i][1]+pts[i][3]);else c.moveTo(pts[i][0]+pts[i][2],pts[i][1]+pts[i][3]);}
+   for(let i=n;i>=0;i--)c.lineTo(pts[i][0]-pts[i][2],pts[i][1]-pts[i][3]);
+   c.closePath();c.fill();
+  };
+  const T='#c4602d',C='#efe0c6',L='#dc8a55';
+  ribbon([40,330],[330,-80],[640,620],[1000,290],300,T);
+  ribbon([20,700],[300,430],[640,980],[1010,640],320,T);
+  ribbon([250,1010],[380,800],[600,1100],[820,930],170,T);
+  ribbon([520,60],[700,160],[820,40],[960,170],120,T);
+  ribbon([40,330],[330,-80],[640,620],[1000,290],70,C);      // cream stripes running inside the big ribbons
+  ribbon([20,700],[300,430],[640,980],[1010,640],78,C);
+  ribbon([40,330],[330,-80],[640,620],[1000,290],26,L);
+  ribbon([20,700],[300,430],[640,980],[1010,640],30,L);
+  c.restore();
+  c.strokeStyle=T;c.lineWidth=8;c.beginPath();c.arc(W/2,H/2,W/2-70,0,Math.PI*2);c.stroke();   // thin terracotta edge line inside a plain cream border
+ },1024,1024);
+ const rugMesh=new THREE.Mesh(new THREE.CircleGeometry(1.1,64),new THREE.MeshStandardMaterial({map:rt,roughness:.97,emissive:'#ffffff',emissiveMap:rt,emissiveIntensity:.06,transparent:true}));
+ rugMesh.rotation.x=-Math.PI/2;rugMesh.position.set(-2.7,gf+.03,-1.65);rugMesh.receiveShadow=true;scene.add(rugMesh);
  armchair80s(scene,-3.15,gf+.03,-2.05,Math.PI/4);
  roundCoffeeTable(scene,-2.3,gf+.03,-1.2);
- torchiere(scene,-2.05,gf+.03,-2.6);
+ torchiere(scene,-2.05,gf,-2.6);
 }
-/** Chunky single-seat armchair in teal velvet with chrome feet, a gold piping line and a coral throw pillow. Faces +Z. */
+/** Chunky single-seat armchair in light-brown (camel) velvet with chrome feet, a gold piping line and a terracotta throw pillow. Faces +Z. */
 function armchair80s(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
  const g=new THREE.Group();g.position.set(x,gfy,z);g.rotation.y=rotY;parent.add(g);
- const velvet=color('#2b8a91',0,.9),velvet2=color('#37a2a6',0,.9),pink=color('#e8618c',0,.85),gold=color('#e9b84d',.4,.45),chrome=color('#c9d3dc',.8,.25);
+ const velvet=color('#c0813f',0,.9),velvet2=color('#dba868',0,.9),pink=color('#c4602d',0,.85),gold=color('#e9b84d',.4,.45),chrome=color('#c9d3dc',.8,.25);
  for(const sx of [-.4,.4])for(const sz of [-.34,.34])cyl(g,sx,.06,sz,.035,.025,.12,chrome,8);
  box(g,0,.22,0,.98,.2,.9,velvet);                                        // base
  box(g,0,.38,.06,.66,.12,.62,velvet2);                                   // seat cushion
@@ -2509,18 +2537,18 @@ function armchair80s(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:num
  for(const sx of [-1,1]){box(g,sx*.45,.40,0,.18,.36,.9,velvet);box(g,sx*.45,.60,0,.22,.07,.88,velvet2);}   // arms with a rolled top
  const pillow=box(g,.2,.55,-.1,.30,.30,.09,pink);pillow.rotation.y=.5;pillow.rotation.z=.35;
 }
-/** Round black-lacquer coffee table with chrome legs, a lower shelf, a pink under-glow, two books and a mug. */
+/** Round black-lacquer coffee table with chrome legs, a lower shelf, a warm under-glow, two books and a mug. */
 function roundCoffeeTable(parent:THREE.Object3D,x:number,gfy:number,z:number){
  const g=new THREE.Group();g.position.set(x,gfy,z);parent.add(g);
  const lacquer=color('#1c1a28',.2,.35),chrome=color('#c9d3dc',.8,.25);
  cyl(g,0,.43,0,.46,.46,.04,lacquer,20);
- cyl(g,0,.405,0,.475,.475,.012,color('#ff5fa8',.1,.3,'#ff5fa8',1.1),20);   // pink glow strip just under the top edge
+ cyl(g,0,.405,0,.475,.475,.012,color('#ffb060',.1,.3,'#ffa040',1.1),20);   // warm amber glow strip just under the top edge
  cyl(g,0,.18,0,.34,.34,.02,lacquer,16);
  for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;cyl(g,Math.cos(a)*.32,.215,Math.sin(a)*.32,.022,.022,.43,chrome,8);}
- box(g,-.12,.465,-.06,.26,.035,.18,color('#2fb3b0',0,.8)).rotation.y=.35;
+ box(g,-.12,.465,-.06,.26,.035,.18,color('#6b4a33',0,.8)).rotation.y=.35;
  box(g,-.11,.50,-.05,.22,.03,.15,color('#f6c445',0,.8)).rotation.y=.1;
  cyl(g,.14,.49,.1,.04,.035,.07,color('#f2efe6',0,.6),10);
- glowPatch(g,0,.02,0,1.6,1.6,'#ff5fa8',.12,0,true);
+ glowPatch(g,0,.02,0,1.6,1.6,'#ffa850',.12,0,true);
 }
 /** Halogen torchiere: dark pole, uplight bowl, a halo, and warm washes on the back wall and the rug. */
 function torchiere(parent:THREE.Object3D,x:number,gfy:number,z:number){
@@ -2577,10 +2605,10 @@ export function buildWorld():World{
  keyLight(scene,'#39e5ff',2.95,12.0,NEON.x+.4,4.2,NEON.z+.2,.075,.61,1.4); // cool blue fill along the right elevation
  keyLight(scene,'#a271ff',2.55,10.5,.15,1.6,-4.3,.075,.61,2.8);            // violet wash over the rear service area
  keyLight(scene,'#9cc8ff',1.45,21,0,9.5,5);                                // cool moon fill from above
- keyLight(scene,'#ffc27a',5.2*k,10,...at(-2.4,2.9,4.6),.12*k,.8,.3);       // storefront, left display window and awning lamps
- keyLight(scene,'#ffc27a',5.2*k,10,...at(2.5,2.9,4.6),.12*k,.8,1.9);       // storefront, right display window and resume stand
+ keyLight(scene,'#ffc27a',4.0*k,10,...at(-2.4,2.9,4.6),.12*k,.8,.3);       // storefront, left display window and awning lamps
+ keyLight(scene,'#ffc27a',4.0*k,10,...at(2.5,2.9,4.6),.12*k,.8,1.9);       // storefront, right display window and resume stand
  keyLight(scene,'#ffbf7a',4.5*k,8.5,...at(2.95,5.5,1.2),.1*k,.7,.9);        // right terrace table, string bulbs and door
- keyLight(scene,'#ffc27a',3.6*k,7.5,...at(-1.2,6.6,2.4),.08*k,.75,2.2);    // upper-floor windows and sconces
+ keyLight(scene,'#ffc27a',2.8*k,7.5,...at(-1.2,6.6,2.4),.08*k,.75,2.2);    // upper-floor windows and sconces
  keyLight(scene,'#ffbe74',3.6*k,8,...at(-1.15,9.0,-.30),.08*k,.65,3.1);    // rooftop terrace
  keyLight(scene,'#ffb872',1.7*k,6.5,...at(5.4,3.4,-.6),.05*k,.7,.5);       // corkboard: the lamp beside it; kept gentle so the board does not glow
  const hits:HitTarget[]=[];
