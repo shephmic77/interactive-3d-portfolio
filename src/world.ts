@@ -1149,7 +1149,7 @@ function interiors(scene:THREE.Object3D){
  box(scene,.2,gf+.015,.45,3.4,.02,2.2,rug('#7a3f4a'));
  cyl(scene,1.9,gf+.78,.35,.5,.5,.06,wood,14);cyl(scene,1.9,gf+.4,.35,.06,.07,.74,iron,8);cyl(scene,1.9,gf+.04,.35,.3,.3,.06,iron,10);
  for(const [sx,sz] of [[1.2,.1],[2.55,.6]] as const){cyl(scene,sx,gf+.5,sz,.2,.2,.07,color('#6d4b3c'),10);cyl(scene,sx,gf+.25,sz,.04,.05,.5,iron,6);}
- pot(scene,-3.35,gf,2.2,.62,false);
+ pot(scene,-3.35,gf,2.45,.62,false);
  pendant(scene,-2.0,top,.9,3.05,gf,1);
  pendant(scene,1.9,top,.35,3.0,gf,1);
  pendant(scene,-.2,top,-1.1,3.15,gf,.9);
@@ -2205,14 +2205,19 @@ function endgameInteriors(scene:THREE.Object3D){
   imagePoster(scene,2.85,2.2,-2.835,.94,1.28,'desert-poster.jpg','#d9b27a');
   // vtest12: four supplied pictures, pixelated for the 8-bit look. Left wall (inner face x = -4.01, turned to face +X), clear of the dark
   // window (z -1.98 .. -.54) and the plant (z 2.2); the fourth on the back wall above the counter, between the window and the Baggio poster.
-  // vtest14: the three ground-floor left-wall posters are now the supplied 8-bit artwork (already pixel art, so no extra pixelation) at 80% of their old size, all 2:3
-  imagePoster(scene,-4.01,2.55,.10,.69,1.03,'battlefront2.jpg','#16202e',0,.22,Math.PI/2);
-  imagePoster(scene,-4.01,2.55,1.15,.64,.96,'xbalanque.jpg','#4a6a3a',0,.22,Math.PI/2);
-  imagePoster(scene,-4.01,2.55,2.20,.64,.96,'joker.jpg','#3a55b0',0,.22,Math.PI/2);
+  // vtest15: the left wall is now a tidy 2 x 2 grid of the four supplied 8-bit pictures (all 2:3, .56 x .84, 0.10 between frames), centred over a
+  // little side table. Viewed from inside, the left column has the larger z.
+  const gz=.81,gy=2.30,dz=.33,dy=.47;
+  imagePoster(scene,-4.01,gy+dy,gz+dz,.56,.84,'battlefront2.jpg','#16202e',0,.22,Math.PI/2);
+  imagePoster(scene,-4.01,gy+dy,gz-dz,.56,.84,'xbalanque.jpg','#4a6a3a',0,.22,Math.PI/2);
+  imagePoster(scene,-4.01,gy-dy,gz+dz,.56,.84,'joker.jpg','#3a55b0',0,.22,Math.PI/2);
+  imagePoster(scene,-4.01,gy-dy,gz-dz,.56,.84,'kafka-8bit.jpg','#ece8e0',0,.14,Math.PI/2);
   imagePoster(scene,-.55,2.45,-2.835,.90,1.27,'kafka.jpg','#ece8e0',110,.12);
   // vtest12: a workbench and a storage chest along the left wall under the pictures.
-  workbench(scene,-3.54,.07,.10,Math.PI/2);
-  woodChest(scene,-3.62,.07,1.20,Math.PI/2);
+  // vtest15: re-spaced along the wall to make room for the little table under the grid: workbench, table, chest, then the plant.
+  workbench(scene,-3.54,.07,.00,Math.PI/2);
+  littleTable(scene,-3.72,.07,gz,Math.PI/2);
+  woodChest(scene,-3.62,.07,1.61,Math.PI/2);
 }
 /** Building-level end-game pieces outside the walls (building-local units): the cat, the quetzal, the flag, the surfboard and the baseball kit. */
 // ---------------------------------------------------------------------------------------------
@@ -2470,6 +2475,16 @@ function workbench(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:numbe
   }
   box(g,-.17,.36,.386,.30,.08,.008,color('#b9c0cc',.5,.5));box(g,-.35,.36,.388,.07,.06,.014,color('#6b4528',0,.9));   // saw: blade and handle
   box(g,.17,.32,.388,.035,.24,.014,color('#6b4528',0,.9));box(g,.17,.46,.39,.13,.06,.022,color('#4a4f5a',.4,.5));    // hammer: handle and head
+}
+/** Little wooden side table with a lower shelf and a candle on top. Faces +Z; `gfy` is the floor height. */
+function littleTable(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,gfy,z);g.rotation.y=rotY;parent.add(g);
+  const top=color('#a8794a',0,.8),leg=color('#5e3d22',0,.85);
+  box(g,0,.725,0,.62,.05,.46,top);                                  // top
+  box(g,0,.69,0,.56,.03,.40,leg);                                   // apron under the top
+  for(const sx of [-.26,.26])for(const sz of [-.18,.18])box(g,sx,.35,sz,.05,.70,.05,leg);
+  box(g,0,.20,0,.54,.03,.38,top);                                   // lower shelf
+  candleJar(g,.14,.75,.06);
 }
 /** Wooden storage chest with iron straps and a brass lock. Faces +Z. */
 function woodChest(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:number){
