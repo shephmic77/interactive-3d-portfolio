@@ -74,19 +74,21 @@ export const profile = {
   linkedin: 'https://www.linkedin.com/in/michael-shepherd7/',
 };
 
-/** The in-site resume. Mirrors public/Michael_Shepherd_Resume.pdf (supplied 2026-10-15); wording follows the PDF. The phone number is left out on purpose. */
+/** The in-site resume. Mirrors public/Michael_Shepherd_Resume.pdf (supplied 2026-10-15); wording follows the PDF.  */
 export type ResumeJob={org:string;place:string;role:string;dates:string;bullets:string[]};
 export type ResumeProject={name:string;tools:string;bullets:string[]};
 export const resume={
   pdf:'Michael_Shepherd_Resume.pdf',
   site:'michael-shepherd.vercel.app',
-  school:{name:'The Pennsylvania State University',place:'University Park, PA',degree:'B.S. in Applied Data Science, College of Information Sciences and Technology',when:'Anticipated graduation: May 2027'},
+  phone:'281-771-6887',
+  linkedin:'linkedin.com/in/michael-shepherd7/',
+  school:{name:'The Pennsylvania State University',place:'University Park, PA',degree:'B.S. in Applied Data Science, College of Information Sciences and Technology',grad:'May 2027'},
   skills:[
-    {label:'Programming languages',items:'Python | R | SQL | JavaScript | HTML/CSS'},
-    {label:'Libraries and frameworks',items:'Pandas | NumPy | scikit-learn | Matplotlib | Beautiful Soup | FastAPI | Streamlit'},
-    {label:'Programs and tools',items:'PostgreSQL (pgvector) | Docker | Git | GitHub | Vercel | Jupyter Notebook | Alteryx Designer | Autodesk Fusion | Ollama | ChatGPT | Codex | Claude'},
+    {label:'Programming Languages',items:'Python | R | SQL | JavaScript | HTML/CSS'},
+    {label:'Libraries and Frameworks',items:'Pandas | NumPy | scikit-learn | Matplotlib | Beautiful Soup | FastAPI | Streamlit'},
+    {label:'Programs and Tools',items:'PostgreSQL (pgvector) | Docker | Git | GitHub | Vercel | Jupyter Notebook | Alteryx Designer | Autodesk Fusion | Ollama | ChatGPT | Codex | Claude'},
     {label:'Methods',items:'Machine Learning | RAG | Data Cleaning and Auditing | Web Scraping | Data Visualization | Unit Testing'},
-    {label:'Spoken language',items:'Spanish (Fluent)'},
+    {label:'Spoken Language',items:'Spanish (Fluent)'},
   ],
   experience:[
     {org:'Geoinformation and Big Data Research Laboratory (GIBD)',place:'University Park, PA',role:'Undergraduate Research Assistant',dates:'May 2026 – Aug 2026',bullets:[

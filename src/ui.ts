@@ -76,18 +76,26 @@ function contact(){
     <div class="note">The vending machine is on the back of the building, beside the credits arcade cabinet. Rotate the scene to find both.</div>`;
 }
 function resume(){
-  const jobs=cv.experience.map(j=>`<div class="rp-job"><div class="rp-row"><strong>${html(j.org)}</strong><span>${html(j.place)}</span></div><div class="rp-row rp-role"><em>${html(j.role)}</em><span>${html(j.dates)}</span></div><ul>${j.bullets.map(t=>`<li>${html(t)}</li>`).join('')}</ul></div>`).join('');
-  const works=cv.projects.map(p=>`<div class="rp-job"><div class="rp-row"><strong>${html(p.name)}</strong></div><div class="rp-tools">${html(p.tools)}</div><ul>${p.bullets.map(t=>`<li>${html(t)}</li>`).join('')}</ul></div>`).join('');
-  const skills=cv.skills.map(k=>`<div class="rp-skill"><dt>${html(k.label)}</dt><dd>${html(k.items)}</dd></div>`).join('');
-  return heading('resume')+`<p class="panel-copy">My resume, in full. The PDF is the official copy; the page below carries the same wording so it is easy to read here.</p>
+  const li=(t:string[])=>`<ul role="list">${t.map(x=>`<li>${html(x)}</li>`).join('')}</ul>`;
+  const jobs=cv.experience.map(j=>`<div class="rs-row"><strong>${html(j.org)}</strong><span>${html(j.place)}</span></div><div class="rs-row rs-it"><em>${html(j.role)}</em><em>${html(j.dates)}</em></div>${li(j.bullets)}`).join('');
+  const works=cv.projects.map(p=>`<p class="rs-proj"><strong>${html(p.name)} | ${html(p.tools)}</strong></p>${li(p.bullets)}`).join('');
+  const skills=cv.skills.map(k=>`<p><strong>${html(k.label)}:</strong> ${html(k.items)}</p>`).join('');
+  return heading('resume')+`<p class="panel-copy">My resume, laid out as the one-page PDF. Open the PDF for the original file.</p>
   <a class="primary-action" href="${html(cv.pdf)}" target="_blank" rel="noopener noreferrer" aria-label="Open the resume as a PDF in a new tab"><span class="pa-text">OPEN THE PDF</span> <span aria-hidden="true">↗</span></a>
-  <div class="resume-paper" id="resume-paper"><h3>${html(profile.name)}</h3><p class="rp-contact">${html(profile.email)} · ${html(cv.site)} · linkedin.com/in/michael-shepherd7 · ${html(profile.github.replace('https://',''))}</p>
-    <h4>EDUCATION</h4><div class="rp-row"><strong>${html(cv.school.name)}</strong><span>${html(cv.school.place)}</span></div><p class="rp-degree"><em>${html(cv.school.degree)}</em><br>${html(cv.school.when)}</p>
-    <h4>TECHNICAL SKILLS</h4><dl class="rp-skills">${skills}</dl>
-    <h4>EXPERIENCE</h4>${jobs}
-    <h4>PROJECTS</h4>${works}
-    <h4>CERTIFICATES</h4><p>${cv.certificates.map(html).join(' | ')}</p></div>
+  <div class="resume-paper" id="resume-paper" role="region" aria-label="Resume, one page"><div class="rs-wrap"><article class="sheet">
+    <h3 class="rs-name">${html(profile.name)}</h3>
+    <p class="rs-contact"><strong>${html(profile.email)} | ${html(cv.phone)}</strong> | ${html(cv.linkedin)} | ${html(cv.site)} | ${html(profile.github.replace('https://',''))}</p>
+    <section><h4 class="rs-h">EDUCATION</h4><div class="rs-row"><span class="rs-l"><strong>${html(cv.school.name)}</strong> | ${html(cv.school.place)}</span><span>Anticipated Graduation: <strong><em>${html(cv.school.grad)}</em></strong></span></div><p><em>${html(cv.school.degree)}</em></p></section>
+    <section><h4 class="rs-h">TECHNICAL SKILLS</h4>${skills}</section>
+    <section><h4 class="rs-h">EXPERIENCE</h4>${jobs}</section>
+    <section><h4 class="rs-h">PROJECTS</h4>${works}</section>
+    <section><h4 class="rs-h">CERTIFICATES</h4><p>${cv.certificates.map(html).join(' | ')}</p></section>
+  </article></div></div>
   <button type="button" id="print-resume" class="ghost-action">PRINT THIS PAGE</button>`;
+}
+function markResumeScroller(){
+  const r=document.querySelector<HTMLElement>('#resume-paper');if(!r)return;
+  if(r.scrollWidth>r.clientWidth+1)r.setAttribute('tabindex','0');else r.removeAttribute('tabindex');
 }
 function credits(){
  return heading('credits')+`<div class="arcade-banner"><span class="pixel-stars">✦  ✷  ✦</span><strong>THANKS FOR PLAYING</strong><span>INSERT CURIOSITY TO CONTINUE</span></div>
@@ -108,7 +116,7 @@ function renderSection(section:Section){
       searchQuery=(e.target as HTMLInputElement).value;applyFilter();
     });
   }
-  if(section==='resume') document.querySelector('#print-resume')?.addEventListener('click',()=>window.print());
+  if(section==='resume'){document.querySelector('#print-resume')?.addEventListener('click',()=>window.print());markResumeScroller();}
   body.querySelectorAll<HTMLButtonElement>('[data-jump]').forEach(el=>el.addEventListener('click',()=>navigate(el.dataset.jump as Section)));
 }
 export function showPanel(section:Section, projectId?:string){
@@ -116,6 +124,7 @@ export function showPanel(section:Section, projectId?:string){
   renderSection(section);
   if(section==='projects' && projectId){const p=projects.find(p=>p.id===projectId);if(p) detail(p);}
   if(section==='projects')openBook(projectId);else closeBook();
+  panel.classList.toggle('wide',section==='resume');
   panel.classList.add('open');panel.setAttribute('aria-hidden','false');
   scrim.hidden=false;requestAnimationFrame(()=>scrim.classList.add('visible'));
   document.body.classList.add('panel-open');
@@ -132,6 +141,7 @@ export function closePanel(){
 }
 export function initUI(nav:NavHandler){
   navigate=nav;
+  window.addEventListener('resize',()=>{if(activeSection==='resume')markResumeScroller();});
   document.querySelector<HTMLButtonElement>('#panel-close')!.addEventListener('click',()=>navigate('home'));
   scrim.addEventListener('click',()=>navigate('home'));
   body.addEventListener('click',(event)=>{
