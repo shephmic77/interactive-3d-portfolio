@@ -133,6 +133,39 @@ const WALL_T=.24, WALL_IN=.05;   // wall thickness, and the inner plaster layer 
 const plasterMat=()=>color('#b99b76',0,.92,'#ff8f45',.13*tuning.room);   // vtest17: dimmer, warmer fill; the lamps do the lighting
 const ceilingMat=()=>color('#8f7660',0,.95,'#ff8f45',.08*tuning.room);
 const floorMat=()=>color('#7a5c40',0,.85,'#ff8a40',.06*tuning.room);
+// vtest25: stylised interior walls. Sage beadboard wainscot (to 1.12 m) under a warm hand-painted floral paper, split by a chair rail.
+const STYLE_INTERIOR=true;
+const WAINSCOT_H=1.12,PAPER_TILE=1.4;
+let paperMats:{low:THREE.Material;up:THREE.Material}|null=null;
+function interiorPaper(){
+  if(paperMats)return paperMats;
+  const wrap=(t:THREE.Texture)=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.needsUpdate=true;return t;};
+  const lowTex=wrap(texture((c,W,H)=>{
+    c.fillStyle='#4d7469';c.fillRect(0,0,W,H);
+    const planks=8,pw=W/planks;
+    for(let i=0;i<planks;i++){
+      const n=hash1(i*5.7+1.3);c.fillStyle=`hsl(${160+n*10},${24+n*8}%,${33+n*7}%)`;c.fillRect(i*pw+1,0,pw-2,H);
+      c.fillStyle='rgba(20,40,36,.55)';c.fillRect(i*pw,0,2,H);c.fillStyle='rgba(255,255,255,.07)';c.fillRect(i*pw+4,0,2,H);
+    }
+    c.fillStyle='#dcc79d';c.fillRect(0,0,W,H*.09);c.fillStyle='rgba(60,40,20,.5)';c.fillRect(0,H*.09,W,3);      // cap rail at the top (v = 1)
+    c.fillStyle='#3a5a50';c.fillRect(0,H*.9,W,H*.1);c.fillStyle='rgba(0,0,0,.35)';c.fillRect(0,H*.9,W,3);       // skirting at the bottom
+  },256,256));
+  // canvas y runs down while v runs up, so the cap above is drawn at the canvas top and lands at v = 1.
+  const upTex=wrap(texture((c,W,H)=>{
+    c.fillStyle='#dcbd8f';c.fillRect(0,0,W,H);
+    for(let x=0;x<W;x+=32){c.fillStyle='rgba(255,240,205,.16)';c.fillRect(x,0,16,H);}
+    const flower=(x:number,y:number,r:number,petal:string)=>{
+      c.fillStyle='#7f9a62';c.beginPath();c.ellipse(x-r*1.1,y+r*.9,r*.9,r*.34,-.7,0,7);c.fill();c.beginPath();c.ellipse(x+r*1.1,y+r*.9,r*.9,r*.34,.7,0,7);c.fill();
+      c.fillStyle=petal;for(let k=0;k<5;k++){const a=k/5*Math.PI*2-1.57;c.beginPath();c.arc(x+Math.cos(a)*r*.62,y+Math.sin(a)*r*.62,r*.46,0,7);c.fill();}
+      c.fillStyle='#f4dc9a';c.beginPath();c.arc(x,y,r*.3,0,7);c.fill();
+    };
+    flower(64,64,15,'#c66a4b');flower(192,192,15,'#c66a4b');flower(192,64,10,'#8a6aa6');flower(64,192,10,'#8a6aa6');
+    c.fillStyle='rgba(120,80,50,.35)';for(const [x,y] of [[128,128],[0,0],[256,0],[0,256],[256,256],[128,0],[128,256],[0,128],[256,128]])c.fillRect(x-3,y-3,6,6);
+  },256,256));
+  const mk=(t:THREE.Texture,rough:number)=>new THREE.MeshStandardMaterial({map:t,roughness:rough,metalness:0,emissive:'#ff8f45',emissiveMap:t,emissiveIntensity:.17*tuning.room});
+  paperMats={low:mk(lowTex,.88),up:mk(upTex,.93)};
+  return paperMats;
+}
 /** True when something small at (x,y,z) would sit across a registered opening (keeps brick joints out of windows). */
 function overlapsOpening(x:number,y:number,z:number,reach:number){
  for(const o of openings){
@@ -164,7 +197,16 @@ function hollowWall(parent:THREE.Object3D,x:number,y:number,z:number,rot:number,
   // The inner plaster is glowing (emissive), so it stops short of the wall's outer ends: otherwise its end face shows
   // as a thin bright line down every building corner.
   const i0=x0<=-width/2+1e-3?x0+.07:x0,i1=x1>=width/2-1e-3?x1-.07:x1;
-  box(g,(i0+i1)/2,cy,-t-WALL_IN/2,i1-i0,h,WALL_IN,inner).userData.wall=true;
+  if(STYLE_INTERIOR&&inner.userData.paper){
+   const P=interiorPaper(),iw=i1-i0,icx=(i0+i1)/2,lowH=Math.max(0,Math.min(y1,WAINSCOT_H)-y0),upH=Math.max(0,y1-Math.max(y0,WAINSCOT_H));
+   const add=(hh:number,cyy:number,mat:THREE.Material,uS:number,vOff:number)=>{
+    const geo=new THREE.BoxGeometry(iw,hh,WALL_IN),uv=geo.attributes.uv as THREE.BufferAttribute;
+    for(let k=16;k<24;k++)uv.setXY(k,(uv.getX(k)*iw+i0)/uS,(uv.getY(k)*hh+vOff)/uS);
+    const m=new THREE.Mesh(geo,mat);m.position.set(icx,cyy,-t-WALL_IN/2);m.castShadow=true;m.receiveShadow=true;m.userData.wall=true;g.add(m);
+   };
+   if(lowH>.002)add(lowH,y0+lowH/2,P.low,WAINSCOT_H,y0);
+   if(upH>.002)add(upH,y1-upH/2,P.up,PAPER_TILE,(y1-upH)-WAINSCOT_H);
+  }else box(g,(i0+i1)/2,cy,-t-WALL_IN/2,i1-i0,h,WALL_IN,inner).userData.wall=true;
  };
  let cursor=-width/2;
  for(const c of cuts){piece(cursor,c.l,0,height);piece(c.l,c.r,0,c.b);piece(c.l,c.r,c.t,height);cursor=c.r;}
@@ -836,7 +878,8 @@ function terraceFloor(scene:THREE.Object3D){
  perimeterRail(scene,'z',4.31,-1.55,3.20,ARCH.groundRoof,trim,.52,.11);
  perimeterRail(scene,'x',-3.22,1.82,4.18,ARCH.groundRoof,trim,.57,.11);
  // LEFT edge (was open) and the rear strip behind the upper block close the terrace all the way round.
- perimeterRail(scene,'z',-4.31,-3.22,3.23,ARCH.groundRoof,trim,.56,.11);
+ perimeterRail(scene,'z',-4.31,-3.22,-2.72,ARCH.groundRoof,trim,.56,.11);
+ perimeterRail(scene,'z',-4.31,-.28,3.23,ARCH.groundRoof,trim,.56,.11);   // vtest25: open where the oriel bay stands on the slab edge
  perimeterRail(scene,'x',-3.22,-4.31,-3.98,ARCH.groundRoof,trim,.57,.11);   // the back rail is open where the bouldering panel passes
  perimeterRail(scene,'x',-3.22,-3.12,1.82,ARCH.groundRoof,trim,.57,.11);
  // A few terrace plants and a restrained seating arrangement provide structure,
@@ -917,7 +960,7 @@ function storefront(scene:THREE.Object3D){
  glowPatch(scene,u.x+u.width/2+.07,5.78,-.45,2.5,3.7,'#ffbd6e',.11,Math.PI/2);
  glowPatch(scene,u.x+u.width/2+1.25,4.462,-.45,2.6,2.3,'#ffbd6e',.12,Math.PI/2,true);
  // 2) Hollow walls: outer brick + inner plaster, cut around the openings above.
- const T=WALL_T,plaster=plasterMat();
+ const T=WALL_T,plaster=plasterMat();plaster.userData.paper=true;
  hollowWall(scene,0,0,gd.depth/2,0,gd.width,gd.height,brick,plaster);
  hollowWall(scene,0,0,-gd.depth/2,Math.PI,gd.width,gd.height,brick,plaster);
  hollowWall(scene,gd.width/2,0,0,Math.PI/2,gd.depth-2*T,gd.height,brick,plaster);
@@ -2734,7 +2777,9 @@ const WALL_ITEMS:Box3[]=[
   {x0:1.2,x1:2.0,y0:6.0,y1:7.9,z0:.7,z1:1.4},
   // the climbing wall's stand-off and the stair landing
   {x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-3.8,z1:-3.0},{x0:4.2,x1:4.9,y0:4.35,y1:5.4,z0:-2.3,z1:-1.4},
-  {x0:4.2,x1:4.95,y0:.0,y1:2.1,z0:-3.0,z1:-2.55}
+  {x0:4.2,x1:4.95,y0:.0,y1:2.1,z0:-3.0,z1:-2.55},
+  // vtest25 massing volumes: the porch roof, the carport roof and the oriel bay
+  {x0:1.6,x1:4.7,y0:6.3,y1:7.95,z0:-3.2,z1:.45},{x0:-8.6,x1:-4.15,y0:2.8,y1:4.3,z0:-2.3,z1:.7},{x0:-5.0,x1:-3.8,y0:4.4,y1:8.4,z0:-2.8,z1:-.2}
 ];
 const itemHit=(x:number,y:number,z:number,m:number)=>{for(const b of WALL_ITEMS)if(x>b.x0-m&&x<b.x1+m&&y>b.y0-m&&y<b.y1+m&&z>b.z0-m&&z<b.z1+m)return true;return false;};
 
@@ -2886,7 +2931,7 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
     box(b,o.x+nx*.09,o.y-o.h/2-.17,o.z+nz*.09,o.w+.4,.06,.2,timberWarm,o.rot);
   }
   // Tile hood over the terrace door on the upper block's right wall (door z = -.45, wall face x = 1.70).
-  pentRoof(b,u.x+u.width/2+.06,7.58,-.45,1.75,.95,.42,Math.PI/2);
+  if(!MASSING)pentRoof(b,u.x+u.width/2+.06,7.58,-.45,1.75,.95,.42,Math.PI/2);   // vtest25: the porch roof replaces this little hood
   // Open timber cabana with a tile gable roof on the left of the roof terrace: the table, chairs, tank and lanterns stay in the open.
   const R=7.945,eave=9.85,cxC=-3.05,zA=-2.25,zB=.55,xL=-3.80,xR=-2.30;
   const roof=gableRoof(b,cxC,eave,(zA+zB)/2,zB-zA,xR-xL,.5,Math.PI/2);
@@ -2901,6 +2946,8 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
   hangingLamp(b,cxC,9.1,(zA+zB)/2,1.0,eave-.1);
   chimney(b);
   exteriorExtras(b,ground,upper);cozyInterior(b);   // vtest24
+  massing(b);                                         // vtest25
+  styledInterior(b);
   return chimneySmoke(b,reduced);
 }
 // ---------------------------------------------------------------------------------------------
@@ -2910,7 +2957,7 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
 // weathervane on the cabana, and inside both floors timber ceiling beams, hanging planters, swag lights, wall shelves, prints, a clock and
 // a runner rug. Nothing that was on or in the building moved. KNOLL=false puts the old flat meadow back.
 // ---------------------------------------------------------------------------------------------
-const KNOLL=true;
+const KNOLL=false;   // vtest25: the hill, wall and big stair were too much; the building is the focus (true brings them back)
 const WALL_BASE=-.80,HILL_DROP=2.4;
 const plazaDist=(x:number,z:number)=>{const dx=Math.max(PLAZA.x0-x,0,x-PLAZA.x1),dz=Math.max(PLAZA.z0-z,0,z-PLAZA.z1);return Math.hypot(dx,dz);};
 /** Ground height around the plaza: flat just below the retaining wall, then falling away like a hill. */
@@ -3122,6 +3169,190 @@ function cozyInterior(b:THREE.Object3D){
   for(const dz of [-.4,-.22,.3,.48])box(b,.06,.094,2.2+dz,1.15,.004,.07,stripe).castShadow=false;
 }
 // ---------------------------------------------------------------------------------------------
+// VTEST25: massing. The building stops being two stacked boxes. New volumes pop out of the walls at different depths and heights, each
+// with its own tile roof, like the stepped hilltop house in the reference:
+//   - RIGHT: a deep tile porch roof over the back half of the side terrace, on timber posts with knee braces and two hanging lamps.
+//   - LEFT, upper: a jettied oriel bay (three lit windows, hip roof, big corbels) bursting out of the upper-left wall.
+//   - LEFT, lower: a lean-to carport roof over the kei truck, running down from the wall to timber posts.
+// Nothing that was on or in the building moved. The timber frame skips these zones (see WALL_ITEMS). MASSING=false removes all three.
+// ---------------------------------------------------------------------------------------------
+const MASSING=true;
+let roofTileMat:THREE.MeshStandardMaterial|null=null;
+const roofTile=()=>roofTileMat??=(()=>{const m=tileMat(1,1);m.side=THREE.DoubleSide;return m;})();
+const soffitMat=color('#5a3d28',0,.9);
+const bayWall=color('#d6c7a9',0,.95);
+const bayGlass=color('#ffcf8a',0,.4,'#ffa045',.62);
+/** One flat polygon (3+ points) lying on a plane: `hint` picks which side faces out; UVs are in metres / `scale`. */
+function polyMesh(parent:THREE.Object3D,pts:THREE.Vector3[],mat:THREE.Material,hint:THREE.Vector3,scale=2.4,cast=true){
+  const n=new THREE.Vector3().crossVectors(pts[1].clone().sub(pts[0]),pts[2].clone().sub(pts[0])).normalize();
+  let p=pts;
+  if(hint.dot(n)<0){p=[...pts].reverse();n.negate();}
+  const u=p[1].clone().sub(p[0]).normalize(),v=new THREE.Vector3().crossVectors(n,u);
+  const pos:number[]=[],nor:number[]=[],uv:number[]=[];
+  for(let i=1;i<p.length-1;i++)for(const q of [p[0],p[i],p[i+1]]){
+    pos.push(q.x,q.y,q.z);nor.push(n.x,n.y,n.z);
+    const d=q.clone().sub(p[0]);uv.push(d.dot(u)/scale,d.dot(v)/scale);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  const m=new THREE.Mesh(g,mat);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m;
+}
+/** A tile roof slab that runs along X and drops away from a wall: top corners given, with a plank soffit and timber fascia. */
+function slopedTileRoof(b:THREE.Object3D,xw:number,yw:number,xo:number,yo:number,zA:number,zB:number,th=.075){
+  const top=[V(xw,yw,zA),V(xo,yo,zA),V(xo,yo,zB),V(xw,yw,zB)];
+  const bot=top.map(p=>V(p.x,p.y-th,p.z));
+  polyMesh(b,top,roofTile(),V(0,1,0));
+  polyMesh(b,bot,soffitMat,V(0,-1,0),1.2,false);
+  const len=Math.hypot(xo-xw,yo-yw),ang=Math.atan2(yo-yw,xo-xw),cx=(xw+xo)/2,cy=(yw+yo)/2;
+  for(const z of [zA,zB]){const f=box(b,cx,cy-.05,z+(z===zB?.02:-.02),len+.04,.17,.06,timberMat);f.rotation.z=ang;}
+  // rafters under the soffit
+  const n=Math.max(2,Math.round((zB-zA)/.75));
+  for(let i=0;i<=n;i++){const z=zA+(zB-zA)*i/n;const r=box(b,cx,cy-th-.05,z,len,.09,.07,timberWarm);r.rotation.z=ang;}
+  return {len,ang};
+}
+/** Hip roof on an axis-aligned rectangle (x0..x1, z0..z1) with eaves at y; the ridge runs along the longer side. */
+function hipTileRoof(b:THREE.Object3D,x0:number,x1:number,z0:number,z1:number,y:number,rise:number){
+  const cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0,mat=roofTile();
+  const alongZ=d>=w,short=Math.min(w,d),ridgeHalf=(Math.max(w,d)-short)/2;
+  const r0=alongZ?V(cx,y+rise,cz-ridgeHalf):V(cx-ridgeHalf,y+rise,cz),r1=alongZ?V(cx,y+rise,cz+ridgeHalf):V(cx+ridgeHalf,y+rise,cz);
+  const c=[V(x0,y,z0),V(x1,y,z0),V(x1,y,z1),V(x0,y,z1)];
+  const centre=V(cx,y-.8,cz),face=(pts:THREE.Vector3[])=>{const m=pts.reduce((a,p)=>a.add(p),V(0,0,0)).multiplyScalar(1/pts.length);return m.sub(centre);};
+  const all=alongZ
+    ?[[c[0],c[1],r0],[c[2],c[3],r1],[c[1],c[2],r1,r0],[c[3],c[0],r0,r1]]
+    :[[c[1],c[2],r1],[c[3],c[0],r0],[c[0],c[1],r1,r0],[c[2],c[3],r0,r1]];
+  for(const f of all)polyMesh(b,f,mat,face(f));
+  // fascia ring and ridge cap
+  box(b,cx,y-.04,z0,w+.06,.14,.06,timberMat);box(b,cx,y-.04,z1,w+.06,.14,.06,timberMat);
+  box(b,x0,y-.04,cz,.06,.14,d+.06,timberMat);box(b,x1,y-.04,cz,.06,.14,d+.06,timberMat);
+  const rl=Math.hypot(r1.x-r0.x,r1.z-r0.z)+.14;
+  if(alongZ)box(b,cx,y+rise+.02,cz,.13,.1,rl,tileDark);else box(b,cx,y+rise+.02,cz,rl,.1,.13,tileDark);
+}
+function rightPorch(b:THREE.Object3D){
+  const xw=1.70,yw=7.62,xo=4.55,yo=6.47,zA=-3.05,zB=.30,th=.075;
+  slopedTileRoof(b,xw,yw,xo,yo,zA,zB,th);
+  const roofY=(x:number)=>yw+(yo-yw)*(x-xw)/(xo-xw);
+  box(b,xw+.04,yw-.1,(zA+zB)/2,.12,.18,zB-zA,timberMat);                                  // wall plate
+  const px=4.15,beamY=roofY(px)-th-.09;
+  box(b,px,beamY,(zA+zB)/2-.03,.15,.17,zB-zA-.3,timberMat);                               // beam under the outer edge
+  for(const pz of [-2.65,-.05]){
+    box(b,px,(4.455+beamY)/2,pz,.14,beamY-4.455,.14,timberMat);                            // post
+    box(b,px,4.5,pz,.22,.09,.22,plinthMat);                                                  // stone foot
+    rodX(b,pz,px,5.75,px-.6,roofY(px-.6)-th-.04,.03,timberWarm,5);                         // knee brace to the rafters
+    rod(b,px,5.8,pz,beamY-.02,pz+(pz<-1?.6:-.6),.03,timberWarm,5);                         // knee brace along the beam
+  }
+  for(const [lx,lz] of [[3.55,-.95],[3.3,-2.2]] as const){hangingLamp(b,lx,roofY(lx)-th-.95,lz,.9,roofY(lx)-th);}
+}
+function carport(b:THREE.Object3D){
+  // The truck stands in world space (x -5.25) while this group is scaled .78, so in building units the truck sits at x about -6.7:
+  // the carport therefore runs out to -8.45 and its posts stand at -8.1, outside the truck's footprint.
+  const xw=-4.40,yw=4.17,xo=-8.45,yo=2.95,zA=-2.15,zB=.55,th=.075;
+  slopedTileRoof(b,xw,yw,xo,yo,zA,zB,th);
+  const roofY=(x:number)=>yw+(yo-yw)*(x-xw)/(xo-xw);
+  box(b,xw-.04,yw-.1,(zA+zB)/2,.12,.18,zB-zA,timberMat);
+  const px=-8.1,beamY=roofY(px)-th-.09;
+  box(b,px,beamY,(zA+zB)/2,.15,.17,zB-zA,timberMat);
+  for(const pz of [-2.05,-.8,.45]){
+    box(b,px,(beamY-.03)/2,pz,.14,beamY+.03,.14,timberMat);
+    box(b,px,.05,pz,.26,.1,.26,plinthMat);
+    if(pz!==-.8)rodX(b,pz,px,beamY-.55,px+.55,roofY(px+.55)-th-.04,.03,timberWarm,5);
+  }
+  festoon(b,V(px+.04,beamY-.2,-2.0),V(px+.04,beamY-.2,.4),.14,6);
+}
+function leftBay(b:THREE.Object3D){
+  const xw=-4.02,xo=-4.80,z0=-2.50,z1=-.50,yb=4.50,yt=7.35,cx=(xw+xo)/2,cz=(z0+z1)/2,w=xw-xo;
+  box(b,cx,(yb+yt)/2,cz,w,yt-yb,z1-z0,bayWall);
+  box(b,cx,yb-.1,cz,w+.08,.2,z1-z0+.08,timberMat);                                           // jetty sill beam
+  box(b,cx,yt-.08,cz,w+.1,.16,z1-z0+.1,timberMat);                                           // top plate
+  for(const z of [z0,z1])for(const x of [xw,xo])box(b,x,(yb+yt)/2,z,.13,yt-yb,.13,timberMat);   // corner posts
+  const g0=yb+.78,g1=yt-.30,gh=g1-g0,gy=(g0+g1)/2;
+  const pane=(x:number,z:number,wd:number,alongX:boolean)=>{   // one lit pane with a timber grid
+    if(alongX){box(b,x,gy,z,wd,gh,.03,bayGlass);}else{box(b,x,gy,z,.03,gh,wd,bayGlass);}
+    const t=.05;
+    if(alongX){box(b,x,gy,z+(z>cz?.02:-.02),t,gh+.08,.05,timberMat);for(const k of [-.18,.2])box(b,x,gy+gh*k,z+(z>cz?.02:-.02),wd+.08,t,.05,timberMat);}
+    else{box(b,x+(x<cx?-.02:.02),gy,z,.05,gh+.08,t,timberMat);for(const k of [-.18,.2])box(b,x+(x<cx?-.02:.02),gy+gh*k,z,.05,t,wd+.08,timberMat);}
+  };
+  for(const dz of [-.46,.46]){pane(xo-.02,cz+dz,.82,false);}
+  for(const z of [z0,z1])pane(cx,z+(z===z0?-.02:.02),.5,true);
+  // frame round every pane, a flower box under the front, and the glow it throws
+  box(b,xo-.03,g0-.04,cz,.05,.08,z1-z0-.12,timberMat);box(b,xo-.03,g1+.04,cz,.05,.08,z1-z0-.12,timberMat);
+  box(b,xo-.16,g0-.16,cz,.24,.17,z1-z0-.2,timberWarm);
+  for(let i=0;i<5;i++){const s=sphere(b,xo-.16,g0-.02,z0+.35+i*.32,.1,i%2?leaf:leaf2,1);s.castShadow=false;}
+  halo(b,xo-.35,gy,cz,2.4,'#ffb866',.42);
+  // corbels that carry the jetty: braces from the wall face up to the sill beam
+  for(const z of [z0+.22,z1-.22]){
+    rodX(b,z,-4.27,3.95,xo+.03,yb-.12,.05,timberMat,6);
+    box(b,xo+.02,yb-.3,z,.14,.3,.18,timberWarm);
+  }
+  hipTileRoof(b,xo-.2,xw+.02,z0-.22,z1+.22,yt,1.15);
+  cyl(b,cx-.1,yt+1.15+.28,cz,.02,.02,.5,iron,6);sphere(b,cx-.1,yt+1.15+.55,cz,.05,brass,1);   // finial
+}
+
+// ---------------------------------------------------------------------------------------------
+// VTEST25 interior styling (beyond the wallpaper): curtains with valances, pennant bunting and hanging dried herbs.
+// ---------------------------------------------------------------------------------------------
+let clothMats:THREE.Material[]|null=null;
+const cloth=()=>clothMats??=['#b0503a','#d2963f','#5f8566','#8a5d80'].map(c=>color(c,0,.96,'#ff8f45',.05*tuning.room));
+let pennantMats:THREE.Material[]|null=null;
+const pennants=()=>pennantMats??=['#c9694a','#e0b254','#6f9a78','#6f8fb5','#b5799a'].map(c=>{const m=color(c,0,.95,'#ff8f45',.12*tuning.room);m.side=THREE.DoubleSide;return m;});
+/** Curtain pair, tie-backs, rod and a scalloped valance inside one window. Shop display windows, blinds and doors are left alone. */
+function curtains(b:THREE.Object3D){
+  const mats=cloth();let k=0;
+  for(const o of openings){
+    const floorY=o.y>4.3?4.4:.05;
+    if(o.y-o.h/2-floorY<.5)continue;                                     // doors
+    if(o.z>3&&o.y<3)continue;                                            // shop display windows
+    if(Math.abs(o.x-4.37)<.05||(Math.abs(o.x+.05)<.05&&o.y>6))continue;   // windows that already have slatted blinds
+    const nx=Math.sin(o.rot),nz=Math.cos(o.rot),m=mats[k++%mats.length],trimM=brass;
+    const g=new THREE.Group();g.position.set(o.x-nx*.40,o.y,o.z-nz*.40);g.rotation.y=o.rot+Math.PI;b.add(g);   // local +Z points into the room
+    const top=o.h/2+.17,hang=o.h+.12,pw=Math.min(.42,o.w*.2);
+    for(const s of [-1,1]){
+      const cx=s*(o.w/2-pw*.35);
+      for(let i=0;i<4;i++)box(g,cx+(i-1.5)*pw/4,top-hang/2-.05,.025+(i%2)*.045,pw/4+.01,hang,.05,m).castShadow=false;
+      const tie=box(g,cx,top-hang*.52,.1,pw+.04,.06,.1,trimM);tie.castShadow=false;                       // tie-back
+      box(g,cx,top-hang*.52-.12,.09,pw*.55,.18,.1,m).castShadow=false;                                         // gathered pinch under the tie
+    }
+    const rod=cyl(g,0,top+.02,.07,.016,.016,o.w+.26,trimM,6);rod.rotation.z=Math.PI/2;
+    for(const s of [-1,1])sphere(g,s*(o.w/2+.14),top+.02,.07,.04,trimM,1);
+    const n=Math.max(3,Math.round(o.w/.36)),sw=(o.w+.1)/n;                                                       // scalloped valance
+    for(let i=0;i<n;i++){const x=-o.w/2-.05+sw*(i+.5),drop=.13+.07*Math.abs(Math.sin((i+.5)/n*Math.PI));box(g,x,top-drop/2+.12,.1,sw*.98,drop,.05,m).castShadow=false;}
+  }
+}
+/** Pennant bunting hung along a sagging cord. */
+function pennantLine(b:THREE.Object3D,a:THREE.Vector3,c:THREE.Vector3,sag:number,n:number,seed=0){
+  const pts:THREE.Vector3[]=[];
+  for(let i=0;i<=n*2;i++){const t=i/(n*2);pts.push(V(a.x+(c.x-a.x)*t,a.y+(c.y-a.y)*t-sag*4*t*(1-t),a.z+(c.z-a.z)*t));}
+  line(b,pts,.008,dark);
+  const dir=c.clone().sub(a);dir.y=0;dir.normalize();const mats=pennants();
+  for(let i=0;i<n;i++){
+    const t=(i+.5)/n,p=V(a.x+(c.x-a.x)*t,a.y+(c.y-a.y)*t-sag*4*t*(1-t)-.01,a.z+(c.z-a.z)*t);
+    const hw=.1,drop=.22+hash1(i*3.1+seed)*.05,m=mats[(i+seed)%mats.length];
+    polyMesh(b,[p.clone().addScaledVector(dir,-hw),p.clone().addScaledVector(dir,hw),V(p.x,p.y-drop,p.z)],m,V(0,0,1),1,false);
+  }
+}
+/** A bundle of dried herbs or flowers hanging from a beam. */
+function herbBundle(b:THREE.Object3D,x:number,beamY:number,z:number,kind:number){
+  line(b,[V(x,beamY,z),V(x,beamY-.12,z)],.006,dark);
+  const mats=[color('#7d8a4a',0,.95),color('#b77a45',0,.95),color('#a85a6b',0,.95)];
+  cyl(b,x,beamY-.26,z,.012,.055,.24,mats[kind%3],6).castShadow=false;
+  cyl(b,x,beamY-.38,z,.055,.02,.09,mats[(kind+1)%3],6).castShadow=false;
+  box(b,x,beamY-.13,z,.07,.025,.07,brass).castShadow=false;
+}
+function styledInterior(b:THREE.Object3D){
+  if(!STYLE_INTERIOR)return;
+  curtains(b);
+  // Ground floor (ceiling 4.22): two runs of bunting between the beams, upper floor (ceiling 7.66): one.
+  pennantLine(b,V(-3.9,3.98,.5),V(3.9,3.98,.5),.34,18,1);
+  pennantLine(b,V(-3.9,3.98,-1.3),V(-.3,3.98,-.9),.22,8,2);
+  pennantLine(b,V(-3.6,7.42,.1),V(1.4,7.42,.1),.3,12,3);
+  for(const [x,z,k] of [[-3.1,1.2,0],[-1.7,1.2,1],[1.9,1.2,2],[3.2,1.2,0],[-3.4,-2.2,1],[.6,-2.2,2],[2.8,-.35,0]] as const)herbBundle(b,x,4.05,z,k);
+  for(const [x,z,k] of [[-3.0,-.9,1],[-.9,-.9,0],[.9,.55,2]] as const)herbBundle(b,x,7.47,z,k);
+}
+function massing(b:THREE.Object3D){
+  if(!MASSING)return;
+  rightPorch(b);carport(b);leftBay(b);
+}
+
+// ---------------------------------------------------------------------------------------------
 // VTEST22: the Porco Rosso / Ghibli pass. A painted night sky with drifting clouds and a low moon, layered hills, a grassy meadow with
 // tufts, flowers and round-canopy trees around the plaza, fireflies, and a gentle wind in every leaf. Nothing here moves any existing
 // object, and nothing uses the shared seeded random() (so no existing plant, vine or tile moves): it has its own hash-based generator.
@@ -3220,7 +3451,7 @@ function meadow(scene:THREE.Object3D,mobile:boolean){
     h.scale.set(rx,ry,rz);h.position.set(Math.cos(a)*R,-ry*.42+(KNOLL?-FAR_GROUND-.28:0),Math.sin(a)*R);h.rotation.y=a;scene.add(h);
   }
   // trees: round, layered canopies on short trunks. Only to the sides and behind, so the front camera view stays open.
-  const spots:[number,number,number][]=[[-23,-3,1.15],[-25,4,1],[-24,11,.9],[24,-5,1.15],[26,2,1],[25,9,.9],[-12,-20,1.3],[-3,-23,1.5],[6,-22,1.35],[15,-19,1.25],[-21,-14,1.35],[23,-13,1.3],[0,-28,1.8],[-14,-26,1.6],[12,-26,1.65],[-7,-11.5,2.1],[9,-13,1.7]];
+  const spots:[number,number,number][]=[[-23,-3,1.15],[-25,4,1],[-24,11,.9],[24,-5,1.15],[26,2,1],[25,9,.9],[-12,-20,1.3],[-3,-23,1.5],[6,-22,1.35],[15,-19,1.25],[-21,-14,1.35],[23,-13,1.3],[0,-28,1.8],[-14,-26,1.6],[12,-26,1.65]];
   spots.forEach(([x,z,s],i)=>{
     const g=new THREE.Group();g.position.set(x,terrainY(x,z)-.05,z);g.scale.setScalar(s);g.rotation.y=hg(i+40)*6.28;scene.add(g);
     cyl(g,0,.9,0,.22,.34,1.8,bark,6).castShadow=false;
