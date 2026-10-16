@@ -1671,33 +1671,40 @@ function wallHoop(parent:THREE.Object3D,wallX:number,z:number){
 }
 
 /** Soft plush tiger sitting upright on a seat (y = seat surface), facing local +Z. A generic orange-and-black toy tiger of our own
- *  making: round ears, cream muzzle, cheek ruffs and tummy, dark stripes, a striped tail. No outfit, no character. */
+ *  making: long torso, round ears, cream muzzle, cheek ruffs and tummy, dark stripes, a ringed tail curled on the seat. Every limb
+ *  overlaps the torso so nothing floats. No outfit, no character. */
 function plushTiger(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number){
-  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;parent.add(g);
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;g.scale.setScalar(1.3);parent.add(g);
   const fur=color('#e0842a',0,.98),cream=color('#f3e2bc',0,.98),dk=color('#241812',0,.7),nose=color('#6a3030',0,.6);
-  const body=sphere(g,0,.115,0,.105,fur,1);body.scale.set(1,1.1,.95);
-  const tum=sphere(g,0,.105,.06,.07,cream,1);tum.scale.set(1,1.1,.7);
+  // Long torso (semi-axes .105 x .1575 x .10), centred at y .16.
+  const body=sphere(g,0,.16,0,.105,fur,1);body.scale.set(1,1.5,.95);
+  const tum=sphere(g,0,.15,.065,.07,cream,1);tum.scale.set(1,1.45,.7);
   // Dark bands around the torso (the cream tummy hides them at the front, so they read as side and back stripes).
-  for(const [by,br] of [[.07,.099],[.125,.106],[.18,.089]] as const){
+  for(const [by,br] of [[.07,.088],[.12,.1036],[.17,.107],[.22,.099],[.27,.077]] as const){
     const band=new THREE.Mesh(new THREE.TorusGeometry(br,.0075,5,16),dk);band.rotation.x=Math.PI/2;band.position.set(0,by,-.004);band.scale.set(1,.95,1);g.add(band);
   }
-  sphere(g,0,.27,.015,.08,fur,1);
-  const mz=sphere(g,0,.255,.085,.037,cream,1);mz.scale.set(1,.8,.8);
-  sphere(g,0,.268,.113,.011,nose,0);
-  const fc=sphere(g,0,.337,.06,.012,dk,0);fc.scale.set(.45,1.7,.45);                   // centre forehead stripe
+  // Head, sunk into the top of the torso so there is no neck gap. Features use head-local coordinates.
+  const h=new THREE.Group();h.position.set(0,.375,.02);h.scale.setScalar(1.06);g.add(h);
+  sphere(h,0,0,0,.08,fur,1);
+  const mz=sphere(h,0,-.015,.07,.037,cream,1);mz.scale.set(1,.8,.8);
+  sphere(h,0,-.002,.098,.011,nose,0);
+  const fc=sphere(h,0,.067,.045,.012,dk,0);fc.scale.set(.45,1.7,.45);                  // centre forehead stripe
   for(const sx of [-1,1]){
-    const ruff=sphere(g,sx*.066,.252,.035,.036,cream,1);ruff.scale.set(1,.9,.8);       // cheek ruff
-    sphere(g,sx*.03,.29,.085,.009,dk,0);                                               // eyes
-    sphere(g,sx*.058,.337,0,.03,fur,1);sphere(g,sx*.058,.335,.014,.016,cream,0);       // ears with a pale inner
-    const fs=sphere(g,sx*.03,.333,.054,.011,dk,0);fs.scale.set(.45,1.6,.45);fs.rotation.z=sx*.3;
-    for(const [cy,cz] of [[.268,.034],[.244,.046]] as const){const cs=sphere(g,sx*.098,cy,cz,.011,dk,0);cs.scale.set(.4,.6,1.6);}   // cheek stripes
-    const arm=sphere(g,sx*.125,.15,.03,.04,fur,1);arm.scale.set(.9,1.5,.9);arm.rotation.z=-sx*.3;
-    for(const ay of [.125,.165]){const as=sphere(g,sx*(.157-(ay-.125)*.2),ay,.03,.012,dk,0);as.scale.set(.4,.5,1.6);}                    // arm stripes
-    const leg=sphere(g,sx*.07,.045,.09,.055,fur,1);leg.scale.set(1,.8,1.4);
-    sphere(g,sx*.07,.04,.15,.03,cream,1).scale.set(1,.8,1);
+    const ruff=sphere(h,sx*.066,-.018,.02,.036,cream,1);ruff.scale.set(1,.9,.8);      // cheek ruff
+    sphere(h,sx*.03,.02,.07,.009,dk,0);                                               // eyes
+    sphere(h,sx*.058,.067,-.015,.03,fur,1);sphere(h,sx*.058,.065,-.001,.016,cream,0);  // ears with a pale inner
+    const fs=sphere(h,sx*.03,.063,.039,.011,dk,0);fs.scale.set(.45,1.6,.45);fs.rotation.z=sx*.3;
+    for(const [cy,cz] of [[-.002,.019],[-.026,.031]] as const){const cs=sphere(h,sx*.098,cy,cz,.011,dk,0);cs.scale.set(.4,.6,1.6);}   // cheek stripes
+    // Arms start inside the shoulders and end in a cream paw resting on the lap.
+    const arm=sphere(g,sx*.105,.2,.03,.042,fur,1);arm.scale.set(.85,1.6,.85);arm.rotation.z=-sx*.25;
+    for(const ay of [.17,.21]){const as=sphere(g,sx*(.138-(ay-.17)*.15),ay,.03,.012,dk,0);as.scale.set(.4,.5,1.6);}   // arm stripes
+    sphere(g,sx*.118,.138,.05,.03,cream,1);
+    // Legs sit forward on the seat, overlapping the bottom of the torso, with cream foot pads.
+    const leg=sphere(g,sx*.068,.055,.085,.06,fur,1);leg.scale.set(1,.8,1.5);
+    sphere(g,sx*.068,.045,.168,.035,cream,1).scale.set(1,.8,1);
   }
-  // Tail curling up behind, ringed.
-  [[.05,-.12,.03,fur],[.07,-.15,.027,dk],[.098,-.165,.025,fur],[.128,-.162,.023,dk]].forEach(([ty,tz,tr,m])=>sphere(g,0,ty as number,tz as number,tr as number,m as THREE.Material,0));
+  // Ringed tail resting on the seat beside the right leg; each ball overlaps the next.
+  ([[.06,-.095,.03,fur],[.11,-.085,.029,dk],[.14,-.05,.028,fur],[.155,-.01,.027,dk],[.15,.03,.026,fur]] as const).forEach(([tx,tz,tr,m])=>sphere(g,tx,.048,tz,tr,m,0));
   return g;
 }
 

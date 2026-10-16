@@ -19,6 +19,9 @@ Changed file: `src/world.ts`.
 **Added**
 - A **bracket lamp** on the left wall by the front corner, where the name sign used to stand, with a warm bloom and a pool of light on the paving. It is faked like the other lamps (no new real light).
 
+**Follow-up (same day)**
+- The tiger plush is about 30% bigger with a longer torso, and every limb now overlaps the body so nothing floats (the arms and legs of the first version looked detached). The ringed tail rests on the seat beside it.
+
 ## Verification
 Type-checked with the stub-typed `tsc` (exit 0). Rendered close-ups in software WebGL of the string lights, the tiger, the corner lamp, the roof table and the empty counter. Not tested: the real Vite build, the Vercel deploy, phones, GPU frame rate.
 
