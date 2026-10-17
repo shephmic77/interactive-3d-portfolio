@@ -491,12 +491,14 @@ function facadeServiceDetail(scene:THREE.Object3D){
     box(scene,side*4.27,.32,0,.12,.14,6.17,stone);
   }
 }
-/** Bouldering wall that climbs the whole back of the building, from the pavement to the roof terrace, like a ladder.
+/** Bouldering wall on the back of the ground floor (see BW).
  *  One tall plywood panel (four stacked sections with seams) stands just clear of every ledge and slab edge, held to the
  *  walls by steel standoffs, with a bolt-hole grid, a coral route to a finish jug on the roof, a cyan problem down the
  *  right edge, foot chips, two volumes, height ticks, chalk, a lamp either side, a crash pad with shoes, and
  *  a monkey hanging by his tail from a grab bar. At the top, the roof's back rail is open and a grab bar marks the exit. */
-const BW={cx:-3.55,w:.70,zf:-3.40,t:.07,bottom:.04,top:8.12};
+/** vtest26b: the wall no longer runs up the building. It is a wide ground-floor panel (about 2.4 m across, 3.5 m high) spread out over the spot
+ *  the old back window used to fill; the window is gone. */
+const BW={cx:-2.70,w:2.40,zf:-3.40,t:.07,bottom:.04,top:3.50};
 const hash1=(n:number)=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
 function boulderRoute(scene:THREE.Object3D){
   const {cx,w,zf,t,bottom,top}=BW,h=top-bottom,mid=(top+bottom)/2;
@@ -508,9 +510,9 @@ function boulderRoute(scene:THREE.Object3D){
   for(let k=1;k<4;k++)box(scene,cx,bottom+k*h/4,zf+t/2,w+.02,.014,t+.012,edge); // seams between the four stacked sections
   box(scene,cx,.037,zf+.14,w+.10,.03,.28,edge);                                 // steel foot plate on the pavement
   // Standoffs: steel arms from the panel's back to the wall, clear of the terrace slab (y 4.27-4.43) and the roof slab (y 7.72-7.95).
-  for(const [by,wallZ] of [[1.2,-WZ],[2.9,-WZ],[5.4,uBack],[6.55,uBack],[7.62,uBack]] as const){
+  for(const [by,wallZ] of [[1.0,-WZ],[2.7,-WZ]] as const){
     const z0=zf+t,len=Math.abs(wallZ-z0)+.02;
-    for(const sx of [-1,1])box(scene,cx+sx*.23,by,z0+(wallZ-z0)/2+.01,.07,.07,len,iron);
+    for(const sx of [-.9,-.3,.3,.9])box(scene,cx+sx,by,z0+(wallZ-z0)/2+.01,.07,.07,len,iron);
   }
   const g=new THREE.Group();g.position.set(cx,0,zf);g.rotation.y=Math.PI;scene.add(g);   // local +z points out from the wall
   // ---- vtest18: a more detailed, more realistic (still low-poly) wall. The face is one painted-texture canvas (four section tints, speckle,
@@ -518,31 +520,31 @@ function boulderRoute(scene:THREE.Object3D){
   // T-nut lattice (four columns, one row every 20 cm); a soft contact shadow sits under each hold; there are grade tags, quickdraws on
   // bolt hangers and two top-out anchors. The route positions, colours and the monkey are the ones you already approved.
   const PXM=380,TW=Math.round((w-.02)*PXM),TH=Math.round((h-.02)*PXM);
-  const LAT=.2,LAT0=bottom+.10,COLS=[-.27,-.09,.09,.27];   // four columns, 18 cm apart, so even the outer holds stay inside the panel
-  const latX=(x:number)=>+Math.max(-.27,Math.min(.27,Math.round((x+.09)/.18)*.18-.09)).toFixed(3);
+  const LAT=.2,LAT0=bottom+.10,COLS=Array.from({length:12},(_,i)=>+((i-5.5)*.2).toFixed(2));   // twelve columns, 20 cm apart, symmetric about the middle
+  const latX=(x:number)=>+Math.max(-1.1,Math.min(1.1,Math.round((x-.1)/.2)*.2+.1)).toFixed(3);
   const latY=(y:number)=>+(Math.round((y-LAT0)/LAT)*LAT+LAT0).toFixed(3);
   const px=(lx:number)=>TW/2+lx*PXM,py=(y:number)=>TH*(1-(y-(bottom+.01))/(h-.02));
   const faceTex=texture((c,W,H)=>{
     const tints=['#8d94a8','#858ca0','#9298ab','#8a91a5'];                                   // section tints, bottom to top
     for(let k=0;k<4;k++){c.fillStyle=tints[k];c.fillRect(0,H*(3-k)/4,W,H/4+1);}
-    for(let i=0;i<9000;i++){                                                                   // painted-grit speckle
+    for(let i=0;i<20000;i++){                                                                   // painted-grit speckle
       c.fillStyle=i%2?'rgba(20,24,40,.09)':'rgba(255,255,255,.07)';
       c.fillRect(hash1(i*1.7)*W,hash1(i*2.3+9)*H,1+(i%3===0?1:0),1+(i%5===0?1:0));
     }
     c.strokeStyle='rgba(255,255,255,.03)';c.lineWidth=1;                                      // faint roller streaks
-    for(let i=0;i<150;i++){const x=hash1(i*5.1)*W;c.beginPath();c.moveTo(x,0);c.lineTo(x+(hash1(i)-.5)*6,H);c.stroke();}
+    for(let i=0;i<300;i++){const x=hash1(i*5.1)*W;c.beginPath();c.moveTo(x,0);c.lineTo(x+(hash1(i)-.5)*6,H);c.stroke();}
     for(let j=0;;j++){                                                                         // T-nut lattice
       const y=LAT0+j*LAT;if(y>top-.08)break;
       for(const lx of COLS){const X=px(lx),Y=py(y);c.fillStyle='#232837';c.beginPath();c.arc(X,Y,5,0,7);c.fill();c.strokeStyle='rgba(205,212,230,.45)';c.lineWidth=1.2;c.stroke();c.fillStyle='#0f121b';c.beginPath();c.arc(X,Y,2.6,0,7);c.fill();}
     }
     const screw=(X:number,Y:number)=>{c.fillStyle='#5a6176';c.beginPath();c.arc(X,Y,3.2,0,7);c.fill();c.strokeStyle='#2b3040';c.lineWidth=1;c.beginPath();c.moveTo(X-2,Y-1);c.lineTo(X+2,Y+1);c.stroke();};
-    for(let y=.3;y<top;y+=.4){screw(px(-.325),py(y));screw(px(.325),py(y));}                   // edge screws
-    for(let k=1;k<4;k++){const sy=bottom+k*h/4;for(const lx of [-.2,0,.2])for(const d of [-.045,.045])screw(px(lx),py(sy+d));}   // along each seam
+    for(let y=.3;y<top;y+=.4){screw(px(-(w/2-.025)),py(y));screw(px(w/2-.025),py(y));}                   // edge screws
+    for(let k=1;k<4;k++){const sy=bottom+k*h/4;for(const lx of [-1,-.6,-.2,.2,.6,1])for(const d of [-.045,.045])screw(px(lx),py(sy+d));}   // along each seam
     c.fillStyle='rgba(239,234,224,.92)';c.font='bold 22px sans-serif';c.textBaseline='middle';
-    for(let m=1;m<=7;m++){                                                                       // height marks, the long ones labelled
+    for(let m=1;m<top;m++){                                                                       // height marks, the long ones labelled
       const Y=py(m),long=m%2===0;
-      c.fillRect(px(-.34),Y-1.5,long?46:24,3);c.fillRect(px(.34)-(long?46:24),Y-1.5,long?46:24,3);
-      if(long){c.textAlign='left';c.fillText(`${m} m`,px(-.34)+52,Y);c.textAlign='right';c.fillText(`${m} m`,px(.34)-52,Y);}
+      c.fillRect(px(-(w/2-.01)),Y-1.5,long?46:24,3);c.fillRect(px(w/2-.01)-(long?46:24),Y-1.5,long?46:24,3);
+      if(long){c.textAlign='left';c.fillText(`${m} m`,px(-(w/2-.01))+52,Y);c.textAlign='right';c.fillText(`${m} m`,px(w/2-.01)-52,Y);}
     }
   },TW,TH);
   const face=new THREE.Mesh(new THREE.PlaneGeometry(w-.02,h-.02),new THREE.MeshStandardMaterial({map:faceTex,roughness:.92,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
@@ -579,18 +581,18 @@ function boulderRoute(scene:THREE.Object3D){
   const placed:{x:number;y:number}[]=[];
   const taken=new Set<string>();
   const cell=(x:number,y:number)=>`${x.toFixed(2)},${y.toFixed(2)}`;
-  const MONKEY={lo:3.99,hi:5.25};                                           // the hanging monkey and his bar occupy this band; every route passes either side of it
-  const blocked=(y:number)=>y>MONKEY.lo&&y<MONKEY.hi;
+  const MONKEY={x:-.95,lo:2.36,hi:3.34};                                    // the hanging monkey and his bar occupy this patch; every route passes round it
+  const blocked=(y:number,x:number)=>y>MONKEY.lo&&y<MONKEY.hi&&Math.abs(x-MONKEY.x)<.42;
   let seedN=0;
   const hold=(x0:number,y0:number,kind:Kind,mat:THREE.Material,spin=0)=>{
     const x=latX(x0),y=latY(y0);
-    if(blocked(y)||taken.has(cell(x,y)))return null;
+    if(blocked(y,x)||taken.has(cell(x,y)))return null;
     taken.add(cell(x,y));
     const [sx,sy]=SHAPE[kind];
     const sh=new THREE.Mesh(new THREE.CircleGeometry(1,10),shadeMat);sh.scale.set(sx*1.05,sy*1.05,1);sh.position.set(x+.012,y-.02,.0085);sh.rotation.z=spin;g.add(sh);   // contact shadow
     const chalk=new THREE.Mesh(new THREE.CircleGeometry(1,8),chalkMat);chalk.scale.set(sx*.8,sy*.8,1);chalk.position.set(x,y+.035,.0092);chalk.rotation.z=spin;g.add(chalk);                              // chalk smudge
     const m=new THREE.Mesh(rockGeo(kind,seedN++%4),mat);m.position.set(x,y,.0095);m.rotation.z=spin;g.add(m);
-    const reach=Math.abs(Math.cos(spin))*sx+Math.abs(Math.sin(spin))*sy,room=.325-Math.abs(x);                    // never clip the side trim of the panel
+    const reach=Math.abs(Math.cos(spin))*sx+Math.abs(Math.sin(spin))*sy,room=w/2-.025-Math.abs(x);                    // never clip the side trim of the panel
     if(reach>room){
       const k=Math.max(.7,room/reach);m.scale.multiplyScalar(k);sh.scale.multiplyScalar(k);chalk.scale.multiplyScalar(k);   // shrink a little...
       const over=reach*k-room;if(over>0){const d=-Math.sign(x)*over;m.position.x+=d;sh.position.x+=d;chalk.position.x+=d;}      // ...then slide it in off the edge
@@ -601,39 +603,37 @@ function boulderRoute(scene:THREE.Object3D){
     return m;
   };
   // Volumes first (so no hold lands under them): a violet and an amber truncated pyramid, each over a 2 x 2 block of lattice points.
-  for(const [vy,vm,vs] of [[3.04,violet2,0],[6.24,amber2,.35]] as const){
+  for(const [vx,vy,vm,vs] of [[.6,1.9,violet2,0],[.6,3.0,amber2,.35]] as const){
     const fr=new THREE.CylinderGeometry(.11,.20,.13,4);fr.rotateY(Math.PI/4);
-    const vol=new THREE.Mesh(fr,vm);vol.rotation.set(Math.PI/2,0,vs);vol.position.set(0,vy,.07);g.add(vol);
-    for(const bx of [-.045,.045]){const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(bx,vy,.138);g.add(b);}
-    for(const lx of [-.1,.1])for(const ly of [vy-.1,vy+.1])taken.add(cell(lx,latY(ly)));
-    placed.push({x:0,y:vy});
+    const vol=new THREE.Mesh(fr,vm);vol.rotation.set(Math.PI/2,0,vs);vol.position.set(vx,vy,.07);g.add(vol);
+    for(const bx of [-.045,.045]){const b=new THREE.Mesh(boltGeo,bolt);b.rotation.x=Math.PI/2;b.position.set(vx+bx,vy,.138);g.add(b);}
+    for(const lx of [vx-.1,vx+.1])for(const ly of [vy-.1,vy+.1])taken.add(cell(latX(lx),latY(ly)));
+    placed.push({x:vx,y:vy});
   }
-  // THE hard one: a V4-5 boulder problem in gold, placed first so nothing else takes its holds. Two taped starts (a pinch and a sloper), a long
-  // reach to a crimp, a lock-off to a side pocket, a rail, a dyno from a sloper to the prism and a horn, then a finish jug. Feet are gold chips.
-  const hard:[number,number,Kind,number][]=[[.1,.94,'pinch',.1],[-.1,1.14,'sloper',-.2],[.1,1.74,'crimp',.15],[-.3,2.14,'pocket',0],[.1,2.54,'rail',-.25],[.3,3.14,'sloper',.25],[-.1,3.54,'horn',0],[-.3,3.74,'jug',.2]];
+  // THE hard one (gold): a V4-5 boulder problem, placed first so nothing else takes its holds. Two taped starts (a pinch and a sloper), a long
+  // reach to a crimp, a lock-off to a side pocket, a rail, a dyno from a sloper to a horn, then a finish jug. Feet are gold chips.
+  const hard:[number,number,Kind,number][]=[[-.3,.94,'pinch',.1],[-.5,1.14,'sloper',-.2],[-.3,1.74,'crimp',.15],[-.7,2.14,'pocket',0],[-.3,2.54,'rail',-.25],[-.1,3.14,'sloper',.25],[-.5,3.34,'horn',0],[-.7,3.5,'jug',.2]];
   for(const [hx,hy,hk,hs] of hard)hold(hx,hy,hk,gold,hs);
-  for(const [fx,fy] of [[-.1,.54],[.3,1.34],[.1,2.14],[-.1,3.34]] as const)hold(fx,fy,'chip',gold);
-  for(const sx of [.1,-.1])box(g,sx,sx>0?.80:1.00,.0105,.17,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
-  box(g,-.27,3.58,.0105,.12,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
-  // Coral warm-up route, much sparser than before: big jugs and a horn or two, all the way up to the finish jug under the roof edge.
-  const COR=[-.3,-.1,-.3,.1,-.3,-.1,.1,-.3],kinds:Kind[]=['jug','horn','jug','rail','jug','prism'];
-  let n=0;
-  for(let y=1.6;y<7.45;y+=1.85,n++){hold(COR[n%8],y+(n%3)*.04,kinds[n%6],n%3===1?wood:coral,((n*37)%7-3)*.09);}
-  hold(.09,7.74,'jug',coral);box(g,.1,7.58,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
-  // Cyan problem down the right edge and a pink one down the left, a few holds each, in other shapes.
-  n=0;for(let y=1.0;y<7.4;y+=2.4,n++){hold(.3,y+(n%2)*.07,(['pocket','pinch','sloper','prism'] as Kind[])[n%4],cyan2,(n%2?-.2:.15));}
-  hold(.3,7.62,'jug',cyan2);
-  n=0;for(let y=1.9;y<7.3;y+=2.7,n++){hold(-.3,y+(n%2)*.08,(['crimp','horn','sloper','pocket'] as Kind[])[n%4],pink2,(n%2?.2:-.15));}
+  for(const [fx,fy] of [[-.5,.54],[-.1,1.34],[-.3,2.14],[-.5,2.94]] as const)hold(fx,fy,'chip',gold);
+  for(const [tx,ty] of [[-.3,.80],[-.5,1.00]] as const)box(g,tx,ty,.0105,.17,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
+  box(g,-.9,3.40,.0105,.12,.03,.006,color('#ffd23f',0,.5,'#ffb800',.2));
+  // Coral warm-up route, sparse: big jugs and a horn or two, up to a finish jug.
+  const coralRoute:[number,number,Kind,boolean][]=[[.3,1.0,'jug',false],[.3,1.6,'horn',false],[.3,2.4,'jug',true],[.3,3.0,'rail',false],[.3,3.5,'jug',false]];
+  coralRoute.forEach(([hx,hy,hk,w2],k)=>hold(hx,hy+(k%3)*.04,hk,w2?wood:coral,((k*37)%7-3)*.09));
+  box(g,.1,3.40,.0105,.2,.03,.006,color('#ff7a59',0,.5,'#ff5a3c',.18));
+  // Cyan problem down one edge and a pink one down the other, a few holds each, in other shapes.
+  (['pocket','pinch','sloper','jug'] as Kind[]).forEach((hk,k)=>hold(.9,[.9,1.7,2.5,3.3][k]+(k%2)*.07,hk,cyan2,(k%2?-.2:.15)));
+  (['crimp','horn'] as Kind[]).forEach((hk,k)=>hold(-.9,[.9,1.6][k]+(k%2)*.08,hk,pink2,(k%2?.2:-.15)));
   // Grade tags on tape at the starts.
   const tag=(x:number,y:number,txt:string,hex:string)=>{
     const t=texture((c,W,H)=>{c.fillStyle='#f4f1e8';c.fillRect(0,0,W,H);c.fillStyle=hex;c.fillRect(0,0,W*.2,H);c.fillStyle='#1c1f2a';c.font='bold 38px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,W*.6,H*.52);},128,64);
     const m=new THREE.Mesh(new THREE.PlaneGeometry(.13,.065),new THREE.MeshStandardMaterial({map:t,roughness:.8,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
     m.position.set(x,y,.0115);g.add(m);
   };
-  tag(0,.40,'V4-5','#ffd23f');tag(.25,.46,'V2','#3fd0e8');tag(-.25,1.55,'V3','#ff6fae');tag(-.25,.40,'V0','#ff7a59');
+  tag(-.3,.40,'V4-5','#ffd23f');tag(.9,.42,'V2','#3fd0e8');tag(-.9,.42,'V3','#ff6fae');tag(.3,.40,'V0','#ff7a59');
   // Neutral foot chips scattered over the whole board, kept clear of the other holds.
-  for(let y=.45;y<7.9;y+=1.4){
-    const x=(hash1(y)-.5)*.56;
+  for(let y=.45;y<top-.1;y+=.55){
+    const x=(hash1(y)-.5)*(w-.4);
     if(placed.some(p=>Math.hypot(p.x-latX(x),p.y-latY(y))<.4))continue;
     hold(x,y,'chip',chip);
   }
@@ -641,22 +641,22 @@ function boulderRoute(scene:THREE.Object3D){
   const QD=[color('#ff5a8a',0,.6),color('#3fd0e8',0,.6),color('#ffbf3f',0,.6),color('#8bd45a',0,.6)];
   const ringGeo=new THREE.TorusGeometry(.02,.0045,5,9);
   let qi=0;
-  for(const target of [5.9,7.0]){
+  for(const target of [1.4,2.8]){
     const yy=latY(target);
-    const col=[.1,-.1,-.3,.3].find(cx=>!blocked(yy-.2)&&!taken.has(cell(cx,yy))&&!taken.has(cell(cx,latY(yy-.2))));
+    const col=[.1,.5,.7,-.1].find(cx=>!blocked(yy-.2,cx)&&!taken.has(cell(cx,yy))&&!taken.has(cell(cx,latY(yy-.2))));
     if(col===undefined)continue;
     taken.add(cell(col,yy));taken.add(cell(col,latY(yy-.2)));
     box(g,col,yy,.0125,.05,.032,.012,zinc);
     for(const ry of [-.045,-.19]){const r=new THREE.Mesh(ringGeo,zinc);r.scale.set(.8,1.5,1);r.position.set(col,yy+ry,.022);g.add(r);}
     box(g,col,yy-.118,.024,.02,.1,.012,QD[qi++%QD.length]);
   }
-  // Top-out: two steel anchor plates with rap rings on the cap, where the roof's back rail is open.
-  for(const sx of [-.14,.14]){box(g,sx,8.04,.0125,.07,.05,.012,zinc);const r=new THREE.Mesh(new THREE.TorusGeometry(.032,.007,5,10),zinc);r.position.set(sx,7.995,.024);g.add(r);}
   // ---- The monkey: hangs upside down from a yellow grab bar by his tail, facing the street, arms and legs dangling. Every limb starts
   // INSIDE the torso (shoulder and hip balls overlap it), and the tail wraps the bar, so the animal is one connected body that is
   // held by the bar, the bar by two steel brackets, and the brackets by the panel. Nothing floats and nothing pokes into the wall.
   const fur=color('#835a37',0,.95),belly=color('#d1a674',0,.95),skin=color('#d8b48c',0,.9),eye=color('#1a1410',0,.5);
-  const BAR_Y=5.02,BAR_Z=.15,my=BAR_Y-.50,bz=.21;                                    // body centre 4.52 m up, ~11 cm off the panel
+  const BAR_Y=3.30,BAR_Z=.15,my=BAR_Y-.50,bz=.21;                                    // body centre 2.8 m up, ~11 cm off the panel
+  const mg=new THREE.Group();mg.position.set(MONKEY.x,0,0);g.add(mg);
+  {const g=mg;                                                                         // the monkey is built in his own group, at the panel's far edge
   cyl(g,0,BAR_Y,BAR_Z,.022,.022,.40,sun,8).rotation.z=Math.PI/2;                        // the bar
   for(const sx of [-1,1])box(g,sx*.17,BAR_Y,.08,.04,.05,.18,iron);                       // brackets: panel face (z 0, a little inside it) to the bar
   const torso=sphere(g,0,my,bz,.125,fur,1);torso.scale.set(.86,1.15,.86);              // y +-.144
@@ -676,22 +676,23 @@ function boulderRoute(scene:THREE.Object3D){
     sphere(g,sx*.19,my+.01,bz+.02,.046,fur,1);sphere(g,sx*.19,my-.10,bz+.03,.046,fur,1);
   }
   // Tail: up from the rump, round the front of the bar, over the top and back down behind it (about three quarters of a turn).
-  line(g,[V(0,my+.13,bz-.01),V(0,my+.26,bz+.005),V(0,my+.38,bz+.005),V(0,4.994,.195),V(0,5.02,.202),V(0,5.057,.187),V(0,5.072,.15),V(0,5.057,.113),V(0,5.02,.098),V(0,4.983,.113)],.024,fur);
+  line(g,[V(0,my+.13,bz-.01),V(0,my+.26,bz+.005),V(0,my+.38,bz+.005),V(0,BAR_Y-.026,.195),V(0,BAR_Y,.202),V(0,BAR_Y+.037,.187),V(0,BAR_Y+.052,.15),V(0,BAR_Y+.037,.113),V(0,BAR_Y,.098),V(0,BAR_Y-.037,.113)],.024,fur);
+  }
   // Light on the panel: warm washes at the two lamp heights (the lamps stand either side, see utilityExterior).
-  for(const [ly,lw] of [[3.2,2.4],[6.7,2.4]] as const)glowPatch(g,0,ly,.01,lw,lw*1.2,'#ffc27a',.11);
+  glowPatch(g,0,1.9,.01,3.2,3.6,'#ffc27a',.11);
   // Crash pad on the pavement below the panel, with fold seams and a strap.
-  const padX=-3.55,padZ=zf-.07-.45;
+  const padX=cx,padZ=zf-.07-.45;
   const pad=color('#2a6f7a',0,.85);
-  box(scene,padX,GROUND+.08,padZ,1.1,.16,.9,pad);
-  for(const sz of [-.15,.15])box(scene,padX,GROUND+.162,padZ+sz,1.1,.004,.025,color('#3f9aa6'));
+  box(scene,padX,GROUND+.08,padZ,1.9,.16,.9,pad);
+  for(const sz of [-.15,.15])box(scene,padX,GROUND+.162,padZ+sz,1.9,.004,.025,color('#3f9aa6'));
   box(scene,padX,GROUND+.162,padZ-.40,.5,.004,.05,color('#e8c26a'));
   // Chalk bucket at the pad's edge: white tub, dark rim, a little chalk dust on top.
-  cyl(scene,padX-.38,GROUND+.16+.085,padZ-.12,.085,.075,.17,color('#e9e6dc',0,.8),9);
-  cyl(scene,padX-.38,GROUND+.16+.172,padZ-.12,.09,.09,.016,color('#2a2f3a',0,.7),9);
-  cyl(scene,padX-.38,GROUND+.16+.181,padZ-.12,.07,.07,.004,color('#f6f3ea',0,.95),9);
+  cyl(scene,padX-.75,GROUND+.16+.085,padZ-.12,.085,.075,.17,color('#e9e6dc',0,.8),9);
+  cyl(scene,padX-.75,GROUND+.16+.172,padZ-.12,.09,.09,.016,color('#2a2f3a',0,.7),9);
+  cyl(scene,padX-.75,GROUND+.16+.181,padZ-.12,.07,.07,.004,color('#f6f3ea',0,.95),9);
   // Climbing shoes (red and black) on the pad, side by side, toes to the wall.
   for(const [sx,sr] of [[-.30,.05],[-.14,-.05]] as const){
-    const sh=new THREE.Group();sh.position.set(padX+.30+sx,GROUND+.16,padZ+.12);sh.rotation.y=sr;scene.add(sh);
+    const sh=new THREE.Group();sh.position.set(padX+.55+sx,GROUND+.16,padZ+.12);sh.rotation.y=sr;scene.add(sh);
     box(sh,0,.014,0,.09,.028,.28,color('#1d2029'));box(sh,0,.06,-.02,.085,.07,.17,color('#c9402f'));box(sh,0,.04,.09,.08,.05,.1,color('#c9402f'));box(sh,0,.062,-.115,.07,.07,.05,color('#1d2029'));
   }
 }
@@ -716,8 +717,7 @@ function utilityExterior(scene:THREE.Object3D){
   electricBox(scene,-2.4,7.12,uBack-.115,Math.PI);
   gutter(scene,[V(-2.4,6.56,uBack-.12),V(-2.4,6.74,uBack-.12)],.041);
   // Service-facing lamps illuminate the back walkway and the two machines (plate back face on the wall).
-  wallLight(scene,-3.0,3.85,-WZ-.057,Math.PI,1.8);    // beside the bouldering panel, above the window, lighting the holds
-  wallLight(scene,-3.0,7.0,uBack-.057,Math.PI,1.2,null);   // second lamp, up by the top of the climbing wall
+  wallLight(scene,-2.7,3.95,-WZ-.057,Math.PI,1.8);    // above the bouldering panel, lighting the holds
   wallLight(scene,-.05,3.56,-WZ-.057,Math.PI,1.25);
   wallLight(scene,3.18,3.59,-WZ-.057,Math.PI,1.6);
   wallLight(scene,-WX-.057,3.57,-2.64,-Math.PI/2,1.1);
@@ -785,7 +785,7 @@ function terraceFurnishings(scene:THREE.Object3D){
   // Window-box planters sit on the railing's top rail.
   railingPlanter(scene,2.92,3.23,'x',ARCH.groundRoof);
   railingPlanter(scene,-.70,3.23,'x',ARCH.groundRoof);
-  railingPlanter(scene,4.31,-1.54,'z',ARCH.groundRoof);
+  // (the planter that used to sit at z -1.54 is gone: it crowded the top of the spiral stair, where the rail opens at z -1.85)
   railingPlanter(scene,4.31,.60,'z',ARCH.groundRoof);
   // Soft practical lantern on the terrace table (table top is h+.765).
   tableLantern(scene,bt.x,h+.765,bt.z);
@@ -892,7 +892,7 @@ function upperRoofTerrace(scene:THREE.Object3D){
  const front=z+depth/2+.08,back=z-depth/2-.08;
  for(const zz of [front,back]){
   box(scene,x,y+.14,zz,width+.32,.25,.19,stone);
-  perimeterRail(scene,'x',zz,zz===back?-3.10:left,right,y+.25,dark,.60);   // the back rail is open at the climbers' exit
+  perimeterRail(scene,'x',zz,left,right,y+.25,dark,.60);   // (vtest26b: no climbers' exit any more, the back rail is continuous)
  }
  for(const xx of [left,right]){
   if(MASSING&&xx===right){
@@ -946,7 +946,7 @@ function storefront(scene:THREE.Object3D){
  // Ground floor side and back remain available to functional interactions.
  facadeWindow(scene,4.37,2.59,-2.00,1.10,2.25,Math.PI/2,'blinds');
  facadeWindow(scene,-4.37,2.60,-1.26,1.45,2.15,-Math.PI/2,'dark');
- facadeWindow(scene,-2.25,2.42,-3.17,1.84,1.99,Math.PI,'warm');
+ // (vtest26b: the ground-floor back window is gone; the climbing panel stands over that wall now)
  // The asymmetric upper floor faces the front terrace with windows, and a
  // separate door opens onto the exposed RIGHT side terrace.
  const upperFront=u.z+u.depth/2+.11;
@@ -2768,7 +2768,7 @@ const WALL_ITEMS:Box3[]=[
   {x0:-3.95,x1:-3.4,y0:5.8,y1:6.8,z0:.8,z1:1.4},
   {x0:-1.4,x1:.9,y0:1,y1:9,z0:-3.6,z1:-2.9},
   // the climbing wall's stand-off and the stair landing
-  {x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-3.8,z1:-3.0},{x0:4.2,x1:4.9,y0:4.35,y1:5.4,z0:-2.3,z1:-1.4},
+  {x0:-3.95,x1:-1.4,y0:0,y1:3.9,z0:-3.8,z1:-3.0},{x0:4.2,x1:4.9,y0:4.35,y1:5.4,z0:-2.3,z1:-1.4},
   {x0:4.2,x1:4.95,y0:.0,y1:2.1,z0:-3.0,z1:-2.55},
   // vtest26 massing volumes: the wizard tower (against the gabled block's right wall) and the balcony slab over the terrace
   {x0:-1.8,x1:1.15,y0:4.4,y1:15,z0:-2.85,z1:.25},{x0:.8,x1:3.7,y0:6.9,y1:8.4,z0:-2.7,z1:-.05}
@@ -3754,7 +3754,7 @@ export function buildWorld():World{
  interiors(building);
  endgameInteriors(building);
  // Last, so the seeded scatter used by every plant above is untouched.
- cozyBuilding(building);cozyWorld(scene);gardenAnnex(scene);leftAnnex(scene);
+ cozyBuilding(building);cozyWorld(scene);gardenAnnex(scene);   // (vtest26b: the small left annex beside the truck was removed)
  const reducedMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const smokeTick=timberAndTiles(building,reducedMotion);   // vtest23: timber frame, plinth, tile roofs, chimney (runs last: needs every opening and wall item)
  const ghibliTick=ghibliWorld(scene,reducedMotion);   // sky, meadow, trees, fireflies and wind (own generator; touches nothing above)

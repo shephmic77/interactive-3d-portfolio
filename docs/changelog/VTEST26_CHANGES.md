@@ -14,6 +14,11 @@ Feedback: the VTEST25 retrofit was "not like the mock-up", so the building was r
 - The planted hut on the right annex roof was dropped: from the home camera it hid the corkboard.
 - Home camera pulled in (distance 21.5), mobile home view tightened, and the five section views re-aimed at the moved targets. The About view now looks at the board straight on, so the annex is out of the way.
 
+## Follow-up edits (same version)
+- Removed the planter that sat at the top of the spiral stair (the right-rail gap at z -1.85).
+- Removed the small left annex that clipped into the parked truck.
+- Climbing wall: the ground-floor back window is gone and the wall no longer climbs the building. It is now a wide ground-floor panel (about 2.4 x 3.5 m) over that spot, with the holds, routes, volumes, grade tags, crash pad and monkey spread across and lowered to fit. The roof-top exit, upper standoffs and upper lamp went with the tall section, and the back rail is continuous.
+
 ## Verification (honest status)
 - Stub-typed `tsc` passes (it checks syntax and scope, not three.js API use). A real `npm run build` / Vercel deploy has **not** been run.
 - Software renders at home, right, left, back, all five section views and a phone-width portrait.
