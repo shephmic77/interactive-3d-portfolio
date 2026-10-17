@@ -27,21 +27,21 @@ const mobile=()=>typeof window.matchMedia==='function' ? window.matchMedia('(max
 // sign post) now fits in a closer view. Desktop is checked by numeric projection (fov 39, 1920x945): the cluster
 // spans roughly x 590-1390 px, clear of the intro text on the left and the quick-nav on the right.
 const HOME_DIRECTION=new THREE.Vector3(18.8,8.9,20.9).normalize();
-const HOME_DISTANCE=19.5;
-const HOME_TARGET=new THREE.Vector3(-.1,3.4,.4);
-const MOBILE_HOME_POSITION=new THREE.Vector3(18.8,13.6,20.9).multiplyScalar(1.2);
-const MOBILE_HOME_TARGET=new THREE.Vector3(0,3.6,0);
+const HOME_DISTANCE=21.5;
+const HOME_TARGET=new THREE.Vector3(-.1,4.6,.3);
+const MOBILE_HOME_POSITION=new THREE.Vector3(18.8,14.6,20.9).multiplyScalar(1.28);
+const MOBILE_HOME_TARGET=new THREE.Vector3(0,4.6,0);
 function homeView():{pos:THREE.Vector3;target:THREE.Vector3}{
  if(mobile())return {pos:MOBILE_HOME_POSITION.clone(),target:MOBILE_HOME_TARGET.clone()};
  return {pos:HOME_TARGET.clone().addScaledVector(HOME_DIRECTION,HOME_DISTANCE),target:HOME_TARGET.clone()};
 }
 
 const views:Record<Section,{pos:THREE.Vector3;target:THREE.Vector3}>={
-  projects:{pos:new THREE.Vector3(-6.5,4.7,11.0),target:new THREE.Vector3(-4.75,1.6,3.5)},
-  about:{pos:new THREE.Vector3(10.3,4.5,6.4),target:new THREE.Vector3(3.5,2.2,.35)},
-  contact:{pos:new THREE.Vector3(6.0,3.7,-9.3),target:new THREE.Vector3(1.37,1.25,-3.3)},
-  resume:{pos:new THREE.Vector3(8.75,3.85,8.95),target:new THREE.Vector3(3.4,1.2,3.75)},
-  credits:{pos:new THREE.Vector3(-3.5,3.9,-9.5),target:new THREE.Vector3(-.17,1.25,-3.3)}
+  projects:{pos:new THREE.Vector3(-5.85,4.5,10.5),target:new THREE.Vector3(-4.09,1.55,3.02)},
+  about:{pos:new THREE.Vector3(9.4,4.0,-.4),target:new THREE.Vector3(2.84,2.05,.28)},
+  contact:{pos:new THREE.Vector3(5.3,3.5,-8.8),target:new THREE.Vector3(1.1,1.2,-2.82)},
+  resume:{pos:new THREE.Vector3(8.1,3.6,8.5),target:new THREE.Vector3(2.74,1.15,3.27)},
+  credits:{pos:new THREE.Vector3(-2.8,3.7,-9.0),target:new THREE.Vector3(-.14,1.2,-2.82)}
 };
 
 function tweenTo(pos:THREE.Vector3,target:THREE.Vector3,duration=1050){

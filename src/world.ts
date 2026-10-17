@@ -44,6 +44,14 @@ function texture(draw:(ctx:CanvasRenderingContext2D,w:number,h:number)=>void,w=5
 export const POINT_LIGHT_BUDGET=16;
 /** The building (walls, terraces, furnishings, back-wall machines) is built at its original size and then shrunk by this factor. */
 export const BUILDING_SCALE=.78;
+/** vtest26: the building is narrower and shallower. The whole building group (ground floor and everything on it) is scaled by PLAN in x and z and by HEIGHT
+ *  in y, so the ground floor goes from 8.5 x 6.15 m to about 6.8 x 4.9 m while the storeys stay almost as tall. x and z share one factor, so rotated children
+ *  are not sheared. */
+export const PLAN=.8,HEIGHT=.93;
+/** Where a world-space prop goes after the shrink: inside the old footprint it is scaled with the plan, outside it keeps its distance from the wall. */
+const WALL_OLD={x:4.25*BUILDING_SCALE,z:3.075*BUILDING_SCALE};
+const pullAxis=(v:number,w:number)=>Math.abs(v)>=w?v-Math.sign(v)*w*(1-PLAN):v*PLAN;
+export const pull=(x:number,z:number):[number,number]=>[pullAxis(x,WALL_OLD.x),pullAxis(z,WALL_OLD.z)];
 /** Live tuning without editing code: open the site with e.g. `?glow=1.3&keys=0.9&room=1.4` to scale the fake-light
  *  halos/pools (glow), the real key lights (keys) and the warm light inside the rooms (room). 1 = as authored; clamped to 0..4. */
 const tuning=(()=>{
@@ -699,7 +707,7 @@ function utilityExterior(scene:THREE.Object3D){
   gutter(scene,[V(WX+.15,4.02,2.25),V(WX+.06,4.04,2.82),V(WX+.06,3.25,2.82),V(WX+.06,.03,2.82)],.044,{axis:'x',value:WX});
   // Left side has its own downspout (upper run on the upper block, lower run on the ground floor), a low utility box and vent.
   exhaustVent(scene,-WX-.075,3.48,1.86,-Math.PI/2,.61);
-  electricBox(scene,-WX-.115,1.07,2.17,-Math.PI/2);
+  // (vtest26: the left utility box moved away; the left lean-to now stands there)
   gutter(scene,[V(uLeft-.075,7.8,.79),V(uLeft-.075,4.5,.79)],.065,{axis:'x',value:uLeft});
   gutter(scene,[V(-WX-.075,4.27,.79),V(-WX-.075,.03,.79)],.065,{axis:'x',value:-WX});
   // Upper rear unit exhausts toward open air; its wiring meets the service conduit.
@@ -707,16 +715,13 @@ function utilityExterior(scene:THREE.Object3D){
   // Disconnect box stacked above the condenser, wired to it by a short conduit (it used to sit across the back rail).
   electricBox(scene,-2.4,7.12,uBack-.115,Math.PI);
   gutter(scene,[V(-2.4,6.56,uBack-.12),V(-2.4,6.74,uBack-.12)],.041);
-  exhaustVent(scene,uRight+.075,6.97,-2.02,Math.PI/2,.46);
   // Service-facing lamps illuminate the back walkway and the two machines (plate back face on the wall).
   wallLight(scene,-3.0,3.85,-WZ-.057,Math.PI,1.8);    // beside the bouldering panel, above the window, lighting the holds
-  wallLight(scene,-2.95,7.0,uBack-.057,Math.PI,1.2,null);   // second lamp, up by the roof exit
+  wallLight(scene,-3.0,7.0,uBack-.057,Math.PI,1.2,null);   // second lamp, up by the top of the climbing wall
   wallLight(scene,-.05,3.56,-WZ-.057,Math.PI,1.25);
   wallLight(scene,3.18,3.59,-WZ-.057,Math.PI,1.6);
   wallLight(scene,-WX-.057,3.57,-2.64,-Math.PI/2,1.1);
   wallLight(scene,WX+.057,3.20,2.10,Math.PI/2,1.0);
-  // Condenser on the upper block's right wall, beside the terrace door.
-  hvacUnit(scene,uRight+.08+.215*.68,6.15,-1.86,Math.PI/2,.68);
 }
 /** Ground surface of the plaza paving (tile tops at .0235); things that stand on it start a hair below that. */
 const GROUND=.022;
@@ -745,7 +750,6 @@ function storefrontDetails(scene:THREE.Object3D){
   skipPot();skipPot();   // vtest17: the two floor pots by the entrance were removed
   box(scene,.03,.04,4.34,1.56,.03,.55,color('#d09354'));
   // The lamps illuminate nearby practical objects rather than washing the facade.
-  wallLight(scene,-ARCH.ground.width/2-.057,2.26,2.95,-Math.PI/2,.86);
   wallLight(scene,ARCH.ground.width/2+.057,2.15,2.92,Math.PI/2,1.0);
 }
 /** Small lantern standing on a table top: base, glass globe and bloom. Returns nothing; `top` is the table surface. */
@@ -764,18 +768,20 @@ function sideTable(parent:THREE.Object3D,x:number,y:number,z:number,r=.27){
   cyl(parent,x,y+.43,z,r,r,.05,wood,12);
   for(const [dx,dz] of [[1,1],[1,-1],[-1,1],[-1,-1]] as const)box(parent,x+dx*r*.62,y+.21,z+dz*r*.62,.045,.42,.045,iron);
 }
+const BISTRO={x:2.95,z:1.45};
 function terraceFurnishings(scene:THREE.Object3D){
   const T=ARCH.groundRoof+.123;             // terrace surface (tile top 4.455)
   const h=ARCH.groundRoof+.12;
   // Bistro set on the right terrace: two chairs face each other across a small round table.
-  const bt={x:2.95,z:1.45};
+  const bt=BISTRO;
   patioTable(scene,bt.x,h,bt.z,.34);
   patioChair(scene,bt.x-.66,h,bt.z,bt.x,bt.z);
   patioChair(scene,bt.x+.66,h,bt.z,bt.x,bt.z);
-  // Lounge corner against the upper wall: a bench and a chair face each other across a low table.
-  bench(scene,2.0,T-.005,-1.9,2.85,-1.9,1.05);
-  sideTable(scene,2.85,T-.005,-1.9);
-  patioChair(scene,2.85,h,-2.45,2.85,-1.9);   // vtest17: moved to the back side of the little table, clear of the stair landing and the terrace door
+  // Lounge corner under the balcony, against the wizard tower: a bench and a chair face each other across a low table (the path from the
+  // spiral stair to the tower door runs just behind them, at z -1.85).
+  bench(scene,1.45,T-.005,-.80,2.45,-.80,1.05);
+  sideTable(scene,2.4,T-.005,-.80);
+  patioChair(scene,3.1,h,-.80,2.4,-.80);
   // Window-box planters sit on the railing's top rail.
   railingPlanter(scene,2.92,3.23,'x',ARCH.groundRoof);
   railingPlanter(scene,-.70,3.23,'x',ARCH.groundRoof);
@@ -803,27 +809,15 @@ function terraceFurnishings(scene:THREE.Object3D){
   run(V(poleC.x,topY,poleC.z),V(poleB.x,topY,poleB.z));
 }
 function roofFurnishings(scene:THREE.Object3D){
-  const R=ARCH.upperRoof+.165;               // roof surface (slab top 7.945)
-  const h=ARCH.upperRoof+.16;
-  // Three chairs around the round lantern table, each turned to face it, plus a small drinks table by one chair.
-  const rt={x:-1.17,z:-.30};
+  // vtest26: the roof terrace is gone, so its round lantern table and three chairs now stand on the open deck in front of the gabled block.
+  const h=ARCH.groundRoof+.12;
+  const rt={x:-2.3,z:2.1};
   patioChair(scene,rt.x-.74,h,rt.z,rt.x,rt.z);
   patioChair(scene,rt.x+.74,h,rt.z,rt.x,rt.z);
-  patioChair(scene,rt.x,h,rt.z-.76,rt.x,rt.z);
-  patioTable(scene,-2.66,R-.02,-1.10,.24);
-  // A compact tool locker by the HVAC unit, not a random sculpture.
-  box(scene,1.36,R+.355,-1.12,.48,.71,.42,slate);
-  box(scene,1.36,R+.37,-.89,.35,.58,.04,zinc);
-  box(scene,1.48,R+.36,-.845,.04,.14,.03,brass);
-  box(scene,.92,R+.15,-1.20,.42,.30,.34,wood);
-  // Lantern on the roof table (its top is at 8.695) with a pool of light on the roof.
-  tableLantern(scene,-1.17,8.695,-.30);
-  glowPatch(scene,-1.15,R,-.30,4.0,3.4,'#ffbe74',.12,0,true);
-  cyl(scene,.35,h+1.61,-2.0,.095,.09,.12,iron,9);
-  // Planters rest on the parapet railing's top rail (rail base is the parapet top, y+.25).
-  const frontRail=ARCH.upper.z+ARCH.upper.depth/2+.08;
-  railingPlanter(scene,-2.95,frontRail,'x',ARCH.upperRoof+.25);
-  railingPlanter(scene,-.55,frontRail,'x',ARCH.upperRoof+.25);
+  patioChair(scene,rt.x,h,rt.z-.72,rt.x,rt.z);
+  patioTable(scene,rt.x,h-.01,rt.z,.36);
+  tableLantern(scene,rt.x,h+.765,rt.z);
+  glowPatch(scene,rt.x,4.462,rt.z,3.6,3.2,'#ffbe74',.12,0,true);
   skipPot();   // vtest17: roof floor pot removed
 }
 // Architectural dimensions, in scene units (one unit is approximately one metre).
@@ -832,7 +826,7 @@ function roofFurnishings(scene:THREE.Object3D){
 // upper-floor roof forms a second, higher terrace. Intentionally only two boxes.
 const ARCH={
  ground:{width:8.5,depth:6.15,height:4.25},
- upper:{x:-1.10,z:-.97,width:5.60,depth:4.10,bottom:4.35,height:3.35},
+ upper:{x:-2.45,z:-.97,width:2.90,depth:4.10,bottom:4.35,height:3.35},   // vtest26: a narrow gabled block on the left (was a 5.6 m box); the tower, balcony and open terrace fill the rest of the deck
  groundRoof:4.32,
  upperRoof:7.78
 } as const;
@@ -866,11 +860,10 @@ function terraceFloor(scene:THREE.Object3D){
  // One tile lattice for the whole terrace (right side and front strip) with one colour rule, so the pattern runs across the join
  // (the two areas used to sit on different grids, and only the right-hand one had the lighter tiles).
  const tileAt=(x:number,z:number)=>{const m=box(scene,x,walkY,z,.401,.022,.401,((Math.floor(x*4)+Math.floor(z*3))%4===0)?tile:slab);m.castShadow=false;};
- for(let i=0;i<=4;i++)for(let k=0;k<=13;k++)tileAt(1.96+.43*i,-2.82+.43*k);        // right terrace, x 1.96 .. 3.68, z -2.82 .. 2.77
- for(let i=1;i<=13;i++)for(let k=10;k<=13;k++)tileAt(1.96-.43*i,-2.82+.43*k);      // front strip on the same lattice, x 1.53 .. -3.63, z 1.48 .. 2.77
- // A warm seam along the setback edge, showing two legible terraces from title view.
- box(scene,1.77,ARCH.groundRoof+.126,-.94,.08,.04,4.12,joints);
- box(scene,-1.08,ARCH.groundRoof+.126,1.14,5.62,.04,.075,joints);
+ // vtest26: the open deck now runs from the gabled block's right wall (x = -1.0) to the right rail and across the whole front: same lattice as before,
+ // laid everywhere except under the gabled block (its floor is a little lower than the tile tops).
+ for(let j=-13;j<=4;j++)for(let k=0;k<=13;k++){const x=1.96+.43*j,z=-2.82+.43*k;if(x<-.85&&z<1.25)continue;tileAt(x,z);}   // x -3.63 .. 3.68, z -2.82 .. 2.77
+ void joints;
  // The FRONT and RIGHT outer edges remain open behind the railings.
  perimeterRail(scene,'x',3.23,-4.31,4.00,ARCH.groundRoof,trim,.56,.11);
  // The right rail has a .6 gap at z = -1.85 where the spiral stair arrives (see terraceStair).
@@ -878,8 +871,7 @@ function terraceFloor(scene:THREE.Object3D){
  perimeterRail(scene,'z',4.31,-1.55,3.20,ARCH.groundRoof,trim,.52,.11);
  perimeterRail(scene,'x',-3.22,1.82,4.18,ARCH.groundRoof,trim,.57,.11);
  // LEFT edge (was open) and the rear strip behind the upper block close the terrace all the way round.
- perimeterRail(scene,'z',-4.31,-3.22,-2.72,ARCH.groundRoof,trim,.56,.11);
- perimeterRail(scene,'z',-4.31,-.28,3.23,ARCH.groundRoof,trim,.56,.11);   // vtest25: open where the oriel bay stands on the slab edge
+ perimeterRail(scene,'z',-4.31,-3.22,3.23,ARCH.groundRoof,trim,.56,.11);   // vtest26: unbroken again (the oriel bay is gone)
  perimeterRail(scene,'x',-3.22,-4.31,-3.98,ARCH.groundRoof,trim,.57,.11);   // the back rail is open where the bouldering panel passes
  perimeterRail(scene,'x',-3.22,-3.12,1.82,ARCH.groundRoof,trim,.57,.11);
  // A few terrace plants and a restrained seating arrangement provide structure,
@@ -890,6 +882,7 @@ function terraceFloor(scene:THREE.Object3D){
 }
 
 function upperRoofTerrace(scene:THREE.Object3D){
+ if(MASSING){for(let i=0;i<3;i++)skipPot();return;}   // vtest26: no roof terrace any more; the gabled block has a tile roof (see upperGable). The three burns keep the seeded sequence intact.
  const {x,z,width,depth}=ARCH.upper;
  const y=ARCH.upperRoof;
  // Roof slab, top at 7.945 (= surfaceBelow for the roof) so roof furniture stands on it instead of hovering.
@@ -902,8 +895,14 @@ function upperRoofTerrace(scene:THREE.Object3D){
   perimeterRail(scene,'x',zz,zz===back?-3.10:left,right,y+.25,dark,.60);   // the back rail is open at the climbers' exit
  }
  for(const xx of [left,right]){
-  box(scene,xx,y+.14,z,.19,.25,depth+.33,stone);
-  perimeterRail(scene,'z',xx,back,front,y+.25,dark,.56);
+  if(MASSING&&xx===right){
+   // vtest26: the right parapet is open where the balcony floor carries the roof deck out over the terrace.
+   const gapA=BALCONY.z0-.05,gapB=BALCONY.z1+.05;
+   for(const [a,c] of [[back-.085,gapA],[gapB,front+.085]] as const){box(scene,xx,y+.14,(a+c)/2,.19,.25,c-a,stone);perimeterRail(scene,'z',xx,a,c,y+.25,dark,.56);}
+  }else{
+   box(scene,xx,y+.14,z,.19,.25,depth+.33,stone);
+   perimeterRail(scene,'z',xx,back,front,y+.25,dark,.56);
+  }
  }
  // Grab bar over the parapet where the bouldering wall tops out: two posts and a rail, in line with the open gap.
  for(const gx of [-3.84,-3.26])cyl(scene,gx,y+.25+.28,back,.022,.022,.56,iron,7);
@@ -933,7 +932,7 @@ function upperRoofTerrace(scene:THREE.Object3D){
 }
 
 function storefront(scene:THREE.Object3D){
- const brick=TIMBER_FRAME?color('#c3b294',0,.95):color('#52556a'),upperBrick=TIMBER_FRAME?color('#d3c4a7',0,.95):color('#626579');   // vtest23: plaster; set TIMBER_FRAME=false for the old brick
+ const brick=TIMBER_FRAME?color('#cdb59d',0,.95):color('#52556a'),upperBrick=TIMBER_FRAME?color('#e2c6b1',0,.95):color('#626579');   // vtest23: plaster; set TIMBER_FRAME=false for the old brick
  const u=ARCH.upper,gd=ARCH.ground;
  const upperY=u.bottom+u.height/2;
  // 1) Register every window and door first: the walls below are cut around these openings.
@@ -951,14 +950,11 @@ function storefront(scene:THREE.Object3D){
  // The asymmetric upper floor faces the front terrace with windows, and a
  // separate door opens onto the exposed RIGHT side terrace.
  const upperFront=u.z+u.depth/2+.11;
- facadeWindow(scene,-2.56,6.16,upperFront,2.12,1.97,0,'warm');
- facadeWindow(scene,-.05,6.18,upperFront,1.96,1.93,0,'blinds');
+ // vtest26: the upper block is the narrow gabled block now: one big lit window in its front gable end, the planter window on its left wall.
+ // (The old back window's two sill pots are burnt below so the seeded plant sequence stays the same; the terrace door is the tower's base door.)
+ facadeWindow(scene,u.x,6.16,upperFront,1.7,1.97,0,'warm');
  facadeWindow(scene,u.x-u.width/2-.11,6.05,-1.50,1.65,1.94,-Math.PI/2,'planter',false);
- facadeWindow(scene,.29,6.16,u.z-u.depth/2-.11,1.85,1.73,Math.PI,'dark');
- // Door to the right terrace: its sill sits just above the tiles (door leaf is local +Z outward along +X).
- doorway(scene,u.x+u.width/2+.11,5.78,-.45,1.15,2.66,Math.PI/2);
- glowPatch(scene,u.x+u.width/2+.07,5.78,-.45,2.5,3.7,'#ffbd6e',.11,Math.PI/2);
- glowPatch(scene,u.x+u.width/2+1.25,4.462,-.45,2.6,2.3,'#ffbd6e',.12,Math.PI/2,true);
+ skipPot();skipPot();
  // 2) Hollow walls: outer brick + inner plaster, cut around the openings above.
  const T=WALL_T,plaster=plasterMat();plaster.userData.paper=true;
  hollowWall(scene,0,0,gd.depth/2,0,gd.width,gd.height,brick,plaster);
@@ -1005,7 +1001,6 @@ function storefront(scene:THREE.Object3D){
  // Striped awning shelters the ground-floor entrance, but does not conceal
  // either balcony. Shorter upper awning makes the silhouette more lively.
  awning(scene,0,3.87,3.14,7.88,1.0);
- awning(scene,u.x,7.72,upperFront-.08,5.20,.45);
  plane(scene,0,3.43,4.119,1.66,.26,labelTexture('THE LITTLE STUDIO','#f7e6c4','#152d36','#c1b09a',1024,160));  // on the awning's front valance; 1024:160 = the 1.66:.26 plane
  // Repositioned limited architectural greenery and lighting.
  for(const [xx,yy,zz,size,trail] of [
@@ -1015,14 +1010,13 @@ function storefront(scene:THREE.Object3D){
  ] as const)skipPot();   // vtest17: floor pots around the building removed (their positions stay in this list for reference)
  addVines(scene,'z',ARCH.ground.depth/2,-3.97,3.74,1.65);         // under the awning, front-left corner
  addVines(scene,'x',ARCH.ground.width/2,-2.70,4.10,2.2);          // hanging from the side cornice, rear right
- addVines(scene,'z',ARCH.upper.z+ARCH.upper.depth/2,1.50,7.69,2.5); // hanging from the roof edge, upper front right
+ addVines(scene,'z',ARCH.upper.z+ARCH.upper.depth/2,-1.24,7.69,2.5); // hanging from the eave, front right of the gabled block
  // Awning lamps hang from the awning's underside (cord ends exactly at it).
  for(const [lx,ly,lz,li] of [[-3.20,3.50,3.72,1.95],[-2.08,3.46,3.69,1.35],[-1.05,3.46,3.68,1.4],[1.00,3.46,3.68,1.4],[2.06,3.46,3.69,1.35],[3.10,3.50,3.72,1.95]] as const)
   hangingLamp(scene,lx,ly,lz,li,awningUnder(3.87,3.14,1.0,lz)+.02);
  // Additional warm sconces make the front and terrace feel inhabited without flattening the scene.
  // Upper-floor sconces sit on the wall piers between and beside the windows (not across a window).
- wallLight(scene,-1.265,6.3,u.z+u.depth/2+.057,0,1.0);
- wallLight(scene,1.32,6.3,u.z+u.depth/2+.057,0,1.0);
+ wallLight(scene,-3.68,6.3,u.z+u.depth/2+.057,0,1.0);
  // (The left-side lamp post by the old wagon spot was removed in round four: the kei truck parks there now. The two tall street
  // lamps on the right side were removed in vtest10; the code is in git history.)
  // Side utility conduits emphasize compact, lived-in construction.
@@ -1119,7 +1113,7 @@ function shelfPlate(text:string,w:number,h:number){
  },PW,PH);
 }
 /** World position of the project book cart (it sits on the pavement in front of the left display window). */
-const CART={x:-4.75,z:3.5};
+const CART=(()=>{const [x,z]=pull(-4.75,3.5);return {x,z};})();
 /** The project book cart, built as a small wooden bookcase on casters to echo the shelf on the Projects page: dark walnut frame,
  *  plum back panel with a warm wash, brass shelf plates, and one rounded-spine book per project (spine out, gold bands, vertical titles).
  *  The neon sign now crowns the case, so it no longer hides the lower row. */
@@ -1179,13 +1173,18 @@ function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group
  hits.push({object:hit,visual:g,section:'projects',label:'Browse projects'});
 }
 /** The paved plaza (world units). Kept tight around the building so the whole scene reads from the default view. */
-const PLAZA={x0:-7.2,x1:7.2,z0:-4.9,z1:5.2};
+/** vtest26: the plaza is tighter (it was x -7.2..7.2, z -4.9..5.2) so the little corner reads as one cramped, cosy yard. */
+const PLAZA=(()=>{const [x0,z0]=pull(-6.3,-4.1),[x1,z1]=pull(5.9,4.7);return {x0,x1,z0,z1};})();
+const PLAZA_OLD={x0:-7.2,x1:7.2,z0:-4.9,z1:5.2};
 function floor(scene:THREE.Object3D){
  const ground=new THREE.Mesh(new THREE.PlaneGeometry(170,170),GHIBLI_SURROUNDINGS?new THREE.MeshStandardMaterial({map:grassTexture(),color:'#ffffff',metalness:0,roughness:1}):new THREE.MeshStandardMaterial({color:'#0b1124',metalness:0,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=GHIBLI_SURROUNDINGS&&KNOLL?FAR_GROUND-.02:-.28;ground.receiveShadow=true;scene.add(ground);  // matte: a glossy ground turned every point light into a huge white-blue specular blob
  const cx=(PLAZA.x0+PLAZA.x1)/2,cz=(PLAZA.z0+PLAZA.z1)/2;
  box(scene,cx,-.16,cz,PLAZA.x1-PLAZA.x0+.4,.32,PLAZA.z1-PLAZA.z0+.4,color('#3a435d'));
  const paving=[color('#5e596d'),color('#746276'),color('#4d5368'),color('#686475')];
- for(let x=PLAZA.x0+.05;x<PLAZA.x1-.4;x+=.73)for(let z=PLAZA.z0+.05;z<PLAZA.z1-.4;z+=.74){let m=box(scene,x+.36,-.004,z+.36,.705,.055,.710,paving[Math.floor(random()*4)]);m.castShadow=false;}
+ let tilesOld=0,tilesNew=0;
+ for(let x=PLAZA_OLD.x0+.05;x<PLAZA_OLD.x1-.4;x+=.73)for(let z=PLAZA_OLD.z0+.05;z<PLAZA_OLD.z1-.4;z+=.74)tilesOld++;
+ for(let x=PLAZA.x0+.05;x<PLAZA.x1-.4;x+=.73)for(let z=PLAZA.z0+.05;z<PLAZA.z1-.4;z+=.74){let m=box(scene,x+.36,-.004,z+.36,.705,.055,.710,paving[Math.floor(random()*4)]);m.castShadow=false;tilesNew++;}
+ for(let i=tilesNew;i<tilesOld;i++)random();   // keep the shared seeded sequence exactly as long as before, so no plant, vine or tile elsewhere moves
  // (the four corner bollards were replaced in vtest8 by lantern posts and hedges, see cozyWorld)
  // Thin curb edge and pavement joint reflections.
  box(scene,cx,.043,PLAZA.z1+.16,PLAZA.x1-PLAZA.x0+.05,.10,.20,stone);
@@ -1197,9 +1196,9 @@ function floor(scene:THREE.Object3D){
 }
 /** World position of the former sign post. The five-sign stack was removed (the on-screen menu already navigates), but the
  *  cool light that used to spill from it stays as general moonlit fill on the right elevation. */
-const NEON={x:6.45,z:2.1};
+const NEON=(()=>{const [x,z]=pull(6.45,2.1);return {x,z};})();
 // The tall name sign and its pole were removed in vtest10 (the name is already on the page); the code is in git history.
-const RESUME_STAND={x:3.4,z:3.75};
+const RESUME_STAND=(()=>{const [x,z]=pull(3.4,3.75);return {x,z};})();
 function resumeStand(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group();g.position.set(RESUME_STAND.x,0,RESUME_STAND.z);g.rotation.y=-.17;scene.add(g);
  box(g,0,.86,0,1.02,1.50,.15,wood);box(g,0,1.15,.105,.89,1.16,.055,color('#efeadb'));
  plane(g,0,1.19,.136,.80,1.04,labelTexture('RESUME','#354653','#eee4ce','#9f9f98',420,512));
@@ -1297,19 +1296,20 @@ function interiors(scene:THREE.Object3D){
  pendant(scene,-2.0,top,.9,3.05,gf,1);
  pendant(scene,1.9,top,.35,3.0,gf,1);
  pendant(scene,-.2,top,-1.1,3.15,gf,.9);
- // ---- Upper floor: a living room. Sofa on the back wall beside the rear window, bookshelf on the left wall,
- // rug with a low table, floor lamp by the front windows, a plant by the terrace door.
- box(scene,-2.3,uf+.2,-2.3,2.2,.4,.9,color('#7a4a52'));
- box(scene,-2.3,uf+.68,-2.67,2.2,.56,.2,color('#8a5660'));
- for(const ax of [-1.0,1.0])box(scene,-2.3+ax,uf+.34,-2.3,.2,.68,.9,color('#6b3e46'));
- for(const px of [-2.8,-1.8])box(scene,px,uf+.52,-2.5,.55,.28,.14,color('#c9a56b')).rotation.z=.12;
- box(scene,-1.4,uf+.016,-.9,2.8,.02,1.9,rug('#3e5a6b'));
- box(scene,-1.4,uf+.4,-.9,1.1,.05,.6,wood);
- for(const [lx,lz] of [[-.9,-.65],[-.9,-1.15],[-1.9,-.65],[-1.9,-1.15]] as const)box(scene,lx,uf+.2,lz,.05,.4,.05,iron);
+ // ---- Upper floor: a living room, now in the narrow gabled block (interior x -3.66 .. -1.24, z -2.78 .. .84). Sofa on the back wall,
+ // bookshelf on the left wall, rug with a low table, floor lamp by the shelf, a plant by the front window. (vtest26: everything shifted left
+ // 1.15 m with the walls; nothing was dropped.)
+ box(scene,-2.45,uf+.2,-2.3,2.2,.4,.9,color('#7a4a52'));
+ box(scene,-2.45,uf+.68,-2.67,2.2,.56,.2,color('#8a5660'));
+ for(const ax of [-1.0,1.0])box(scene,-2.45+ax,uf+.34,-2.3,.2,.68,.9,color('#6b3e46'));
+ for(const px of [-2.95,-1.95])box(scene,px,uf+.52,-2.5,.55,.28,.14,color('#c9a56b')).rotation.z=.12;
+ box(scene,-2.45,uf+.016,-.9,2.2,.02,1.9,rug('#3e5a6b'));
+ box(scene,-2.45,uf+.4,-.9,1.1,.05,.6,wood);
+ for(const [lx,lz] of [[-1.95,-.65],[-1.95,-1.15],[-2.95,-.65],[-2.95,-1.15]] as const)box(scene,lx,uf+.2,lz,.05,.4,.05,iron);
  bookshelf(scene,-3.49,uf,.3,.95,1.9,Math.PI/2);
  floorLamp(scene,-3.2,uf,-.05);
- pendant(scene,-1.4,roof-.04,-.9,6.55,uf,1);
- pot(scene,1.1,uf,.45,.5,true,uf+.03);
+ pendant(scene,-2.45,roof-.04,-.9,6.55,uf,1);
+ pot(scene,-1.55,uf,.55,.5,true,uf+.03);
 }
 // ---------------------------------------------------------------------------------------------
 // END GAME: personal touches. The brief for these props is "evoke, do not copy": every piece is an original, generic
@@ -1881,7 +1881,7 @@ function keiTruck(scene:THREE.Object3D,x:number,z:number,rotY:number){
 /** A basketball backboard bolted to an outside wall (building-local `wallX`, hoop facing -X). The group is scaled back up so every
  *  number inside is in metres: backboard 1.05 x .70, rim .38 across at 2.40 m, kid-and-driveway height that keeps the cornice clear. */
 function wallHoop(parent:THREE.Object3D,wallX:number,z:number){
-  const g=new THREE.Group();g.position.set(wallX,0,z);g.rotation.y=-Math.PI/2;g.scale.setScalar(1/BUILDING_SCALE);parent.add(g);
+  const g=new THREE.Group();g.position.set(wallX,0,z);g.rotation.y=-Math.PI/2;g.scale.set(1/(BUILDING_SCALE*PLAN),1/(BUILDING_SCALE*HEIGHT),1/(BUILDING_SCALE*PLAN));parent.add(g);
   const metal=color('#2a3342',.5,.5),board=color('#e8ecf4',0,.5),orange=color('#e8662a',.2,.5),navy=color('#2d4a8a',0,.6);
   const BY=2.62;
   box(g,0,BY,.30,1.05,.70,.045,board);
@@ -2206,8 +2206,7 @@ function albumFrame(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number
 /** A world-level cluster of props on the plaza. */
 function endgameWorld(scene:THREE.Object3D){
   // Round four: the wagon and its lamp are gone; a white kei pickup parks on the left and the heron moved forward to give it room.
-  keiTruck(scene,-5.25,-.8,.04);
-  heron(scene,-6.4,2.25,.7);
+  {const [tx,tz]=pull(-4.95,-.8),[hx,hz]=pull(-5.55,2.35);keiTruck(scene,tx,tz,.04);heron(scene,hx,hz,.7);}
 }
 /** A small red toy seaplane (generic biplane on floats) hung from the ceiling by two cords. */
 function toyPlane(parent:THREE.Object3D,x:number,y:number,z:number,rotY:number,ceilingY:number){
@@ -2322,11 +2321,11 @@ function endgameInteriors(scene:THREE.Object3D){
   // ---- Upper floor ----------------------------------------------------------------------------------------
   // Six framed jerseys in two rows above the sofa (inner face of the back wall is z = -2.78).
   const wallZ=-2.78;
-  JERSEYS.forEach((spec,i)=>jerseyFrame(scene,-3.1+(i%3)*.8,i<3?7.0:6.0,wallZ,spec));
+  JERSEYS.forEach((spec,i)=>jerseyFrame(scene,-3.2+(i%3)*.75,i<3?7.0:6.0,wallZ,spec));
   // Plush tiger on the sofa, leaning against the backrest between the two cushions.
-  plushTiger(scene,-2.3,uf+.4,-2.45,0);
+  plushTiger(scene,-2.45,uf+.4,-2.45,0);
   // Turntable on a sideboard against the right wall, flanked by two small speakers.
-  const sx=1.26,sz=-2.0;
+  const sx=-1.46,sz=-.2;
   box(scene,sx,uf+.4,sz,.4,.8,1.2,wood);
   box(scene,sx,uf+.825,sz,.34,.05,.40,color('#1d2029'));
   cyl(scene,sx,uf+.865,sz,.15,.15,.02,color('#9aa3ad',.6,.4),14);
@@ -2340,12 +2339,12 @@ function endgameInteriors(scene:THREE.Object3D){
   }
   // Coffee table: just the candle now (the playing cards and two paperbacks were removed in vtest10).
   const tt=uf+.425;
-  cyl(scene,-1.7,tt+.05,-.9,.03,.03,.1,cream,8);
-  sphere(scene,-1.7,tt+.115,-.9,.014,bright,0);halo(scene,-1.7,tt+.12,-.9,.5,'#ffb866',.5);
-  soccerBall(scene,-.7,uf+.11,-2.5);
-  shipInBottle(scene,-1.25,tt,-.9);                                 // on the coffee table, bottle lying along x (vtest12)
+  cyl(scene,-2.75,tt+.05,-.9,.03,.03,.1,cream,8);
+  sphere(scene,-2.75,tt+.115,-.9,.014,bright,0);halo(scene,-2.75,tt+.12,-.9,.5,'#ffb866',.5);
+  soccerBall(scene,-1.6,uf+.11,-2.5);
+  shipInBottle(scene,-2.3,tt,-.9);                                 // on the coffee table, bottle lying along x (vtest12)
   // Six framed pictures in a 2 wide x 3 tall grid (top row: two supplied pictures; below: four record sleeves) on the right wall above the turntable (inner face x = 1.46), turned to face into the room.
-  ([['','','#2d6fb8','#ffffff','skydive.jpg'],['','','#c9371f','#ffffff','red-pool.jpg'],['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,1.46,6.6-Math.floor(i/2)*.4,-2.19+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
+  ([['','','#2d6fb8','#ffffff','skydive.jpg'],['','','#c9371f','#ffffff','red-pool.jpg'],['RAM','Daft Punk','#2c2f36','#eae6dc','ram.jpg'],['Luv(sic) Hexology','Nujabes','#a98a64','#2b2113','luv-sic-hexology.jpg'],['Mm..Food','MF DOOM','#4a5b66','#e9eef1','mm-food.jpg'],['Graduation','Kanye West','#e6dcc6','#2b2f38','graduation.jpg']] as const).forEach(([t,a,bg,fg,im],i)=>albumFrame(scene,-1.24,6.6-Math.floor(i/2)*.4,-.4+(i%2)*.40,-Math.PI/2,t,a,bg,fg,im));
   // Poster on the ground-floor back wall (inner face z = -2.835), right of the counter.
   baggioPoster(scene,1.5,2.2,-2.835);
   // Supplied desert poster, further right on the same wall (same inner face), clear of the Baggio poster.
@@ -2427,7 +2426,7 @@ function cozyWorld(scene:THREE.Object3D){
   // to a slim stake at the end of its hedge. The gap between the stakes (behind the vending machine and the arcade cabinet) stays
   // open, and the front stays open so the shop front is never crossed.
   const P=(x:number,z:number)=>V(x,top-.12,z);
-  const stakeL=-2.55,stakeR=3.55;
+  const stakeL=pull(-2.55,0)[0],stakeR=pull(3.55,0)[0];
   for(const sx of [stakeL,stakeR]){
     cyl(scene,sx,(top-.05)/2,pz0,.028,.036,top-.05,dark,6);sphere(scene,sx,top-.04,pz0,.045,brass,1);
   }
@@ -2435,21 +2434,20 @@ function cozyWorld(scene:THREE.Object3D){
   festoon(scene,P(px0,pz0),P(px0,pz1),.5,15);
   festoon(scene,P(px1,pz0),P(px1,pz1),.5,15);
   // Hedges close the courtyard on the sides and back, with gaps for the machines, the truck and the heron.
-  hedge(scene,(px0+px0+0)/2-.05+.0,(pz0+1.0)/2,Math.abs(1.0-pz0)-.5,'z');          // left, behind the truck
-  hedge(scene,px1+.05,(pz0+3.2)/2,Math.abs(3.2-pz0)-.5,'z',.3);                   // right
-  hedge(scene,(px0+.4-2.4)/2,pz0,Math.abs(-2.4-(px0+.4)),'x');                      // back left
-  hedge(scene,(3.4+px1-.4)/2,pz0,Math.abs(px1-.4-3.4),'x');                         // back right
+  hedge(scene,(px0+px0+0)/2-.05+.0,(pz0+pull(0,1.0)[1])/2,Math.abs(pull(0,1.0)[1]-pz0)-.5,'z');          // left, behind the truck
+  hedge(scene,px1+.05,(pz0+pull(0,3.2)[1])/2,Math.abs(pull(0,3.2)[1]-pz0)-.5,'z',.3);                   // right
+  hedge(scene,(px0+.4+stakeL)/2,pz0,Math.abs(stakeL-(px0+.4)),'x');                      // back left
+  hedge(scene,(stakeR+px1-.4)/2,pz0,Math.abs(px1-.4-stakeR),'x');                         // back right
   // Curb flower troughs by the shop.
-  trough(scene,-2.45,4.95,1.0);trough(scene,.1,4.98,1.0);trough(scene,2.45,4.95,.9);
+  {const tz=pull(0,4.5)[1];trough(scene,pull(-2.45,0)[0],tz,1.0);trough(scene,pull(.1,0)[0],tz+.02,1.0);trough(scene,pull(2.45,0)[0],tz,.9);}
   // Back: a bench and a stack of crates with a plant.
-  const g=new THREE.Group();g.position.set(-4.2,PAVE,-3.75);g.scale.setScalar(.85);scene.add(g);
+  const g=new THREE.Group();{const [bx,bz]=pull(-4.2,-3.2);g.position.set(bx,PAVE,bz);}g.scale.setScalar(.85);scene.add(g);
   bench(g,0,.02,0,0,2,1.5);box(g,-.35,.56,.02,.42,.12,.3,color('#d9b45a'),.1);
   for(const sx of [-1,1])box(g,sx*.9,.18,.45,.2,.2,.2,color('#4f3d38'));
-  crate(scene,-6.1,-3.7,.46,.2);crate(scene,-6.15,-3.2,.34,-.3);
-  pot(scene,-6.1,.02+.46+.03,-3.7,.5,true);
+  {const [c1x,c1z]=pull(-5.5,-3.2),[c2x,c2z]=pull(-5.55,-2.7);crate(scene,c1x,c1z,.46,.2);crate(scene,c2x,c2z,.34,-.3);pot(scene,c1x,.02+.46+.03,c1z,.5,true);}
   // vtest12: couch with a raccoon and a blue jay, back against the right wall under the corkboard (the sill band sticks out to world
   // x = 3.377, the couch back sits at 3.40 and the couch faces +X; the corkboard's lower edge is well above the backrest).
-  tuftedCouch(scene,3.71,.31,Math.PI/2);
+  {const [cx,cz]=pull(3.71,.31);tuftedCouch(scene,cx,cz,Math.PI/2);}
 }
 /** Details on the building itself, in its local units. */
 function cozyBuilding(b:THREE.Object3D){
@@ -2458,8 +2456,7 @@ function cozyBuilding(b:THREE.Object3D){
   addVines(left,'z',0,2.05,4.1,2.1);addVines(left,'z',0,-2.35,4.0,1.5);
   const back=new THREE.Group();back.position.set(0,0,-ARCH.ground.depth/2);back.rotation.y=Math.PI;b.add(back);
   addVines(back,'z',0,.55,4.0,1.5);   // was at 1.35, which put it on the back window's frame (vtest12)
-  const upBack=new THREE.Group();upBack.position.set(0,0,ARCH.upper.z-ARCH.upper.depth/2-.01);upBack.rotation.y=Math.PI;b.add(upBack);
-  addVines(upBack,'z',0,1.85,7.7,2.3);addVines(upBack,'z',0,-1.55,7.7,1.7);
+  // (vtest26: the upper back-wall ivy is gone: that wall now carries the climbing panel and the condenser.)
   // Candle jars on the shop-front crates.
   candleJar(b,-3.70,.52+.03+GROUND,4.22);candleJar(b,-3.12,.40+.03+GROUND,4.14);
   // Bracket lamp on the second-floor left wall, on the blank stretch to the right of the window (vtest12: moved up from the
@@ -2476,10 +2473,7 @@ function cozyBuilding(b:THREE.Object3D){
   glowPatch(b,ux-.012,uy-.45,uz,2.6,3.0,'#ffc27a',.13,-Math.PI/2);   // warm wash on the wall (no floor pool: nothing is below it but the roof edge)
   // Lights where they were asked for (vtest12): two lantern posts on the roof terrace (back-left near the climbers' exit, and behind the
   // water tank), one at the left end of the terrace by the upper block's corner, and a wall lamp at the back end of the upper right wall.
-  railLantern(b,-2.45,ARCH.upperRoof+.25+.8425,-3.10,7.945);   // vtest17: was a free-standing post in the climbers' exit; now a lamp on the back rail beside it
-  terraceLantern(b,.62,7.945,-2.90);
-  terraceLantern(b,-3.72,4.455,1.55);
-  wallLight(b,ARCH.upper.x+ARCH.upper.width/2+.057,6.2,-2.72,Math.PI/2,1.1);
+  terraceLantern(b,-3.72,4.455,1.55);   // vtest26: the roof-terrace lanterns went with the roof terrace
   terraceStair(b);
 }
 // ---------------------------------------------------------------------------------------------
@@ -2726,12 +2720,12 @@ function woodChest(parent:THREE.Object3D,x:number,gfy:number,z:number,rotY:numbe
   box(g,0,.33,.265,.09,.10,.03,brass);
 }
 function endgameExterior(scene:THREE.Object3D){
-  const bt={x:2.95,z:1.45};
+  const bt=BISTRO;
   cat(scene,bt.x-.66,ARCH.groundRoof+.12+.5525,bt.z,faceTo(bt.x-.66,bt.z,bt.x,bt.z));   // on the left bistro chair, watching the lantern
-  quetzal(scene,-1.75,ARCH.upperRoof+.25+.81+.0325,ARCH.upper.z+ARCH.upper.depth/2+.08);   // on the roof's front rail
+  quetzal(scene,BALCONY.x0+1.55,BALCONY.y+.81+.0325,BALCONY.z1);   // on the balcony's front rail
   baseballSet(scene,2.15,4.0);
   wallHoop(scene,-ARCH.ground.width/2,.85);                                               // left wall, in front of the parked truck
-  chessBoard(scene,2.85,4.893,-1.9,.4);                                                   // terrace side table, where the lattice board stood
+  chessBoard(scene,2.4,4.893,-.80,.4);                                                    // on the lounge's low table, where the lattice board stood
   // Parked (not placed): flag, surfboard, rail scarves, pennant swag, round shields, door wreath, lattice board, wagon, free-standing hoop.
 }
 // ---------------------------------------------------------------------------------------------
@@ -2744,7 +2738,7 @@ const TIMBER_FRAME=true;
 const timberMat=color('#4a3123',0,.88);
 const timberWarm=color('#6a4630',0,.86);
 const plinthMat=color('#6f6b78',0,.95);
-const tileDark=color('#7a3320',0,.8);
+const tileDark=color('#1f5755',0,.8);
 
 interface Box3{x0:number;x1:number;y0:number;y1:number;z0:number;z1:number}
 /** Things bolted to or hanging on the walls, in building-local coordinates (x0..x1 etc.). Timber is cut around them. */
@@ -2768,18 +2762,16 @@ const WALL_ITEMS:Box3[]=[
   {x0:2.6,x1:3.3,y0:.85,y1:1.5,z0:-3.4,z1:-2.9},{x0:-3.3,x1:-2.7,y0:3.5,y1:4.2,z0:-3.6,z1:-2.9},
   {x0:-.35,x1:.25,y0:3.3,y1:3.85,z0:-3.6,z1:-2.9},{x0:2.9,x1:3.5,y0:3.3,y1:3.9,z0:-3.6,z1:-2.9},
   {x0:-.4,x1:1.5,y0:2.9,y1:4.3,z0:-3.6,z1:-2.9},{x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-4.2,z1:-2.9},
-  // upper walls: condensers, vents, boxes, lamps, ivy, the bracket lamp, the downspout
-  {x0:1.60,x1:2.45,y0:5.5,y1:6.7,z0:-2.4,z1:-1.4},{x0:1.6,x1:2.1,y0:6.6,y1:7.35,z0:-2.3,z1:-1.75},
-  {x0:1.6,x1:2.1,y0:6.0,y1:6.6,z0:-3.0,z1:-2.45},{x0:-3.4,x1:-1.4,y0:5.6,y1:7.5,z0:-3.6,z1:-2.9},
-  {x0:-3.3,x1:-2.6,y0:6.6,y1:7.4,z0:-3.6,z1:-2.9},{x0:-4.6,x1:-3.8,y0:5.6,y1:6.9,z0:-.35,z1:.55},
-  {x0:-4.1,x1:-3.8,y0:4.4,y1:7.9,z0:.6,z1:1.0},{x0:-1.5,x1:-1.0,y0:5.8,y1:6.8,z0:.8,z1:1.4},{x0:1.1,x1:1.55,y0:5.8,y1:6.8,z0:.8,z1:1.4},
+  // upper walls (vtest26: the narrow gabled block): back-wall condenser, vent and lamps, left-wall bracket lamp and downspout, front-wall sconce
+  {x0:-3.2,x1:-1.6,y0:5.5,y1:7.5,z0:-3.6,z1:-2.9},{x0:-3.3,x1:-2.6,y0:6.6,y1:7.4,z0:-3.6,z1:-2.9},
+  {x0:-4.6,x1:-3.8,y0:5.6,y1:6.9,z0:-.35,z1:.55},{x0:-4.1,x1:-3.8,y0:4.4,y1:7.9,z0:.6,z1:1.0},
+  {x0:-3.95,x1:-3.4,y0:5.8,y1:6.8,z0:.8,z1:1.4},
   {x0:-1.4,x1:.9,y0:1,y1:9,z0:-3.6,z1:-2.9},
-  {x0:1.2,x1:2.0,y0:6.0,y1:7.9,z0:.7,z1:1.4},
   // the climbing wall's stand-off and the stair landing
   {x0:-3.95,x1:-3.15,y0:0,y1:9,z0:-3.8,z1:-3.0},{x0:4.2,x1:4.9,y0:4.35,y1:5.4,z0:-2.3,z1:-1.4},
   {x0:4.2,x1:4.95,y0:.0,y1:2.1,z0:-3.0,z1:-2.55},
-  // vtest25 massing volumes: the porch roof, the carport roof and the oriel bay
-  {x0:1.6,x1:4.7,y0:6.3,y1:7.95,z0:-3.2,z1:.45},{x0:-8.6,x1:-4.15,y0:2.8,y1:4.3,z0:-2.3,z1:.7},{x0:-5.0,x1:-3.8,y0:4.4,y1:8.4,z0:-2.8,z1:-.2}
+  // vtest26 massing volumes: the wizard tower (against the gabled block's right wall) and the balcony slab over the terrace
+  {x0:-1.8,x1:1.15,y0:4.4,y1:15,z0:-2.85,z1:.25},{x0:.8,x1:3.7,y0:6.9,y1:8.4,z0:-2.7,z1:-.05}
 ];
 const itemHit=(x:number,y:number,z:number,m:number)=>{for(const b of WALL_ITEMS)if(x>b.x0-m&&x<b.x1+m&&y>b.y0-m&&y<b.y1+m&&z>b.z0-m&&z<b.z1+m)return true;return false;};
 
@@ -2838,13 +2830,13 @@ function frameWall(parent:THREE.Object3D,w:WallDef,y0:number,y1:number,rails:num
 let tileBase:THREE.Texture|null=null;
 function tileMat(u:number,v:number){
   tileBase??=texture((c,W,H)=>{
-    c.fillStyle='#9a4527';c.fillRect(0,0,W,H);
+    c.fillStyle='#2c6f6b';c.fillRect(0,0,W,H);
     const rows=8,cols=8,th=H/rows,tw=W/cols;
     for(let r=0;r<rows;r++)for(let k=-1;k<=cols;k++){
       const x=k*tw+(r%2?tw/2:0),y=r*th,n=hash1(r*13.7+k*3.1+5);
-      c.fillStyle=`hsl(${12+n*10},${58+n*14}%,${34+n*10}%)`;
+      c.fillStyle=`hsl(${170+n*14},${36+n*12}%,${28+n*11}%)`;
       c.beginPath();c.moveTo(x+1,y);c.lineTo(x+tw-1,y);c.lineTo(x+tw-1,y+th*.62);c.quadraticCurveTo(x+tw/2,y+th*1.18,x+1,y+th*.62);c.closePath();c.fill();
-      c.strokeStyle='rgba(60,20,10,.55)';c.lineWidth=2;c.beginPath();c.moveTo(x+1,y+th*.62);c.quadraticCurveTo(x+tw/2,y+th*1.18,x+tw-1,y+th*.62);c.stroke();
+      c.strokeStyle='rgba(6,34,38,.55)';c.lineWidth=2;c.beginPath();c.moveTo(x+1,y+th*.62);c.quadraticCurveTo(x+tw/2,y+th*1.18,x+tw-1,y+th*.62);c.stroke();
     }
   },256,256);
   const t=tileBase.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(Math.max(1,u),Math.max(1,v));t.needsUpdate=true;
@@ -2880,6 +2872,7 @@ function pentRoof(parent:THREE.Object3D,x:number,y:number,z:number,w:number,run:
   }
   return g;
 }
+const CHIMNEY={x:-3.25,z:-2.25,y0:9.9,top:11.5};   // vtest26: a brick stack through the little tower's hip roof (it used to stand on the terrace)
 const brickTexture=()=>texture((c,W,H)=>{
   c.fillStyle='#bfae98';c.fillRect(0,0,W,H);
   const rows=8,bw=W/4,bh=H/rows;
@@ -2890,15 +2883,14 @@ const brickTexture=()=>texture((c,W,H)=>{
 },128,128);
 /** Brick chimney on the terrace beside the door, rising past the roof edge (hidden rail posts stay inside it). */
 function chimney(parent:THREE.Object3D){
-  const cx=1.98,cz=.64,w=.52,y0=4.43,top=9.35;
+  const cx=CHIMNEY.x,cz=CHIMNEY.z,w=.46,y0=CHIMNEY.y0,top=CHIMNEY.top;
   const bt=brickTexture().clone();bt.wrapS=bt.wrapT=THREE.RepeatWrapping;bt.repeat.set(2,(top-y0)/.55);bt.needsUpdate=true;
   const brickMat=new THREE.MeshStandardMaterial({map:bt,roughness:.9,color:'#ffffff'});
   box(parent,cx,(y0+top)/2,cz,w,top-y0,w,brickMat);
   box(parent,cx,y0+.18,cz,w+.16,.36,w+.16,stone);                               // stone footing
   box(parent,cx,top+.07,cz,w+.2,.14,w+.2,tileDark);box(parent,cx,top+.19,cz,w+.1,.1,w+.1,tileDark);   // corbelled cap
   for(const dx of [-.12,.12]){cyl(parent,cx+dx,top+.45,cz,.075,.085,.34,color('#9b5236',0,.85),8);cyl(parent,cx+dx,top+.64,cz,.095,.075,.07,tileDark,8);}
-  box(parent,cx-w/2-.045,y0+2.2,cz,.09,.1,w+.2,stone);                           // a stone string course on the stack
-  box(parent,cx-w/2-.045,y0+4.0,cz,.09,.1,w+.2,stone);
+  for(const sy of [2.2,4.0])if(y0+sy<top-.25)box(parent,cx-w/2-.045,y0+sy,cz,.09,.1,w+.2,stone);   // stone string courses on a tall stack
 }
 const smokeMat=()=>new THREE.SpriteMaterial({map:glowTexture(),color:'#aab8d0',transparent:true,opacity:.2,depthWrite:false,fog:true});
 function chimneySmoke(parent:THREE.Object3D,reduced:boolean){
@@ -2907,7 +2899,7 @@ function chimneySmoke(parent:THREE.Object3D,reduced:boolean){
   return (elapsed:number)=>{
     for(const p of puffs){
       const t=reduced?p.k*.8+.1:(elapsed*.075+p.k)%1;
-      p.s.position.set(1.98+t*1.0+Math.sin(t*5+p.k*9)*.12,10.1+t*3.1,.64+Math.cos(t*4+p.k*7)*.08);
+      p.s.position.set(CHIMNEY.x+t*1.0+Math.sin(t*5+p.k*9)*.12,CHIMNEY.top+.75+t*3.1,CHIMNEY.z+Math.cos(t*4+p.k*7)*.08);
       const sc=.55+t*1.9;p.s.scale.set(sc,sc,1);p.m.opacity=.26*Math.min(1,t*5)*(1-t);
     }
   };
@@ -2932,6 +2924,7 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
   }
   // Tile hood over the terrace door on the upper block's right wall (door z = -.45, wall face x = 1.70).
   if(!MASSING)pentRoof(b,u.x+u.width/2+.06,7.58,-.45,1.75,.95,.42,Math.PI/2);   // vtest25: the porch roof replaces this little hood
+  if(!MASSING){
   // Open timber cabana with a tile gable roof on the left of the roof terrace: the table, chairs, tank and lanterns stay in the open.
   const R=7.945,eave=9.85,cxC=-3.05,zA=-2.25,zB=.55,xL=-3.80,xR=-2.30;
   const roof=gableRoof(b,cxC,eave,(zA+zB)/2,zB-zA,xR-xL,.5,Math.PI/2);
@@ -2944,6 +2937,7 @@ function timberAndTiles(b:THREE.Object3D,reduced:boolean){
   }
   for(const pz of [zA,zB])for(const px of [xL,xR]){rodX(b,pz,px+(px<cxC?.02:-.02),eave-.62,px+(px<cxC?.42:-.42),eave-.1,.03,timberWarm,5);}   // knee braces
   hangingLamp(b,cxC,9.1,(zA+zB)/2,1.0,eave-.1);
+  }
   chimney(b);
   exteriorExtras(b,ground,upper);cozyInterior(b);   // vtest24
   massing(b);                                         // vtest25
@@ -3070,12 +3064,12 @@ function exteriorExtras(b:THREE.Object3D,ground:WallDef[],upper:WallDef[]){
   const cone=cyl(b,cx,6.2,cz,.04,.95,.62,iron,14);cone.material=tileMat(8,2.2);cone.castShadow=true;
   cyl(b,cx,5.9,cz,.97,.97,.07,timberMat,14);sphere(b,cx,6.56,cz,.06,brass,1);
   // Weathervane on the cabana ridge.
-  const wx=-3.05,wz=-.85,wy=10.36;
+  const wx=-2.45,wz=-1.4,wy=MASSING?TB2.top+TB2.rise-.2:10.36;   // vtest26: on the little tower's hip roof
   cyl(b,wx,wy+.4,wz,.02,.02,.8,iron,6);
   box(b,wx,wy+.62,wz,.55,.04,.04,iron);box(b,wx+.31,wy+.62,wz,.14,.12,.03,iron).rotation.z=.0;box(b,wx-.27,wy+.62,wz,.12,.14,.03,iron);
   box(b,wx,wy+.45,wz,.04,.04,.34,iron);box(b,wx,wy+.45,wz,.34,.04,.04,iron);
   // Wind chime hanging from the cabana's front plate.
-  const chx=-3.55,chz=.58,chy=9.7;
+  const chx=BALCONY.x0+.9,chz=BALCONY.z1-.35,chy=BALCONY.y-.45;   // vtest26: hangs under the balcony's front edge
   cyl(b,chx,chy-.02,chz,.09,.09,.02,timberWarm,8);
   for(let i=0;i<5;i++){const a=i/5*Math.PI*2,r=.055,len=.22+(i%3)*.07;cyl(b,chx+Math.cos(a)*r,chy-.1-len/2,chz+Math.sin(a)*r,.009,.009,len,color('#cfd6de',.8,.3),5);}
   cyl(b,chx,chy-.2,chz,.02,.02,.2,iron,5);sphere(b,chx,chy-.42,chz,.035,brass,1);
@@ -3144,23 +3138,23 @@ function cozyInterior(b:THREE.Object3D){
   // Timber ceiling beams, matching the frame outside (ground ceiling 4.22, upper ceiling 7.66).
   for(const z of [-2.2,-.35,1.2,2.6])box(b,0,4.13,z,7.98,.17,.2,timberMat);
   for(const x of [-3.93,3.93])box(b,x,4.13,0,.16,.17,5.6,timberMat);
-  for(const z of [-1.9,-.2,.55])box(b,-1.1,7.56,z,5.0,.17,.2,timberMat);
-  for(const x of [-3.58,1.38])box(b,x,7.56,-1.0,.16,.17,3.5,timberMat);
+  for(const z of [-1.9,-.2,.55])box(b,-2.45,7.56,z,2.5,.17,.2,timberMat);
+  for(const x of [-3.58,-1.32])box(b,x,7.56,-1.0,.16,.17,3.5,timberMat);
   // Swag lights along the beams.
   festoon(b,V(-3.85,4.02,2.45),V(3.85,4.02,2.45),.34,12);
   festoon(b,V(-3.85,4.02,-1.55),V(-.5,4.02,-1.55),.28,7);
-  festoon(b,V(-3.5,7.45,-.9),V(1.3,7.45,-.9),.3,10);
+  festoon(b,V(-3.5,7.45,-.9),V(-1.4,7.45,-.9),.3,6);
   // Hanging planters in the windows, ground floor and upper floor.
   hangingPlanter(b,-3.3,3.05,2.6,4.05);hangingPlanter(b,3.2,3.05,2.6,4.05);
-  hangingPlanter(b,-2.6,6.75,.55,7.47);hangingPlanter(b,.35,6.75,.55,7.47);
+  hangingPlanter(b,-3.1,6.75,.55,7.47);hangingPlanter(b,-1.8,6.75,.55,7.47);
   // Wall shelves with books, jars and plants (clear walls only), a clock over the bookshelf, framed prints.
   wallShelf(b,-4.01,2.15,2.35,.8,Math.PI/2,0);wallShelf(b,-4.01,2.7,2.35,.8,Math.PI/2,1);
   wallShelf(b,-.15,2.1,-2.835,1.0,0,2);framedPrint(b,-.15,2.95,-2.835,.55,.7,0,0);
   wallClock(b,4.0,3.45,.7,-Math.PI/2);
-  wallShelf(b,1.46,6.95,-2.0,1.0,-Math.PI/2,0);framedPrint(b,1.46,6.2,-2.0,.62,.8,-Math.PI/2,1);
+  wallShelf(b,-1.24,6.95,-1.75,1.0,-Math.PI/2,0);framedPrint(b,-1.24,6.2,-1.75,.62,.8,-Math.PI/2,1);
   // Paper lanterns hanging in the upper room's back-right corner (fake glow only).
   const paper=color('#ffd9a0',0,.5,'#ffa852',.9);
-  for(const [x,y,z,r] of [[.85,6.95,-2.4,.2],[.5,7.2,-2.15,.16],[1.1,7.15,-2.15,.14]] as const){
+  for(const [x,y,z,r] of [[-1.6,6.95,-2.4,.2],[-1.95,7.2,-2.15,.16],[-1.45,7.15,-2.15,.14]] as const){
     line(b,[V(x,7.6,z),V(x,y+r,z)],.01,dark);const s=sphere(b,x,y,z,r,paper,1);s.scale.y=1.15;halo(b,x,y,z,1.1,'#ffb866',.5);
   }
   // A striped runner by the shop door.
@@ -3180,7 +3174,7 @@ const MASSING=true;
 let roofTileMat:THREE.MeshStandardMaterial|null=null;
 const roofTile=()=>roofTileMat??=(()=>{const m=tileMat(1,1);m.side=THREE.DoubleSide;return m;})();
 const soffitMat=color('#5a3d28',0,.9);
-const bayWall=color('#d6c7a9',0,.95);
+const bayWall=color('#e2c6b1',0,.95);   // warm peach plaster (the concept's wall colour)
 const bayGlass=color('#ffcf8a',0,.4,'#ffa045',.62);
 /** One flat polygon (3+ points) lying on a plane: `hint` picks which side faces out; UVs are in metres / `scale`. */
 function polyMesh(parent:THREE.Object3D,pts:THREE.Vector3[],mat:THREE.Material,hint:THREE.Vector3,scale=2.4,cast=true){
@@ -3227,64 +3221,150 @@ function hipTileRoof(b:THREE.Object3D,x0:number,x1:number,z0:number,z1:number,y:
   const rl=Math.hypot(r1.x-r0.x,r1.z-r0.z)+.14;
   if(alongZ)box(b,cx,y+rise+.02,cz,.13,.1,rl,tileDark);else box(b,cx,y+rise+.02,cz,rl,.1,.13,tileDark);
 }
-function rightPorch(b:THREE.Object3D){
-  const xw=1.70,yw=7.62,xo=4.55,yo=6.47,zA=-3.05,zB=.30,th=.075;
-  slopedTileRoof(b,xw,yw,xo,yo,zA,zB,th);
-  const roofY=(x:number)=>yw+(yo-yw)*(x-xw)/(xo-xw);
-  box(b,xw+.04,yw-.1,(zA+zB)/2,.12,.18,zB-zA,timberMat);                                  // wall plate
-  const px=4.15,beamY=roofY(px)-th-.09;
-  box(b,px,beamY,(zA+zB)/2-.03,.15,.17,zB-zA-.3,timberMat);                               // beam under the outer edge
-  for(const pz of [-2.65,-.05]){
-    box(b,px,(4.455+beamY)/2,pz,.14,beamY-4.455,.14,timberMat);                            // post
-    box(b,px,4.5,pz,.22,.09,.22,plinthMat);                                                  // stone foot
-    rodX(b,pz,px,5.75,px-.6,roofY(px-.6)-th-.04,.03,timberWarm,5);                         // knee brace to the rafters
-    rod(b,px,5.8,pz,beamY-.02,pz+(pz<-1?.6:-.6),.03,timberWarm,5);                         // knee brace along the beam
-  }
-  for(const [lx,lz] of [[3.55,-.95],[3.3,-2.2]] as const){hangingLamp(b,lx,roofY(lx)-th-.95,lz,.9,roofY(lx)-th);}
+// ---------------------------------------------------------------------------------------------
+// vtest26 (W1 concept, rebuilt to match the mock-up): the upper floor is no longer a second box. It is
+//   - a narrow GABLED block on the left (teal tile roof, front gable window, a small second volume with its own hip roof stacked behind the ridge),
+//   - a big round WIZARD TOWER with a blunt teal cone, half-buried in the gabled block's right wall,
+//   - an open-air terrace to the right of the tower (the old right terrace, now under the sky), with a BALCONY slab cantilevered from the tower
+//     over its back half, held up at the front by two timber posts,
+//   - the old roof terrace is gone: its table and chairs stand on the open deck, its quetzal sits on the balcony rail.
+// Roofs are teal everywhere (see tileMat). Walls of the new volumes are a warm peach plaster.
+// ---------------------------------------------------------------------------------------------
+const TOWER={x:-.35,z:-1.3,r:1.4,y0:4.455,top:11.3};
+const BALCONY={x0:.85,x1:3.55,z0:-2.6,z1:-.15,y:7.945};
+const TB2={x0:-3.7,x1:-1.9,z0:-2.6,z1:-.4,y0:7.3,top:10.0,rise:1.1};
+const GABLE_RISE=1.45;
+/** A cylinder shell covering only the arc from bearing `a0` for `len` radians (bearing from +Z towards +X), outside faces only. */
+function cylArc(parent:THREE.Object3D,x:number,y:number,z:number,rTop:number,rBot:number,h:number,mat:THREE.Material,seg:number,a0:number,len:number){
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBot,h,seg,1,true,a0,len),mat);
+  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
 }
-function carport(b:THREE.Object3D){
-  // The truck stands in world space (x -5.25) while this group is scaled .78, so in building units the truck sits at x about -6.7:
-  // the carport therefore runs out to -8.45 and its posts stand at -8.1, outside the truck's footprint.
-  const xw=-4.40,yw=4.17,xo=-8.45,yo=2.95,zA=-2.15,zB=.55,th=.075;
-  slopedTileRoof(b,xw,yw,xo,yo,zA,zB,th);
-  const roofY=(x:number)=>yw+(yo-yw)*(x-xw)/(xo-xw);
-  box(b,xw-.04,yw-.1,(zA+zB)/2,.12,.18,zB-zA,timberMat);
-  const px=-8.1,beamY=roofY(px)-th-.09;
-  box(b,px,beamY,(zA+zB)/2,.15,.17,zB-zA,timberMat);
-  for(const pz of [-2.05,-.8,.45]){
-    box(b,px,(beamY-.03)/2,pz,.14,beamY+.03,.14,timberMat);
-    box(b,px,.05,pz,.26,.1,.26,plinthMat);
-    if(pz!==-.8)rodX(b,pz,px,beamY-.55,px+.55,roofY(px+.55)-th-.04,.03,timberWarm,5);
+/** A lit window set on the tower's curved wall. `a` is the bearing from +Z towards +X; the group's local +Z points straight out. */
+function towerWindow(b:THREE.Object3D,a:number,yc:number,w:number,h:number,flowers=false,shutter?:string){
+  const {x,z,r}=TOWER;
+  const g=new THREE.Group();g.position.set(x+Math.sin(a)*(r+.01),yc,z+Math.cos(a)*(r+.01));g.rotation.y=a;b.add(g);
+  box(g,0,0,0,w+.2,h+.2,.12,timberMat);
+  box(g,0,0,.07,w,h,.06,bayGlass);
+  box(g,0,0,.11,.05,h,.04,timberMat);box(g,0,h*.14,.11,w,.05,.04,timberMat);
+  box(g,0,-h/2-.1,.1,w+.34,.07,.22,timberWarm);
+  if(shutter){const sm=color(shutter,0,.85);for(const s of [-1,1])box(g,s*(w/2+.26),0,.08,.3,h+.1,.05,sm);}
+  if(flowers){
+    box(g,0,-h/2-.23,.2,w+.3,.17,.2,color('#775b53'));
+    for(let i=0;i<3;i++)sphere(g,(i-1)*.2,-h/2-.06,.2,i===1?.12:.1,i===1?leaf2:leaf,1);
   }
-  festoon(b,V(px+.04,beamY-.2,-2.0),V(px+.04,beamY-.2,.4),.14,6);
+  halo(g,0,0,.55,2.1,'#ffb866',.4);
 }
-function leftBay(b:THREE.Object3D){
-  const xw=-4.02,xo=-4.80,z0=-2.50,z1=-.50,yb=4.50,yt=7.35,cx=(xw+xo)/2,cz=(z0+z1)/2,w=xw-xo;
-  box(b,cx,(yb+yt)/2,cz,w,yt-yb,z1-z0,bayWall);
-  box(b,cx,yb-.1,cz,w+.08,.2,z1-z0+.08,timberMat);                                           // jetty sill beam
-  box(b,cx,yt-.08,cz,w+.1,.16,z1-z0+.1,timberMat);                                           // top plate
-  for(const z of [z0,z1])for(const x of [xw,xo])box(b,x,(yb+yt)/2,z,.13,yt-yb,.13,timberMat);   // corner posts
-  const g0=yb+.78,g1=yt-.30,gh=g1-g0,gy=(g0+g1)/2;
-  const pane=(x:number,z:number,wd:number,alongX:boolean)=>{   // one lit pane with a timber grid
-    if(alongX){box(b,x,gy,z,wd,gh,.03,bayGlass);}else{box(b,x,gy,z,.03,gh,wd,bayGlass);}
-    const t=.05;
-    if(alongX){box(b,x,gy,z+(z>cz?.02:-.02),t,gh+.08,.05,timberMat);for(const k of [-.18,.2])box(b,x,gy+gh*k,z+(z>cz?.02:-.02),wd+.08,t,.05,timberMat);}
-    else{box(b,x+(x<cx?-.02:.02),gy,z,.05,gh+.08,t,timberMat);for(const k of [-.18,.2])box(b,x+(x<cx?-.02:.02),gy+gh*k,z,.05,t,wd+.08,timberMat);}
+function wizardTower(b:THREE.Object3D){
+  const {x,z,r,y0,top}=TOWER;
+  const eave=ARCH.upper.bottom+ARCH.upper.height;                       // 7.70: top of the gabled block's walls
+  const wallX=ARCH.upper.x+ARCH.upper.width/2;                          // the block's right wall, which the tower is half-buried in
+  const a0=Math.asin(THREE.MathUtils.clamp((wallX-x)/r,-1,1)),aLen=Math.PI-2*a0;   // only the arc outside that wall is built below the eaves
+  // stone footing and shaft: a partial shell up to the eaves of the gabled block (so nothing pokes into its rooms), a full shaft above
+  cylArc(b,x,y0+.3,z,r+.1,r+.15,.6,plinthMat,32,a0,aLen);
+  cylArc(b,x,y0+.6+(eave-y0-.6)/2,z,r*.99,r,eave-y0-.6,bayWall,32,a0,aLen);
+  cyl(b,x,eave+(top-eave)/2,z,r*.95,r*.99,top-eave,bayWall,32);
+  cylArc(b,x,6.35,z,r+.07,r+.08,.17,timberMat,32,a0,aLen);
+  for(const ry of [BALCONY.y-.12,10.0])cyl(b,x,ry,z,r+.07,r+.08,.17,timberMat,32);   // timber string courses
+  // eaves: cornice board, corbel ring, a flared tile skirt and a blunt tile cone (much less pointed than the first sketch)
+  cyl(b,x,top-.07,z,r+.2,r+.2,.2,timberMat,32);
+  cyl(b,x,top-.24,z,r+.1,r+.2,.15,timberWarm,32);
+  const roofM=tileMat(12,2.6);
+  cyl(b,x,top+.2,z,r+.62,r+.85,.36,roofM,32);
+  cyl(b,x,top+.38+1.3,z,.07,r+.62,2.6,roofM,32);
+  cyl(b,x,top+3.35,z,.02,.03,.7,iron,6);sphere(b,x,top+3.7,z,.09,brass,1);
+  // base door to the terrace (the old terrace door), facing the spiral stair
+  {
+    const a=Math.PI/2+.38,px=x+Math.sin(a)*(r+.01),pz=z+Math.cos(a)*(r+.01);
+    const g=new THREE.Group();g.position.set(px,y0,pz);g.rotation.y=a;b.add(g);
+    box(g,0,1.12,.02,1.3,2.35,.12,timberMat);box(g,0,1.12,.09,1.05,2.15,.08,timberWarm);box(g,0,1.5,.14,.6,.7,.04,bayGlass);
+    box(g,0,.07,.34,1.4,.14,.62,plinthMat);
+    box(g,0,2.45,.34,1.7,.1,.7,tileDark).rotation.x=-.2;   // a little teal hood over the door
+    sphere(g,.88,1.9,.1,.09,bright,1);halo(g,.88,1.9,.14,1.5,'#ffbf75',.6);
+    glowPatch(b,px+Math.sin(a)*1.5,4.462,pz+Math.cos(a)*1.5,2.6,2.3,'#ffbd6e',.12,Math.PI/2,true);
+  }
+  // lower tier (towards the camera) and upper tier of lit windows; the balcony door faces the terrace (bearing 90 degrees)
+  towerWindow(b,.25,6.0,.55,1.4,false,'#5a8a5c');towerWindow(b,.85,6.0,.55,1.4,false,'#5a8a5c');towerWindow(b,-.35,6.0,.5,1.3);
+  towerWindow(b,.05,9.45,.85,1.15,true);towerWindow(b,.7,9.45,.85,1.15,true,'#3d6f9e');towerWindow(b,-.55,9.45,.7,1.15,true);towerWindow(b,2.45,9.45,.7,1.15,true);
+  towerWindow(b,2.4,5.4,.42,.9);   // low slit, towards the stair
+  {
+    const a=Math.PI/2,g=new THREE.Group();g.position.set(x+Math.sin(a)*(r+.01),BALCONY.y+1.08,z);g.rotation.y=a;b.add(g);
+    box(g,0,0,.02,1.4,2.2,.12,timberMat);box(g,0,0,.09,1.1,2.0,.08,bayGlass);box(g,0,0,.13,.05,2.0,.04,timberMat);box(g,0,.35,.13,1.1,.05,.04,timberMat);
+    halo(g,0,0,.6,2.8,'#ffb866',.45);
+  }
+  // pennants and a string of bulbs from the tower's cornice down to the balcony
+  pennantLine(b,V(x+r*.55,top-.5,z+r*.85),V(BALCONY.x1-.05,BALCONY.y+1.0,BALCONY.z1+.02),.55,11,4);
+  festoon(b,V(x+r*.95,top-.45,z+r*.25),V(BALCONY.x1-.05,BALCONY.y+1.0,BALCONY.z0+.4),.45,9);
+  wallLight(b,x+Math.sin(1.35)*(r+.06),y0+2.3,z+Math.cos(1.35)*(r+.06),1.35,.8,4.455);
+}
+/** The gabled block's roof: teal tile gable, ridge front to back, plaster gable ends with a small lit window in the front one. */
+function upperGable(b:THREE.Object3D){
+  const u=ARCH.upper,eave=u.bottom+u.height,rise=GABLE_RISE,xl=u.x-u.width/2,xr=u.x+u.width/2;
+  gableRoof(b,u.x,eave,u.z,u.depth,u.width,rise,Math.PI/2,.42,.34);
+  for(const [zf,dir] of [[u.z+u.depth/2+.004,1],[u.z-u.depth/2-.004,-1]] as const){
+    polyMesh(b,[V(xl,eave-.06,zf),V(xr,eave-.06,zf),V(u.x,eave+rise-.08,zf)],bayWall,V(0,0,dir),2.4);
+    box(b,u.x,eave+.02,zf+dir*.025,u.width+.1,.12,.07,timberMat);                          // tie beam across the gable foot
+  }
+  // front gable window
+  const zf=u.z+u.depth/2+.03,wy=eave+.56;
+  box(b,u.x,wy,zf,.84,.84,.08,timberMat);box(b,u.x,wy,zf+.03,.62,.62,.05,bayGlass);
+  box(b,u.x,wy,zf+.07,.05,.64,.04,timberMat);box(b,u.x,wy,zf+.07,.64,.05,.04,timberMat);
+  box(b,u.x,wy-.5,zf+.08,.9,.07,.2,timberWarm);
+  halo(b,u.x,wy,zf+.5,1.8,'#ffb866',.4);
+  // back gable: a timber king post and two braces, so it is not a blank triangle
+  const zb=u.z-u.depth/2-.04;
+  box(b,u.x,eave+rise/2-.04,zb,.09,rise-.2,.05,timberMat);
+  rodX(b,zb,u.x-.12,eave+.12,u.x-u.width/2+.35,eave+.1,.025,timberWarm,5);rodX(b,zb,u.x+.12,eave+.12,u.x+u.width/2-.35,eave+.1,.025,timberWarm,5);
+}
+/** The little second volume stacked behind the gable's ridge, with its own peach walls, timber corners, lit windows with blue shutters and a hip roof. */
+function upperLittleTower(b:THREE.Object3D){
+  const {x0,x1,z0,z1,y0,top,rise}=TB2,cx=(x0+x1)/2,cz=(z0+z1)/2,w=x1-x0,d=z1-z0,h=top-y0;
+  box(b,cx,y0+h/2,cz,w,h,d,bayWall);
+  for(const sx of [x0,x1])for(const sz of [z0,z1])box(b,sx,y0+h/2,sz,.13,h,.13,timberMat);
+  box(b,cx,top-.08,cz,w+.12,.16,d+.12,timberMat);
+  const sh=color('#3d6f9e',0,.85);
+  const win=(wx:number,wy:number,wz:number,rot:number,ww:number,hh:number)=>{
+    const g=new THREE.Group();g.position.set(wx,wy,wz);g.rotation.y=rot;b.add(g);
+    box(g,0,0,0,ww+.2,hh+.2,.1,timberMat);box(g,0,0,.05,ww,hh,.06,bayGlass);box(g,0,0,.09,.05,hh,.04,timberMat);box(g,0,hh*.12,.09,ww,.05,.04,timberMat);
+    box(g,0,-hh/2-.1,.1,ww+.3,.07,.2,timberWarm);
+    for(const s of [-1,1])box(g,s*(ww/2+.27),0,.07,.32,hh+.1,.05,sh);
+    halo(g,0,0,.5,1.9,'#ffb866',.4);
   };
-  for(const dz of [-.46,.46]){pane(xo-.02,cz+dz,.82,false);}
-  for(const z of [z0,z1])pane(cx,z+(z===z0?-.02:.02),.5,true);
-  // frame round every pane, a flower box under the front, and the glow it throws
-  box(b,xo-.03,g0-.04,cz,.05,.08,z1-z0-.12,timberMat);box(b,xo-.03,g1+.04,cz,.05,.08,z1-z0-.12,timberMat);
-  box(b,xo-.16,g0-.16,cz,.24,.17,z1-z0-.2,timberWarm);
-  for(let i=0;i<5;i++){const s=sphere(b,xo-.16,g0-.02,z0+.35+i*.32,.1,i%2?leaf:leaf2,1);s.castShadow=false;}
-  halo(b,xo-.35,gy,cz,2.4,'#ffb866',.42);
-  // corbels that carry the jetty: braces from the wall face up to the sill beam
-  for(const z of [z0+.22,z1-.22]){
-    rodX(b,z,-4.27,3.95,xo+.03,yb-.12,.05,timberMat,6);
-    box(b,xo+.02,yb-.3,z,.14,.3,.18,timberWarm);
+  win(cx,9.0,z1+.03,0,.7,1.05);          // front
+  win(x0-.03,9.0,cz,-Math.PI/2,.7,1.05); // left
+  const e=.34;
+  hipTileRoof(b,x0-e,x1+e,z0-e,z1+e,top,rise);
+  cyl(b,cx,top+rise+.28,cz,.02,.02,.5,iron,6);sphere(b,cx,top+rise+.55,cz,.05,brass,1);
+}
+function terraceBalcony(b:THREE.Object3D){
+  const {x0,x1,z0,z1,y}=BALCONY,cx=(x0+x1)/2,cz=(z0+z1)/2,T=4.455;
+  box(b,cx,y-.11,cz,x1-x0,.22,z1-z0,color('#76748b'));                        // slab: same top height as the old roof deck (7.945)
+  box(b,cx,y-.235,cz,x1-x0-.06,.04,z1-z0-.06,soffitMat);
+  box(b,cx,y-.31,z1-.05,x1-x0,.18,.16,timberMat);box(b,x1-.05,y-.31,cz,.16,.18,z1-z0,timberMat);box(b,cx,y-.31,z0+.05,x1-x0,.18,.16,timberMat);   // edge beams
+  for(let i=0;i<5;i++)box(b,x0+.35+i*.5,y-.29,cz,.09,.14,z1-z0-.1,timberWarm);                         // joists
+  // two posts at the front corners, stone feet on the terrace, braces up into the beams
+  const post=(px:number,pz:number)=>{
+    const top=y-.39;box(b,px,(T+top)/2,pz,.16,top-T,.16,timberMat);box(b,px,T+.07,pz,.3,.14,.3,plinthMat);
+    box(b,px,top-.08,pz,.26,.1,.26,timberWarm);
+  };
+  const pxA=x1-.3,pxB=x0+.8,pz=z1-.12;
+  post(pxA,pz);post(pxB,pz);
+  for(const px of [pxA,pxB]){
+    rodX(b,pz,px,y-1.15,px+(px>cx?-.65:.65),y-.38,.035,timberWarm,5);
+    rod(b,px,y-1.15,pz,y-.38,pz-.65,.035,timberWarm,5);
   }
-  hipTileRoof(b,xo-.2,xw+.02,z0-.22,z1+.22,yt,1.15);
-  cyl(b,cx-.1,yt+1.15+.28,cz,.02,.02,.5,iron,6);sphere(b,cx-.1,yt+1.15+.55,cz,.05,brass,1);   // finial
+  perimeterRail(b,'x',z1,x0,x1,y,dark,.55,.06);perimeterRail(b,'z',x1,z0,z1,y,dark,.55,.06);perimeterRail(b,'x',z0,x0,x1,y,dark,.55,.06);
+  railingPlanter(b,x0+.7,z1,'x',y);railingPlanter(b,x1-.6,z1,'x',y);railingPlanter(b,x1,z0+.8,'z',y);
+  for(const lx of [x0+.95,x1-.8])hangingLamp(b,lx,y-.3-.85,cz+.2,.9,y-.24);
+}
+/** Planted corner under the balcony: a rug of grass and two small potted trees, so the open terrace reads as a roof garden. */
+function terraceGarden(b:THREE.Object3D){
+  const T=4.455;
+  box(b,2.3,T+.015,-1.5,2.2,.03,2.0,color('#4f7f55',0,.95));
+  const tree=(x:number,z:number,s:number)=>{
+    cyl(b,x,T+.19*s,z,.33*s,.27*s,.38*s,color('#775b53'),10);cyl(b,x,T+.38*s+.5*s,z,.04*s,.06*s,1.0*s,timberMat,6);
+    sphere(b,x,T+1.45*s,z,.62*s,leaf,2);sphere(b,x+.32*s,T+1.2*s,z+.1*s,.42*s,leaf2,2);sphere(b,x-.3*s,T+1.25*s,z-.12*s,.4*s,leaf,2);
+  };
+  tree(3.85,-2.5,.5);tree(3.8,-.5,.75);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -3343,13 +3423,93 @@ function styledInterior(b:THREE.Object3D){
   // Ground floor (ceiling 4.22): two runs of bunting between the beams, upper floor (ceiling 7.66): one.
   pennantLine(b,V(-3.9,3.98,.5),V(3.9,3.98,.5),.34,18,1);
   pennantLine(b,V(-3.9,3.98,-1.3),V(-.3,3.98,-.9),.22,8,2);
-  pennantLine(b,V(-3.6,7.42,.1),V(1.4,7.42,.1),.3,12,3);
+  pennantLine(b,V(-3.6,7.42,.1),V(-1.3,7.42,.1),.26,6,3);
   for(const [x,z,k] of [[-3.1,1.2,0],[-1.7,1.2,1],[1.9,1.2,2],[3.2,1.2,0],[-3.4,-2.2,1],[.6,-2.2,2],[2.8,-.35,0]] as const)herbBundle(b,x,4.05,z,k);
-  for(const [x,z,k] of [[-3.0,-.9,1],[-.9,-.9,0],[.9,.55,2]] as const)herbBundle(b,x,7.47,z,k);
+  for(const [x,z,k] of [[-3.2,-.9,1],[-1.7,-.9,0],[-2.5,.5,2]] as const)herbBundle(b,x,7.47,z,k);
+}
+/** vtest26 (W3 right side): a planted lean-to standing against the right-hand edge of the yard, as in the concept sketch: a small plastered store with a
+ *  flat garden roof, a hut with its own planted roof above it, a ladder, window boxes, barrels, crates, a bicycle and a lamp. World units, no new real light. */
+function gardenAnnex(parent:THREE.Object3D){
+  // vtest26 shrink: the annex is drawn at its original size, then scaled down and tucked against the narrower wall.
+  const AS=.85,scene=new THREE.Group();scene.position.set(pull(3.5,0)[0]-3.5*AS,0,-.0675);scene.scale.set(AS,1,AS);parent.add(scene);
+  const x0=3.5,x1=5.2,z0=1.55,z1=3.15,h=1.95,w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2,P=PAVE;
+  const soil=color('#4a3a2e',0,.95),grass=color('#4f7f55',0,.95);
+  box(scene,cx,P+.13,cz,w+.12,.26,d+.12,plinthMat);
+  box(scene,cx,P+.26+(h-.26)/2,cz,w,h-.26,d,bayWall);
+  for(const sx of [x0,x1])for(const sz of [z0,z1])box(scene,sx,P+h/2,sz,.12,h,.12,timberMat);
+  for(const yy of [P+.32,P+h-.1]){box(scene,cx,yy,z1+.01,w+.1,.14,.09,timberMat);box(scene,x1+.01,yy,cz,.09,.14,d+.1,timberMat);}
+  rodX(scene,z1+.04,x0+.06,P+.4,x0+.62,P+h-.2,.028,timberWarm,5);rodX(scene,z1+.04,x1-.06,P+.4,x1-.62,P+h-.2,.028,timberWarm,5);
+  // front door, a window beside it, a window on the right side
+  box(scene,x0+.5,P+.95,z1+.02,.74,1.6,.07,timberMat);box(scene,x0+.5,P+.93,z1+.06,.58,1.45,.06,timberWarm);box(scene,x0+.5,P+1.28,z1+.1,.36,.36,.03,bayGlass);
+  box(scene,x1-.38,P+1.15,z1+.03,.62,.62,.07,timberMat);box(scene,x1-.38,P+1.15,z1+.07,.5,.5,.05,bayGlass);box(scene,x1-.38,P+1.15,z1+.1,.04,.5,.03,timberMat);
+  box(scene,x1+.03,P+1.15,cz,.07,.62,.7,timberMat);box(scene,x1+.07,P+1.15,cz,.05,.5,.58,bayGlass);box(scene,x1+.1,P+1.15,cz,.03,.5,.04,timberMat);
+  halo(scene,x1-.38,P+1.15,z1+.3,1.5,'#ffb866',.42);halo(scene,x1+.3,P+1.15,cz,1.5,'#ffb866',.42);
+  for(const [bx,bz,al] of [[x1-.38,z1+.14,'x'],[x1+.14,cz,'z']] as const){
+    const g=new THREE.Group();g.position.set(bx,P+.7,bz);g.rotation.y=al==='x'?0:Math.PI/2;scene.add(g);
+    box(g,0,0,0,.62,.14,.17,color('#775b53'));for(let i=0;i<3;i++)sphere(g,(i-1)*.19,.12,0,i===1?.1:.08,i===1?leaf2:leaf,1);
+  }
+  const aw=box(scene,x0+.5,P+1.9,z1+.34,.95,.07,.7,color('#c8493b'));aw.rotation.x=.38;   // the concept's red door awning
+  // lamp over the door, with its pool on the paving
+  box(scene,x0+.5,P+1.85,z1+.12,.13,.2,.13,lanternGlass);halo(scene,x0+.5,P+1.85,z1+.14,1.3,'#ffbf75',.6);glowPatch(scene,x0+.5,P+.012,z1+.6,2.6,2.2,'#ffbd70',.13,0,true);
+  // flat garden roof with a parapet, soil, grass, shrubs and a small tree
+  const ry=P+h;
+  box(scene,cx,ry+.06,cz,w+.3,.12,d+.3,stone);
+  for(const sz of [z0-.13,z1+.13])box(scene,cx,ry+.2,sz,w+.3,.16,.07,stone);
+  for(const sx of [x0-.13,x1+.13])box(scene,sx,ry+.2,cz,.07,.16,d+.3,stone);
+  box(scene,cx,ry+.17,cz,w+.1,.1,d+.1,soil);box(scene,cx,ry+.23,cz,w-.05,.03,d-.05,grass);
+  for(const [sx,sz,sr] of [[x0+.2,z1-.15,.2],[x1-.18,z1-.2,.17],[x0+.25,z0+.2,.18],[x1-.2,z0+.25,.2]] as const)sphere(scene,sx,ry+.38,sz,sr,leaf,2);
+  // the hut on top (its own planted roof), and a ladder up the front
+  // (the planted hut on this roof was dropped in the vtest26 shrink: from the home camera it stood right in front of the corkboard)
+  // a pair of potted shrubs and a lantern sit up there instead
+  cyl(scene,x0+.45,ry+.3,z0+.55,.17,.13,.3,color('#996553'),9);sphere(scene,x0+.45,ry+.62,z0+.55,.26,leaf2,2);
+  for(const lx of [x0+1.0,x0+1.24]){rod(scene,lx,P,z1+.55,ry+.25,z1+.08,.016,timberWarm,5);}
+  for(let k=1;k<7;k++){const t=k/7.5;box(scene,x0+1.12,P+(ry+.25-P)*t,z1+.55-(.47)*t,.28,.025,.03,timberWarm);}
+  // barrels, crates and a bicycle against the front
+  cyl(scene,x1+.34,P+.34,z1-.2,.26,.23,.68,woodWarmBarrel(),12);cyl(scene,x1+.34,P+.7,z1-.2,.25,.25,.025,iron,12);cyl(scene,x1+.34,P+.24,z1-.2,.265,.265,.025,iron,12);
+  crate(scene,x1-.05,z1+.5,.48,.2);crate(scene,x1-.05,z1+.5,.36,-.2);
+  bicycle(scene,x0+1.3,z1+1.0,-.35);
+}
+const barrelMat=color('#6a4630',0,.86);
+function woodWarmBarrel(){return barrelMat;}
+/** A plain generic bicycle leaning on its stand (frame, two spoked wheels, bars, saddle, basket). Faces local +X. */
+function bicycle(scene:THREE.Object3D,x:number,z:number,rotY:number){
+  const g=new THREE.Group();g.position.set(x,PAVE,z);g.rotation.y=rotY;scene.add(g);
+  const frame=color('#2f8a86',.3,.5),tire=color('#161a22',0,.9);
+  for(const wx of [-.45,.45]){const t=new THREE.Mesh(new THREE.TorusGeometry(.3,.025,6,16),tire);t.position.set(wx,.32,0);t.castShadow=true;g.add(t);cyl(g,wx,.32,0,.02,.02,.04,iron,6).rotation.x=Math.PI/2;}
+  const bar=(x1:number,y1:number,x2:number,y2:number)=>{const m=cyl(g,(x1+x2)/2,(y1+y2)/2,0,.016,.016,Math.hypot(x2-x1,y2-y1),frame,6);m.rotation.z=Math.atan2(x2-x1,y2-y1)*-1;};
+  bar(-.45,.32,-.1,.62);bar(-.1,.62,.3,.62);bar(.3,.62,.45,.32);bar(-.45,.32,.0,.32);bar(.0,.32,-.1,.62);bar(.0,.32,.3,.62);bar(.3,.62,.38,.82);
+  box(g,.38,.84,0,.06,.04,.42,iron);box(g,-.14,.7,0,.2,.05,.1,color('#5a3d28'));
+  box(g,.52,.65,0,.26,.2,.3,color('#a9825a'));
+}
+/** vtest26 (concept annex B): a small lean-to against the left wall in the front corner, with a teal hip roof, a yellow door awning, a window,
+ *  a lamp, a barrel and a pot. World units; it stands clear of the parked truck and the wall hoop. */
+function leftAnnex(parent:THREE.Object3D){
+  const AS=.85,scene=new THREE.Group();scene.position.set(-2.70+3.3*AS,0,-.175);scene.scale.set(AS,1,AS);parent.add(scene);
+  const x0=-4.85,x1=-3.3,z0=1.2,z1=2.5,h=2.0,w=x1-x0,d=z1-z0,cx=(x0+x1)/2,cz=(z0+z1)/2,P=PAVE;
+  box(scene,cx,P+.13,cz,w+.12,.26,d+.12,plinthMat);
+  box(scene,cx,P+.26+(h-.26)/2,cz,w,h-.26,d,bayWall);
+  for(const sx of [x0,x1])for(const sz of [z0,z1])box(scene,sx,P+h/2,sz,.12,h,.12,timberMat);
+  for(const yy of [P+.32,P+h-.08]){box(scene,cx,yy,z1+.01,w+.1,.14,.09,timberMat);box(scene,x0-.01,yy,cz,.09,.14,d+.1,timberMat);}
+  rodX(scene,z1+.04,x0+.06,P+.4,x0+.6,P+h-.2,.028,timberWarm,5);
+  // door (yellow awning) and a window on the front, a window on the left side
+  box(scene,cx+.3,P+.95,z1+.02,.8,1.6,.07,timberMat);box(scene,cx+.3,P+.93,z1+.06,.64,1.45,.06,timberWarm);box(scene,cx+.3,P+1.28,z1+.1,.4,.4,.03,bayGlass);
+  const aw=box(scene,cx+.3,P+1.9,z1+.36,1.05,.07,.72,color('#e2a93c'));aw.rotation.x=.38;
+  box(scene,x0+.42,P+1.1,z1+.03,.62,.66,.07,timberMat);box(scene,x0+.42,P+1.1,z1+.07,.5,.54,.05,bayGlass);box(scene,x0+.42,P+1.1,z1+.1,.04,.54,.03,timberMat);
+  box(scene,x0-.03,P+1.1,cz,.07,.62,.7,timberMat);box(scene,x0-.07,P+1.1,cz,.05,.5,.58,bayGlass);
+  halo(scene,x0+.42,P+1.1,z1+.35,1.5,'#ffb866',.42);halo(scene,x0-.35,P+1.1,cz,1.5,'#ffb866',.4);
+  glowPatch(scene,cx+.3,P+.012,z1+.7,2.6,2.2,'#ffbd70',.12,0,true);
+  box(scene,x1-.2,P+1.85,z1+.12,.13,.2,.13,lanternGlass);halo(scene,x1-.2,P+1.85,z1+.14,1.3,'#ffbf75',.6);
+  // teal hip roof with a small finial
+  hipTileRoof(scene,x0-.3,x1+.1,z0-.3,z1+.3,P+h,.85);
+  cyl(scene,cx,P+h+.85+.2,cz,.018,.018,.4,iron,6);sphere(scene,cx,P+h+.85+.42,cz,.045,brass,1);
+  // a barrel and a pot by the door
+  cyl(scene,x0+.2,P+.34,z1+.5,.26,.23,.68,woodWarmBarrel(),12);cyl(scene,x0+.2,P+.7,z1+.5,.25,.25,.025,iron,12);
+  cyl(scene,x0+.2,P+.24,z1+.5,.265,.265,.025,iron,12);
+  cyl(scene,x1-.45,P+.2,z1+.5,.2,.15,.4,color('#996553'),9);sphere(scene,x1-.45,P+.52,z1+.5,.22,leaf2,2);
 }
 function massing(b:THREE.Object3D){
   if(!MASSING)return;
-  rightPorch(b);carport(b);leftBay(b);
+  upperGable(b);upperLittleTower(b);wizardTower(b);terraceBalcony(b);terraceGarden(b);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -3569,22 +3729,22 @@ export function buildWorld():World{
  // are densest; the lamps themselves add halos and light pools on top. The two rear machines add 2 more.
  // The building is one uniformly scaled group; lights that belong to it are positioned with `at()` and their
  // intensity is scaled by S^2 so that shrinking distances does not make surfaces brighter (E = I / d^2).
- const S=BUILDING_SCALE,at=(x:number,y:number,z:number):[number,number,number]=>[x*S,y*S,z*S],k=S*S;
+ const S=BUILDING_SCALE,at=(x:number,y:number,z:number):[number,number,number]=>[x*S*PLAN,y*S*HEIGHT,z*S*PLAN],k=S*S*PLAN*PLAN;
  keyLight(scene,'#f28aca',3.1,13.0,CART.x-.3,2.6,CART.z-.3,.075,.61,0);   // magenta glow around the book cart and left front
  keyLight(scene,'#39e5ff',2.95,12.0,NEON.x+.4,4.2,NEON.z+.2,.075,.61,1.4); // cool blue fill along the right elevation
- keyLight(scene,'#a271ff',2.55,10.5,.15,1.6,-4.3,.075,.61,2.8);            // violet wash over the rear service area
+ keyLight(scene,'#a271ff',2.55,10.5,.12,1.6,pull(0,-4.3)[1],.075,.61,2.8);            // violet wash over the rear service area
  keyLight(scene,'#9cc8ff',1.45,21,0,9.5,5);                                // cool moon fill from above
  keyLight(scene,'#ffc27a',4.0*k,10,...at(-2.4,2.9,4.6),.12*k,.8,.3);       // storefront, left display window and awning lamps
  keyLight(scene,'#ffc27a',4.0*k,10,...at(2.5,2.9,4.6),.12*k,.8,1.9);       // storefront, right display window and resume stand
  keyLight(scene,'#ffbf7a',4.5*k,8.5,...at(2.95,5.5,1.2),.1*k,.7,.9);        // right terrace table, string bulbs and door
  keyLight(scene,'#ffc27a',2.8*k,7.5,...at(-1.2,6.6,2.4),.08*k,.75,2.2);    // upper-floor windows and sconces
- keyLight(scene,'#ffbe74',3.6*k,8,...at(-1.15,9.0,-.30),.08*k,.65,3.1);    // rooftop terrace
+ keyLight(scene,'#ffbe74',3.6*k,8,...at(1.9,8.9,-1.2),.08*k,.65,3.1);    // balcony, tower door and the top of the terrace
  keyLight(scene,'#ffb872',1.7*k,6.5,...at(5.4,3.4,-.6),.05*k,.7,.5);       // corkboard: the lamp beside it; kept gentle so the board does not glow
  const hits:HitTarget[]=[];
  // World-level pieces: plaza and the props that are not part of the building (cart, signs, resume stand).
  floor(scene);endgameWorld(scene);
  // The building and everything mounted on it or standing against it live in one group, uniformly scaled.
- const building=new THREE.Group();building.scale.setScalar(S);scene.add(building);
+ const building=new THREE.Group();building.scale.set(S*PLAN,S*HEIGHT,S*PLAN);scene.add(building);
  storefront(building);bounceDecals(building);
  // Purposeful V4 architectural detail, intentionally separated from all navigation targets.
  storefrontDetails(building);terraceFurnishings(building);roofFurnishings(building);facadeServiceDetail(building);utilityExterior(building);
@@ -3594,7 +3754,7 @@ export function buildWorld():World{
  interiors(building);
  endgameInteriors(building);
  // Last, so the seeded scatter used by every plant above is untouched.
- cozyBuilding(building);cozyWorld(scene);
+ cozyBuilding(building);cozyWorld(scene);gardenAnnex(scene);leftAnnex(scene);
  const reducedMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  const smokeTick=timberAndTiles(building,reducedMotion);   // vtest23: timber frame, plinth, tile roofs, chimney (runs last: needs every opening and wall item)
  const ghibliTick=ghibliWorld(scene,reducedMotion);   // sky, meadow, trees, fireflies and wind (own generator; touches nothing above)
