@@ -1143,11 +1143,11 @@ function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group
   halo(g,0,yUnder-.03,.2,1.4,'#ffc27a',.14);
   glowPatch(g,0,yFloor+.004,.0,2.3,.5,'#ffbd70',.10,0,true);
  }
- // the project books: seven data science volumes up top, four software / hardware / engineering volumes below (same order and grouping as the Projects page)
- const widths=[.22,.27,.25,.22,.27,.25,.22, .27,.25,.23,.27];
- const heights=[.64,.58,.54,.68,.61,.55,.65, .62,.69,.58,.60];
- const rows=[{from:0,to:7,y:S2,gaps:[.03,.03,.03,.03,.03,.03]},{from:7,to:11,y:S1,gaps:[.03,.24,.24]}];
- const z0=-.02,depth=.40,jitter=[.006,-.008,.01,-.004,.008,-.01,.004,-.006,.01,-.008,.006];
+ // the project books: seven data science volumes up top, five software / hardware / engineering volumes below (same order and grouping as the Projects page)
+ const widths=[.22,.27,.25,.22,.27,.25,.22, .27,.25,.24,.23,.27];
+ const heights=[.64,.58,.54,.68,.61,.55,.65, .62,.69,.63,.58,.60];
+ const rows=[{from:0,to:7,y:S2,gaps:[.03,.03,.03,.03,.03,.03]},{from:7,to:12,y:S1,gaps:[.03,.03,.24,.24]}];
+ const z0=-.02,depth=.40,jitter=[.006,-.008,.01,-.004,.008,-.01,.004,-.006,.01,-.008,-.005,.006];
  for(const row of rows){
   let total=0;for(let i=row.from;i<row.to;i++)total+=widths[i]+(i<row.to-1?row.gaps[i-row.from]:0);
   let x=-total/2;

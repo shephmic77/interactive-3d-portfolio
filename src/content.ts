@@ -116,7 +116,7 @@ export const resume={
   certificates:['IBM Data Analyst Professional Certificate','Alteryx Designer Core Certification'],
 };
 
-/** 7 data science projects + 2 software/AI + 1 hardware + 1 grouped engineering book. */
+/** 7 data science projects + 3 software/AI + 1 hardware + 1 grouped engineering book. */
 export const projects: Project[] = [
   { id:'futwar', name:'FutWAR', category:'Data Science & ML', description:'Developing a soccer value metric inspired by baseball WAR, accounting for positional roles, tactics, and differences across leagues.', tools:['Python','Sports analytics','Statistical modeling'], link:git+'FutWAR', status:'In progress', color:'#eb7d56' },
   { id:'allstar', name:'NBA All-Star Prediction', category:'Data Science & ML', description:'Machine-learning models exploring NBA All-Star selections and potential snubs.', tools:['Python','Machine learning','Basketball'], link:git+'nba-all-star-prediction', color:'#b8c7f9' },
@@ -127,6 +127,7 @@ export const projects: Project[] = [
   { id:'kaggle', name:'DS 310 Kaggle Project', category:'Data Science & ML', description:'An academic regression and ensemble-modeling competition project.', tools:['Python','Ensemble methods','Regression'], link:git+'DS-310-Project-1', color:'#a8e2a8' },
   { id:'rag', name:'Basketball RAG Assistant', category:'Software & AI', description:'A basketball question-answering application built around retrieval-augmented generation.', tools:['Python','FastAPI','PostgreSQL','Docker'], link:git+'basketball-rag-assistant', color:'#80daef' },
   { id:'gas', name:'Geospatial Agentic Services', category:'Software & AI', description:'Contributions to NOAA flood alerts and travel hazard assessment agents for geospatial workflows.', tools:['Python','Agents','Geospatial data'], link:git+'GIBD-GAS-Contributions', color:'#99f2d5' },
+  { id:'spotify', name:'Spotify Playlist Curator', category:'Software & AI', description:'A personal Python app that rebuilds a messy Spotify playlist collection from the music you already have, with transparent rule-based scoring and approval before anything is written.', tools:['Python','Spotify Web API','SQLite','Streamlit'], link:git+'spotify-playlist-curator', status:'Release 1.0.0', color:'#c4de7c' },
   { id:'macropad', name:'Pluto12 Macropad', category:'Hardware', description:'A configurable custom macropad and keyboard firmware project.', tools:['Firmware','Hardware','Customization'], link:git+'pluto12-macropad', color:'#ffbd86' },
   { id:'engineering', name:'Engineering Portfolio', category:'Engineering', description:'A collection of earlier CAD and mechanical-design work, including a Formula SAE nose cone, bearing, carabiner, Zen Garden table, and 3D-printed mechanisms.', tools:['CAD','SolidWorks','Fusion 360','3D printing'], status:'Collection', color:'#d9c2a4' },
 ];
@@ -667,6 +668,63 @@ export const books: Record<string, ProjectBook> = {
       {path:'Travel Risk Agent/',text:'the agent, its definition and its service'},
       {path:'Tests/',text:'the tests for both agents'},
       {path:'demo_client_workflow.py · docs/',text:'the integrated demo and a detailed work document'},
+    ],
+  },
+
+  spotify: {
+    kicker:'Release 1.0.0 · all seven phases done',
+    tagline:'Rebuilding a messy Spotify collection from the music already in it.',
+    overview:[
+      'A personal Python application that treats Liked Songs plus every playlist you own as one Master Music Crate, proposes a better set of playlists with explicit identities, and, once approved, creates and maintains them in your Spotify account without letting them drift.',
+      'It never adds music from outside the crate, never touches Liked Songs, and never modifies or deletes the original playlists.',
+    ],
+    labels:{question:'The idea',data:'What it works from',method:'How it works',details:'Worth knowing',findings:'Where it stands'},
+    question:'Can a tangled playlist collection be reorganised into playlists with clear identities, using only the songs already there, in a way that can be inspected and approved?',
+    data:[
+      'Liked Songs and every playlist the account owns, imported through the Spotify Web API into a local SQLite database.',
+      'Genre, era and mood tags from MusicBrainz and Last.fm, fetched one song at a time within each service’s rate limits and cached.',
+      'The owner’s own descriptions of each playlist, example songs and keep / reject / essential feedback.',
+    ],
+    stats:[{label:'Phases',value:'7 of 7 done'},{label:'Tests',value:'213'},{label:'Language',value:'Python 3.12+'},{label:'Release',value:'1.0.0'}],
+    tools:['Python','Spotify Web API','SQLite','Streamlit','MusicBrainz','Last.fm'],
+    method:[
+      {title:'Import the crate',text:'Read Liked Songs and owned playlists, with pagination, rate-limit handling and snapshot caching so unchanged playlists are not re-downloaded.'},
+      {title:'Merge duplicates',text:'Copies with the same ISRC count as one song. Near-matches are only suggested for you to confirm; live, remix, acoustic and similar versions are never treated as duplicates.'},
+      {title:'Tag the songs',text:'Fetch genre, era and mood tags from MusicBrainz and Last.fm, one song at a time.'},
+      {title:'Describe each playlist',text:'Write what a playlist is for in your own words plus example songs, and the description becomes tag rules and example songs.'},
+      {title:'Score into drafts',text:'Every song is scored against every playlist’s own definition. Songs can land in several playlists or none, and each gets a plain-language reason.'},
+      {title:'Preview, approve, write',text:'A preview shows exactly what would be created or changed. After you type yes, new private playlists are written, verified by re-reading, and can be rolled back.'},
+    ],
+    details:[
+      {term:'Transparent scoring',text:'No machine learning and no AI sees the library. Matching is tag and example scoring you can inspect with the “why” view of each draft.'},
+      {term:'Feedback per playlist',text:'Kept songs become examples, rejected songs never return to that playlist, and essential songs are always in. Songs already in a draft need less to stay than new songs need to get in.'},
+      {term:'Writes only its own playlists',text:'The app writes only to playlists it created itself, and saves each playlist’s state before and after every change.'},
+      {term:'Drift guards',text:'Scheduled maintenance only prepares a preview unless auto-apply is turned on. Large changes, new playlists or an incomplete import are held for approval.'},
+    ],
+    titles:{results:'The pipeline and its rules'},
+    chart:{kind:'steps',title:'From library to playlists',steps:['Import Liked Songs and playlists','Merge duplicate recordings','Tag with MusicBrainz and Last.fm','Describe each playlist','Score songs into drafts, with reasons','Keep / reject / essential feedback','Preview, approve, write private playlists','Scheduled maintenance within drift limits'],note:'The flow as drawn in the README.'},
+    extra:{kind:'cards',title:'Hard rules',items:[
+      {title:'Crate only',text:'Never adds music from outside your own library.'},
+      {title:'Liked Songs',text:'Never modified; no library-write permission is requested.'},
+      {title:'Original playlists',text:'Never edited, renamed or deleted.'},
+      {title:'No AI on the library',text:'Library data is never sent to any AI model.'},
+    ],note:'Condensed from the README and its contributor rules.'},
+    findings:[
+      'All seven phases are marked done: import, the crate with duplicate merging, tags and analysis, proposals, drafts with reasons, feedback, writing to Spotify, and automatic maintenance.',
+      'The README states 213 tests, with Spotify, MusicBrainz and Last.fm mocked.',
+      'It can run from the command line or a Streamlit interface, and maintenance can be scheduled daily or weekly with Windows Task Scheduler.',
+    ],
+    limits:[
+      'Spotify only returns playlist contents for playlists the account owns or collaborates on, so followed playlists add no songs.',
+      'In Spotify’s Development Mode the app owner needs Premium, with at most five users per app.',
+      'Spotify provides no audio features or recommendations to new apps, so classification relies on your descriptions, examples, feedback and independent tags.',
+      'Local files can be read but not added to playlists through the API, so the app gives you a to-do list instead.',
+    ],
+    credit:'Tag data comes from MusicBrainz and Last.fm and is used for personal, non-commercial purposes. Everything is stored locally.',
+    files:[
+      {path:'src/playlist_curator/',text:'the application, split into Spotify access, crate, metadata, curator and storage layers'},
+      {path:'tests/',text:'tests against a fake Spotify service'},
+      {path:'docs/',text:'the project plan, architecture, scoring methodology and data sources'},
     ],
   },
 

@@ -18,6 +18,7 @@ Feedback: the VTEST25 retrofit was "not like the mock-up", so the building was r
 - Removed the planter that sat at the top of the spiral stair (the right-rail gap at z -1.85).
 - Removed the small left annex that clipped into the parked truck.
 - Climbing wall: the ground-floor back window is gone and the wall no longer climbs the building. It is now a wide ground-floor panel (about 2.4 x 3.5 m) over that spot, with the holds, routes, volumes, grade tags, crash pad and monkey spread across and lowered to fit. The roof-top exit, upper standoffs and upper lamp went with the tall section, and the back rail is continuous.
+- New book on the cart: **Spotify Playlist Curator** (volume 10, lower shelf; the cart now holds 12 books). Its page text, numbers and limits come from the repository's README (`shephmic77/spotify-playlist-curator`, Release 1.0.0); nothing was invented. It links to the repository. Cart spacing was adjusted for the extra book.
 
 ## Verification (honest status)
 - Stub-typed `tsc` passes (it checks syntax and scope, not three.js API use). A real `npm run build` / Vercel deploy has **not** been run.
