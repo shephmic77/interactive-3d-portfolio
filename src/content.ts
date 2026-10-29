@@ -116,19 +116,21 @@ export const resume={
   certificates:['IBM Data Analyst Professional Certificate','Alteryx Designer Core Certification'],
 };
 
-/** 7 data science projects + 3 software/AI + 1 hardware + 1 grouped engineering book. */
+/** 8 data science projects + 4 software/AI + 1 hardware + 1 grouped engineering book. */
 export const projects: Project[] = [
   { id:'futwar', name:'FutWAR', category:'Data Science & ML', description:'Developing a soccer value metric inspired by baseball WAR, accounting for positional roles, tactics, and differences across leagues.', tools:['Python','Sports analytics','Statistical modeling'], link:git+'FutWAR', status:'In progress', color:'#eb7d56' },
-  { id:'allstar', name:'NBA All-Star Prediction', category:'Data Science & ML', description:'Machine-learning models exploring NBA All-Star selections and potential snubs.', tools:['Python','Machine learning','Basketball'], link:git+'nba-all-star-prediction', color:'#b8c7f9' },
-  { id:'moneyball', name:'NBA Moneyball', category:'Data Science & ML', description:'Examines player salary and performance using predictive regression models.', tools:['Python','Regression','Basketball'], link:git+'nba-moneyball', color:'#ffcf7d' },
-  { id:'archetypes', name:'NBA Player Archetypes', category:'Data Science & ML', description:'Groups basketball players by statistical playing style to find comparable player types.', tools:['Python','Clustering','Basketball'], link:git+'nba-player-archetypes', color:'#8dd9d1' },
-  { id:'purchase', name:'Online Purchase Prediction', category:'Data Science & ML', description:'Predictive modeling and customer segmentation for online shopping behavior.', tools:['R','Classification','Clustering'], link:git+'online-purchase-prediction', color:'#b0a5ff' },
-  { id:'letterboxd', name:'Letterboxd Analyzer', category:'Data Science & ML', description:'An exploratory analysis project working with film-watching and rating data.', tools:['Python','Data analysis','Movies'], link:git+'letterboxd-analyzer', color:'#ff9cab' },
-  { id:'kaggle', name:'DS 310 Kaggle Project', category:'Data Science & ML', description:'An academic regression and ensemble-modeling competition project.', tools:['Python','Ensemble methods','Regression'], link:git+'DS-310-Project-1', color:'#a8e2a8' },
-  { id:'rag', name:'Basketball RAG Assistant', category:'Software & AI', description:'A basketball question-answering application built around retrieval-augmented generation.', tools:['Python','FastAPI','PostgreSQL','Docker'], link:git+'basketball-rag-assistant', color:'#80daef' },
+  { id:'allstar', name:'NBA All-Star Prediction', category:'Data Science & ML', description:'Explores NBA All-Star prediction, potential snubs, model disagreements and the limits of box-score statistics.', tools:['Python','Machine learning','Basketball'], link:git+'nba-all-star-prediction', color:'#b8c7f9' },
+  { id:'moneyball', name:'NBA Moneyball', category:'Data Science & ML', description:'Uses machine learning to compare player production with salary, find underpaid and overpaid players, and look for market inefficiencies.', tools:['Python','Regression','Basketball'], link:git+'nba-moneyball', color:'#ffcf7d' },
+  { id:'archetypes', name:'NBA Player Archetypes', category:'Data Science & ML', description:'Uses K-Means clustering to move from the five traditional positions to data-driven player archetypes.', tools:['Python','Clustering','Basketball'], link:git+'nba-player-archetypes', color:'#8dd9d1' },
+  { id:'purchase', name:'Online Purchase Prediction', category:'Data Science & ML', description:'STAT 380 final project: predicting online purchase intention and finding shopper segments with logistic regression, KNN and K-means in R.', tools:['R','Classification','Clustering'], link:git+'online-purchase-prediction', color:'#b0a5ff' },
+  { id:'letterboxd', name:'Letterboxd Analyzer', category:'Data Science & ML', description:'An interactive Streamlit app for analyzing Letterboxd viewing habits, ratings and movie taste.', tools:['Python','Data analysis','Movies'], link:git+'letterboxd-analyzer', color:'#ff9cab' },
+  { id:'kaggle', name:'DS 310 Kaggle Project', category:'Data Science & ML', description:'Regression for a Penn State Kaggle competition with feature engineering, weighted ridge regression and model ensembles. Ranked 1st on the private leaderboard.', tools:['Python','Ensemble methods','Regression'], link:git+'DS-310-Project-1', color:'#a8e2a8' },
+  { id:'nbawins', name:'NBA Team Winning Factors', category:'Data Science & ML', description:'STAT 184 group project in R: do player age, three-point attempt rate and pace factor explain how many regular-season games NBA teams win?', tools:['R','Data wrangling','Basketball'], link:git+'nba-team-winning-factors', status:'Group project', color:'#e9b3e0' },
+  { id:'rag', name:'Basketball RAG Assistant', category:'Software & AI', description:'An end-to-end basketball RAG application using FastAPI, PostgreSQL/pgvector, Ollama and Docker.', tools:['Python','FastAPI','PostgreSQL','Docker'], link:git+'basketball-rag-assistant', color:'#80daef' },
   { id:'gas', name:'Geospatial Agentic Services', category:'Software & AI', description:'Contributions to NOAA flood alerts and travel hazard assessment agents for geospatial workflows.', tools:['Python','Agents','Geospatial data'], link:git+'GIBD-GAS-Contributions', color:'#99f2d5' },
   { id:'spotify', name:'Spotify Playlist Curator', category:'Software & AI', description:'A personal Python app that rebuilds a messy Spotify playlist collection from the music you already have, with transparent rule-based scoring and approval before anything is written.', tools:['Python','Spotify Web API','SQLite','Streamlit'], link:git+'spotify-playlist-curator', status:'Release 1.0.0', color:'#c4de7c' },
-  { id:'macropad', name:'Pluto12 Macropad', category:'Hardware', description:'A configurable custom macropad and keyboard firmware project.', tools:['Firmware','Hardware','Customization'], link:git+'pluto12-macropad', color:'#ffbd86' },
+  { id:'skillissue', name:'Skill Issue', category:'Software & AI', description:'A 2v2 noir split-screen shooter built in about 20 hours at HackPSU Fall 2026, where two phones control one shared character. I built the shared character, combat systems, main map and noir art direction.', tools:['Godot 4.7','GDScript','React Native','Next.js'], link:git+'SkillIssue', status:'Hackathon · team of five', color:'#d6d9e0' },
+  { id:'macropad', name:'Pluto12 Macropad', category:'Hardware', description:'Custom QMK firmware and Windows shortcuts for the Penn State IEEE Pluto12 macropad: 11 buttons, a volume knob, media controls and app launchers.', tools:['Firmware','Hardware','Customization'], link:git+'pluto12-macropad', color:'#ffbd86' },
   { id:'engineering', name:'Engineering Portfolio', category:'Engineering', description:'A collection of earlier CAD and mechanical-design work, including a Formula SAE nose cone, bearing, carabiner, Zen Garden table, and 3D-printed mechanisms.', tools:['CAD','SolidWorks','Fusion 360','3D printing'], status:'Collection', color:'#d9c2a4' },
 ];
 
@@ -682,15 +684,15 @@ export const books: Record<string, ProjectBook> = {
     question:'Can a tangled playlist collection be reorganised into playlists with clear identities, using only the songs already there, in a way that can be inspected and approved?',
     data:[
       'Liked Songs and every playlist the account owns, imported through the Spotify Web API into a local SQLite database.',
-      'Genre, era and mood tags from MusicBrainz and Last.fm, fetched one song at a time within each service’s rate limits and cached.',
+      'Song-level tags from MusicBrainz and Last.fm, plus AcousticBrainz audio data (mood classifiers, tempo, key), fetched within each service’s rate limits and cached.',
       'The owner’s own descriptions of each playlist, example songs and keep / reject / essential feedback.',
     ],
-    stats:[{label:'Phases',value:'7 of 7 done'},{label:'Tests',value:'213'},{label:'Language',value:'Python 3.12+'},{label:'Release',value:'1.0.0'}],
-    tools:['Python','Spotify Web API','SQLite','Streamlit','MusicBrainz','Last.fm'],
+    stats:[{label:'Phases',value:'7 of 7 done'},{label:'Tests',value:'246'},{label:'Language',value:'Python 3.12+'},{label:'Release',value:'1.0.0'}],
+    tools:['Python','Spotify Web API','SQLite','Streamlit','MusicBrainz','Last.fm','AcousticBrainz'],
     method:[
       {title:'Import the crate',text:'Read Liked Songs and owned playlists, with pagination, rate-limit handling and snapshot caching so unchanged playlists are not re-downloaded.'},
       {title:'Merge duplicates',text:'Copies with the same ISRC count as one song. Near-matches are only suggested for you to confirm; live, remix, acoustic and similar versions are never treated as duplicates.'},
-      {title:'Tag the songs',text:'Fetch genre, era and mood tags from MusicBrainz and Last.fm, one song at a time.'},
+      {title:'Tag the songs',text:'Fetch MusicBrainz and Last.fm tags and AcousticBrainz audio data, then read each song through a vocabulary of about 430 sound words and 160 genres that imply a sound.'},
       {title:'Describe each playlist',text:'Write what a playlist is for in your own words plus example songs, and the description becomes tag rules and example songs.'},
       {title:'Score into drafts',text:'Every song is scored against every playlist’s own definition. Songs can land in several playlists or none, and each gets a plain-language reason.'},
       {title:'Preview, approve, write',text:'A preview shows exactly what would be created or changed. After you type yes, new private playlists are written, verified by re-reading, and can be rolled back.'},
@@ -702,7 +704,7 @@ export const books: Record<string, ProjectBook> = {
       {term:'Drift guards',text:'Scheduled maintenance only prepares a preview unless auto-apply is turned on. Large changes, new playlists or an incomplete import are held for approval.'},
     ],
     titles:{results:'The pipeline and its rules'},
-    chart:{kind:'steps',title:'From library to playlists',steps:['Import Liked Songs and playlists','Merge duplicate recordings','Tag with MusicBrainz and Last.fm','Describe each playlist','Score songs into drafts, with reasons','Keep / reject / essential feedback','Preview, approve, write private playlists','Scheduled maintenance within drift limits'],note:'The flow as drawn in the README.'},
+    chart:{kind:'steps',title:'From library to playlists',steps:['Import Liked Songs and playlists','Merge duplicate recordings','Tag with MusicBrainz, Last.fm and AcousticBrainz','Describe each playlist','Score songs into drafts, with reasons','Keep / reject / essential feedback','Preview, approve, write private playlists','Scheduled maintenance within drift limits'],note:'The flow as drawn in the README.'},
     extra:{kind:'cards',title:'Hard rules',items:[
       {title:'Crate only',text:'Never adds music from outside your own library.'},
       {title:'Liked Songs',text:'Never modified; no library-write permission is requested.'},
@@ -711,7 +713,8 @@ export const books: Record<string, ProjectBook> = {
     ],note:'Condensed from the README and its contributor rules.'},
     findings:[
       'All seven phases are marked done: import, the crate with duplicate merging, tags and analysis, proposals, drafts with reasons, feedback, writing to Spotify, and automatic maintenance.',
-      'The README states 213 tests, with Spotify, MusicBrainz and Last.fm mocked.',
+      'The README states 246 tests, with Spotify, MusicBrainz, Last.fm and AcousticBrainz mocked and no network.',
+      'Songs are judged individually by how they sound: genre and era words count only in playlists that ask for them, and drafts are inclusive by default so you can trim in Spotify and the next run learns from it.',
       'It can run from the command line or a Streamlit interface, and maintenance can be scheduled daily or weekly with Windows Task Scheduler.',
     ],
     limits:[
@@ -720,7 +723,7 @@ export const books: Record<string, ProjectBook> = {
       'Spotify provides no audio features or recommendations to new apps, so classification relies on your descriptions, examples, feedback and independent tags.',
       'Local files can be read but not added to playlists through the API, so the app gives you a to-do list instead.',
     ],
-    credit:'Tag data comes from MusicBrainz and Last.fm and is used for personal, non-commercial purposes. Everything is stored locally.',
+    credit:'Tag and audio data come from MusicBrainz, Last.fm and AcousticBrainz and are used for personal, non-commercial purposes. Everything is stored locally.',
     files:[
       {path:'src/playlist_curator/',text:'the application, split into Spotify access, crate, metadata, curator and storage layers'},
       {path:'tests/',text:'tests against a fake Spotify service'},
@@ -775,6 +778,95 @@ export const books: Record<string, ProjectBook> = {
       {path:'firmware/keymap.c',text:'the QMK keymap'},
       {path:'windows/macropad.ahk',text:'the AutoHotkey v2 launcher'},
     ],
+  },
+
+  nbawins: {
+    kicker:'STAT 184 group project · Fall 2025',
+    tagline:'Which team statistics go with winning in the NBA regular season?',
+    overview:[
+      'A Penn State STAT 184 final project in R that looks at how three team factors relate to regular-season success, measured by wins out of 82 games.',
+      'Each factor stands for a different area that can influence success: player age as a proxy for skill and athleticism, three-point attempt rate for strategy, and pace factor for possessions and style of play.',
+    ],
+    question:'Which of player age, three-point attempt rate and pace factor are related to how many games a team wins?',
+    data:[
+      'Team-season statistics from Stathead’s Team Season Finder, sourced from Basketball-Reference.',
+      'Seasons 2014–15 to 2024–25, with 2019–20 and 2020–21 left out because COVID-19 affected the games played.',
+      'One .csv per season, plus a final merged file, in the Data folder.',
+    ],
+    stats:[{label:'Seasons',value:'2014–2025'},{label:'Factors',value:'3'},{label:'Games',value:'82 / season'},{label:'My role',value:'Data wrangling'}],
+    tools:['R','Quarto','Basketball-Reference'],
+    method:[
+      {title:'Pull the data',text:'Export team-season statistics for each season from Stathead.'},
+      {title:'Merge and clean',text:'R code joins the seasons into one file and cleans it for analysis.'},
+      {title:'Visualise',text:'Charts and tables of each factor against wins.'},
+      {title:'Model',text:'Statistical models relate age, three-point attempt rate and pace factor to regular-season wins.'},
+      {title:'Report',text:'A Quarto final report (FinalReport.qmd rendered to PDF) places the findings in a wider context.'},
+    ],
+    titles:{results:'What the factors showed'},
+    chart:{kind:'contrast',title:'Effect on regular-season wins',from:{heading:'Significant',items:['Player age','Three-point attempt rate']},to:{heading:'Negligible',items:['Pace factor']},note:'As summarised in the README.'},
+    findings:[
+      'Both player age and three-point attempt rate have a significant impact on a team’s wins.',
+      'Pace factor has a negligible effect on wins. The team found this surprising, since pace reflects possessions and would seem to raise the chances of scoring and winning.',
+    ],
+    limits:[
+      'Only three factors are studied.',
+      'Two COVID-affected seasons are excluded.',
+    ],
+    next:['Possibly extend the analysis to other game-play factors.'],
+    files:[
+      {path:'Data/',text:'season .csv files and the merged data set'},
+      {path:'ProjectCode/',text:'R code to merge and clean data, make visuals and fit models'},
+      {path:'Visualizations/',text:'tables, charts and figures used in the report'},
+      {path:'FinalReport.qmd · .pdf',text:'the final report'},
+    ],
+    credit:'Group project with Abigail Brown (communication) and Abigail Weinstein (documentation); my part was data wrangling. This is my fork of the course repository.',
+  },
+
+  skillissue: {
+    kicker:'HackPSU Fall 2026 · team of five',
+    tagline:'One body. Two players. A noir shooter controlled by two phones.',
+    overview:[
+      'A 2v2 split-screen shooter built in about 20 hours at HackPSU Fall 2026 (24–25 October, Penn State University Park). Each team is two raccoons in one trench coat: one phone drives the legs, the other aims the gun.',
+      'The two players share one health bar and one score, so neither can win alone. First team to 10 kills wins, or whoever leads when the clock runs out.',
+    ],
+    labels:{question:'The idea',data:'My part',method:'What I built',details:'Worth knowing',findings:'How it went'},
+    question:'Can two people share one character, one moving and one shooting, and make the split itself the fun?',
+    data:[
+      'Role: gameplay programmer, 3D modeling, level design and art direction.',
+      'The shared Duo character, the combat systems, the main map (The Pit), and the noir theme for both the game and the phone app.',
+      'Seven merged pull requests (#1, #6–#11) plus two direct commits; 46 files created in the game.',
+    ],
+    stats:[{label:'Team',value:'5'},{label:'Build time',value:'≈ 20 h'},{label:'My PRs',value:'7 + 2 commits'},{label:'Files',value:'46'}],
+    tools:['Godot 4.7','GDScript','Shaders','React Native','TypeScript','Next.js'],
+    method:[
+      {title:'The Duo',text:'One body built from components (movement, aim, weapons, health, team, hitboxes) plus swappable controllers, so two phones, a keyboard or a test bot can drive it. Tuning lives in editable resource files.'},
+      {title:'Combat',text:'Head, body and leg hitboxes; spread that grows with movement and jumping; per-gun tracers; three guns with respawning pickups; a sniper scope and short spawn protection.'},
+      {title:'The Pit',text:'A three-level city block with a sniper in the open and a shotgun on each team’s porch, with sightlines checked so no spawn can be seen from a camping spot.'},
+      {title:'Noir theme',text:'Black, white and grey with only red and blue saturated, one UI kit for every screen, and the same look ported to the React Native phone app.'},
+      {title:'Homepage',text:'Served the approved poster-style homepage through a one-line, reversible Next.js rewrite, leaving the game’s API routes untouched.'},
+    ],
+    details:[
+      {term:'Teamwork by design',text:'A scoped sniper is only perfect when the Runner stands still, so the Gunner has to tell the Runner to stop.'},
+      {term:'Merged cleanly',text:'The first pull request added 46 new files and edited none of the teammates’ files, so it merged with no conflicts.'},
+      {term:'Small jokes',text:'A headshot knocks the fedora off, and on death the coat empties and both raccoons tumble out.'},
+    ],
+    titles:{results:'How it fits together'},
+    chart:{kind:'steps',title:'From phones to the screen',steps:['Each phone joins a lobby by code','Motion streams through the relay','The Godot game turns it into movement and aim','Both players drive one shared body','The website runs the small API the game and phones need'],note:'As described in the README.'},
+    extra:{kind:'cards',title:'Two phones, one raccoon coat',items:[
+      {title:'Runner',text:'Tilt to move, twist to sprint, flick to jump or crouch.'},
+      {title:'Gunner',text:'Turn the phone to aim; fire, aim, reload and switch buttons.'},
+    ],note:'Controls from the README.'},
+    findings:[
+      'A playable 2v2 match with phone controls and a keyboard practice mode, built over one weekend.',
+      'My fork adds a contributions page, the hackathon journal, a snapshot of the website and a tidier folder layout, with the Godot smoke tests re-run.',
+    ],
+    files:[
+      {path:'CONTRIBUTIONS.md',text:'what I built, with pictures and the pull requests behind it'},
+      {path:'apps/game/',text:'the Godot game: the Duo, weapons, maps and menus'},
+      {path:'apps/companion/',text:'the Expo / React Native phone controller'},
+      {path:'docs/',text:'setup guide, protocol, the hackathon journal and the website snapshot'},
+    ],
+    credit:'Team project with Ryan Smith (repository owner), Aditya Pratap Singh, Brian Podolskiy and Kenneth Tran. Networking, the relay, motion sensing, the HUD and medkits were teammates’ work. Apache License 2.0.',
   },
 
   engineering: {

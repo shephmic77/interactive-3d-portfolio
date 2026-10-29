@@ -1143,19 +1143,20 @@ function bookCart(scene:THREE.Object3D,hits:HitTarget[]){const g=new THREE.Group
   halo(g,0,yUnder-.03,.2,1.4,'#ffc27a',.14);
   glowPatch(g,0,yFloor+.004,.0,2.3,.5,'#ffbd70',.10,0,true);
  }
- // the project books: seven data science volumes up top, five software / hardware / engineering volumes below (same order and grouping as the Projects page)
- const widths=[.22,.27,.25,.22,.27,.25,.22, .27,.25,.24,.23,.27];
- const heights=[.64,.58,.54,.68,.61,.55,.65, .62,.69,.63,.58,.60];
- const rows=[{from:0,to:7,y:S2,gaps:[.03,.03,.03,.03,.03,.03]},{from:7,to:12,y:S1,gaps:[.03,.03,.24,.24]}];
- const z0=-.02,depth=.40,jitter=[.006,-.008,.01,-.004,.008,-.01,.004,-.006,.01,-.008,-.005,.006];
+ // the project books: eight data science volumes up top, six software / hardware / engineering volumes below (same order and grouping as the Projects page)
+ const widths=[.22,.27,.25,.22,.27,.25,.22,.24, .27,.25,.24,.26,.23,.27];
+ const heights=[.64,.58,.54,.68,.61,.55,.65,.60, .62,.69,.63,.66,.58,.60];
+ const nDS=projects.filter(p=>p.category==='Data Science & ML').length;
+ const rows=[{from:0,to:nDS,y:S2,gaps:Array(nDS).fill(.03)},{from:nDS,to:projects.length,y:S1,gaps:projects.slice(nDS+1).map((p,k)=>p.category===projects[nDS+k].category?.03:.24)}];
+ const z0=-.02,depth=.40,jitter=[.006,-.008,.01,-.004,.008,-.01,.004,-.006,.01,-.008,-.005,.006,-.007,.009];
  for(const row of rows){
-  let total=0;for(let i=row.from;i<row.to;i++)total+=widths[i]+(i<row.to-1?row.gaps[i-row.from]:0);
+  let total=0;for(let i=row.from;i<row.to;i++)total+=widths[i%widths.length]+(i<row.to-1?row.gaps[i-row.from]:0);
   let x=-total/2;
   const brassEnd=(ex:number,dir:number)=>{box(g,ex,row.y+.12,z0,.012,.24,.22,brass);box(g,ex+dir*.04,row.y+.006,z0,.09,.012,.22,brass);};
   brassEnd(x-.016,-1);
   for(let i=row.from;i<row.to;i++){
-   const p=projects[i],w=widths[i],h=heights[i];
-   const book=cartBook(p,i+1,w,h,depth);book.position.set(x+w/2,row.y,z0+jitter[i]);book.rotation.y=(i%3-1)*.03;g.add(book);
+   const p=projects[i],w=widths[i%widths.length],h=heights[i%heights.length];
+   const book=cartBook(p,i+1,w,h,depth);book.position.set(x+w/2,row.y,z0+jitter[i%jitter.length]);book.rotation.y=(i%3-1)*.03;g.add(book);
    // the whole book (with a little margin) is the click target; the visible spine is lit and readable when the visitor zooms in
    const hit=box(book,0,h/2,0,w+.03,h+.04,depth+.06,new THREE.MeshBasicMaterial({opacity:0,transparent:true,depthWrite:false}));
    hits.push({object:hit,visual:book,section:'projects',projectId:p.id,label:`Open ${p.name}`});
