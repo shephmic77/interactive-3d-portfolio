@@ -96,7 +96,7 @@
 .shelf-case::after{content:'';position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,#0007,transparent 8%,transparent 92%,#0007);pointer-events:none}
 .shelf-row{display:flex;flex-direction:column;gap:3px;position:relative;z-index:1}
 .shelf-label{margin:0 0 2px 6px;font:500 9.5px/1.4 'DM Mono',monospace;letter-spacing:2px;color:#cdb987;text-transform:uppercase}
-.shelf-books{list-style:none;margin:0;padding:0 8px;display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,.6vw,8px);min-height:calc(var(--sh)*.83)}
+.shelf-books{list-style:none;margin:0;padding:0 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;gap:clamp(4px,.6vw,8px);row-gap:12px;min-height:calc(var(--sh)*.83)}
 .sp-gap{flex:none;width:clamp(14px,2.4vw,34px)}
 .plank{height:14px;border-radius:2px;background:linear-gradient(180deg,#8a6240 0,#5d3f26 45%,#3c2715 100%);box-shadow:0 7px 12px #000a,inset 0 1px 0 #ffffff3a}
 .spine{position:relative;flex:none;width:var(--wv,54px);height:calc(var(--sh)*var(--t,1));display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;padding:7px 0;border:0;border-radius:3px 3px 1px 1px;color:#f6e7bd;font:600 clamp(11.5px,1vw,14.5px)/1.12 var(--serif);cursor:pointer;
