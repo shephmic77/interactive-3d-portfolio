@@ -96,10 +96,11 @@
 .shelf-case::after{content:'';position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,#0007,transparent 8%,transparent 92%,#0007);pointer-events:none}
 .shelf-row{display:flex;flex-direction:column;gap:3px;position:relative;z-index:1}
 .shelf-label{margin:0 0 2px 6px;font:500 9.5px/1.4 'DM Mono',monospace;letter-spacing:2px;color:#cdb987;text-transform:uppercase}
-.shelf-books{list-style:none;margin:0;padding:0 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;gap:clamp(4px,.6vw,8px);row-gap:12px;min-height:calc(var(--sh)*.83)}
+.shelf-books{list-style:none;margin:0;padding:0 8px;display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,.6vw,8px);min-height:calc(var(--sh)*.83)}
+.shelf-books>li:not(.sp-gap){flex:0 1 auto;min-width:40px}   /* a full shelf slims its spines rather than wrapping */
 .sp-gap{flex:none;width:clamp(14px,2.4vw,34px)}
 .plank{height:14px;border-radius:2px;background:linear-gradient(180deg,#8a6240 0,#5d3f26 45%,#3c2715 100%);box-shadow:0 7px 12px #000a,inset 0 1px 0 #ffffff3a}
-.spine{position:relative;flex:none;width:var(--wv,54px);height:calc(var(--sh)*var(--t,1));display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;padding:7px 0;border:0;border-radius:3px 3px 1px 1px;color:#f6e7bd;font:600 clamp(11.5px,1vw,14.5px)/1.12 var(--serif);cursor:pointer;
+.spine{position:relative;flex:none;width:var(--wv,54px);max-width:100%;height:calc(var(--sh)*var(--t,1));display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;padding:7px 0;border:0;border-radius:3px 3px 1px 1px;color:#f6e7bd;font:600 clamp(11.5px,1vw,14.5px)/1.12 var(--serif);cursor:pointer;
   background:linear-gradient(90deg,#00000070 0,transparent 15%,#ffffff26 38%,transparent 62%,#00000074 100%),repeating-linear-gradient(0deg,#ffffff07 0 2px,transparent 2px 5px),#3a2b33;
   background:linear-gradient(90deg,#00000070 0,transparent 15%,#ffffff26 38%,transparent 62%,#00000074 100%),repeating-linear-gradient(0deg,#ffffff07 0 2px,transparent 2px 5px),color-mix(in srgb,var(--c) 44%,#1b1320);
   box-shadow:inset 0 0 0 1px #ffffff2a,3px 0 6px #0008;transform-origin:50% 100%;transition:transform .32s var(--ease),box-shadow .32s,filter .32s}
