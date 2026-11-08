@@ -79,6 +79,10 @@ function start() {
   function resize() {
     camera.aspect = host.clientWidth / host.clientHeight;
     camera.fov = camera.aspect < .85 ? 54 : 43;
+    // Leave room for the title on wide screens while keeping the reef centered on narrow screens.
+    const wideFraming = THREE.MathUtils.smoothstep(camera.aspect, 1.2, 2.03);
+    camera.filmOffset = -0.25 * camera.aspect * camera.getFilmWidth()
+      * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * wideFraming;
     camera.updateProjectionMatrix();
     renderer.setSize(host.clientWidth, host.clientHeight);
   }
