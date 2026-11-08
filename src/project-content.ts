@@ -1,4 +1,4 @@
-/** Edit this file to change all portfolio content. Nothing here is loaded from a server. */
+
 export type Category = 'Data Science & ML' | 'Software & AI' | 'Hardware' | 'Engineering';
 export type Project = {
   id: string;
@@ -12,7 +12,7 @@ export type Project = {
 };
 
 
-/** One chart ("plate") in a project's book. Every number here comes from the project's own README. */
+
 export type Chart=
   |{kind:'bars';title:string;items:{label:string;value:number;text:string}[];max:number;note?:string}
   |{kind:'prob';title:string;groups:{heading:string;items:{label:string;value:number}[]}[];note?:string}
@@ -29,94 +29,31 @@ export type Fact={label:string;value:string};
 export type Step={title:string;text:string};
 export type Term={term:string;text:string};
 export type FileNote={path:string;text:string};
-/**
- * What a project's own book contains. A book is a small volume of up to four spreads:
- *  1 Overview (left: title, numbers, tools · right: story, question, data)
- *  2 Method   (left: the steps · right: details worth knowing)
- *  3 Results  (left: charts · right: findings)
- *  4 Limits   (left: limits and lessons · right: next steps, files, GitHub link)
- * Spreads with nothing to show are left out. Only facts stated in the project's public README or already in this file;
- * no invented results.
- */
-export type ProjectBook={
-  kicker?:string;                       // status line, e.g. "STAT 380 final project"
+
+export type ProjectDetails={
+  kicker?:string;
   tagline:string;
-  overview:string[];                    // one or two short paragraphs
+  overview:string[];
   question?:string;
   data:string[];
   stats?:Fact[];
-  tools?:string[];                      // overrides the tool chips from the project list
+  tools?:string[];
   method?:Step[];
   details?:Term[];
-  chart:Chart;                          // main plate on the Results spread
-  extra?:Chart;                         // second plate under it
+  chart:Chart;
+  extra?:Chart;
   findings:string[];
   limits?:string[];
   learned?:string[];
   next?:string[];
   files?:FileNote[];
   credit?:string;
-  repoNote?:string;                     // shown instead of a GitHub button when there is no single repository
+  repoNote?:string;
   titles?:Partial<Record<'overview'|'method'|'results'|'limits',string>>;
   labels?:Partial<Record<'question'|'data'|'method'|'details'|'findings'|'limits'|'learned'|'next'|'files',string>>;
 };
 
 const git = 'https://github.com/shephmic77/';
-export const profile = {
-  name: 'Michael Shepherd',
-  title: 'Data Science · Sports Analytics',
-  school: 'Penn State University',
-  degree: 'B.S. in Applied Data Science',
-  graduation: 'Anticipated graduation May 2027',
-  location: 'United States',
-  email: 'mrs7065@psu.edu',
-  github: 'https://github.com/shephmic77',
-  linkedin: 'https://www.linkedin.com/in/michael-shepherd7/',
-};
-
-/** The in-site resume. Mirrors public/Michael_Shepherd_Resume.pdf (supplied 2026-10-15); wording follows the PDF.  */
-export type ResumeJob={org:string;place:string;role:string;dates:string;bullets:string[]};
-export type ResumeProject={name:string;tools:string;bullets:string[]};
-export const resume={
-  pdf:'Michael_Shepherd_Resume.pdf',
-  site:'michael-shepherd.vercel.app',
-  phone:'281-771-6887',
-  linkedin:'linkedin.com/in/michael-shepherd7/',
-  school:{name:'The Pennsylvania State University',place:'University Park, PA',degree:'B.S. in Applied Data Science, College of Information Sciences and Technology',grad:'May 2027'},
-  skills:[
-    {label:'Programming Languages',items:'Python | R | SQL | JavaScript | HTML/CSS'},
-    {label:'Libraries and Frameworks',items:'Pandas | NumPy | scikit-learn | Matplotlib | Beautiful Soup | FastAPI | Streamlit'},
-    {label:'Programs and Tools',items:'PostgreSQL (pgvector) | Docker | Git | GitHub | Vercel | Jupyter Notebook | Alteryx Designer | Autodesk Fusion | Ollama | ChatGPT | Codex | Claude'},
-    {label:'Methods',items:'Machine Learning | RAG | Data Cleaning and Auditing | Web Scraping | Data Visualization | Unit Testing'},
-    {label:'Spoken Language',items:'Spanish (Fluent)'},
-  ],
-  experience:[
-    {org:'Geoinformation and Big Data Research Laboratory (GIBD)',place:'University Park, PA',role:'Undergraduate Research Assistant',dates:'May 2026 – Aug 2026',bullets:[
-      'Built two Python-based agents, a Travel Hazard Assessment Agent and a NOAA Flood Alert Agent, for the Geospatial Agentic Services (GAS) multi-agent workflow, which fans requests out to hazard-data agents and renders the combined results on an interactive web map.',
-      'Flood Alert Agent: takes a location, search radius and time range, filters National Weather Service alerts to flood-related hazards, calculates distance from the requested location, classifies risk level and returns GeoJSON for downstream GAS agents.',
-      'Travel Hazard Assessment Agent: standardized fields across GeoJSON and CSV hazard datasets, assigned Low, Medium, High or Critical risk levels, removed duplicate records, rejected unsupported geometry and produced one unified point-based GeoJSON dataset.',
-      'Wrote 13 unit tests across both agents and validated the full workflow through the GAS client, covering agent registration, artifact passing and map generation; a Houston demo combined 12 earthquake and flood records within 300 km.',
-      'Collaborated with graduate researchers and independently studied technical documentation to implement and refine agent features.']},
-    {org:'Made By Design Lab',place:'University Park, PA',role:'Undergraduate Research Assistant',dates:'August 2023 – May 2025',bullets:[
-      'Developed a working multi-material 3D printing process (Mosaic hardware, Chroma software) through iterative CAD designs and test prints, and documented it in an instruction manual that gave future lab members a repeatable workflow.']},
-    {org:'American Society of Mechanical Engineers (ASME) Design Team',place:'University Park, PA',role:'Team Lead',dates:'January 2023 – May 2025',bullets:[
-      'Led the chassis subsystem of a fully 3D-printed RC car, collaborating with 5 subsystem leads and designing the gear differential casing and drivetrain components in Autodesk Fusion for PLA and resin 3D printing.',
-      "Trained 8 team members in Autodesk Fusion, providing CAD guidance for the RC car's design and development."]},
-  ] as ResumeJob[],
-  projects:[
-    {name:'Basketball RAG Assistant',tools:'Python, FastAPI, PostgreSQL (pgvector), Ollama, Docker',bullets:[
-      'Built a retrieval-augmented generation (RAG) app that answers basketball questions from a sample game dataset: a FastAPI backend loads game records into PostgreSQL, writes a natural-language summary of each game and stores its vector embedding in pgvector.',
-      'At query time the question is embedded, pgvector retrieves similar games and only those records go to a local Llama 3.2 model through Ollama, so answers stay grounded; the chat UI shows the retrieved evidence, and the app runs as three Docker Compose services.']},
-    {name:'NBA All-Star Prediction and Snub Exploration',tools:'Python, Jupyter Notebook',bullets:[
-      'Built random forest and logistic regression models (scikit-learn) to predict All-Star selections across approximately 3,800 NBA player seasons from 2015–2025, reaching about 0.949 accuracy, and iterated through five versions that used Pandas and NumPy to add True Shooting Percentage and team wins as efficiency and team-context features.',
-      'Analyzed high-confidence prediction errors to find players whose box score profiles diverged from their selection, such as James Harden in 2023 (85.4% predicted, not selected) and Andrew Wiggins in 2022 (2.4% predicted, selected).']},
-    {name:'Penn State DS 310 Kaggle Regression Competition',tools:'Python, Jupyter Notebook',bullets:[
-      'Built regression models on 242 training rows and 64 predictors, from ridge baselines through feature engineering, PCA regression, SVR and stacked blends in scikit-learn, and ranked first on the private leaderboard (MSE 2058.85).']},
-  ] as ResumeProject[],
-  certificates:['IBM Data Analyst Professional Certificate','Alteryx Designer Core Certification'],
-};
-
-/** 10 data science projects + 4 software/AI + 1 hardware + 1 grouped engineering book. */
 export const projects: Project[] = [
   { id:'futwar', name:'FutWAR', category:'Data Science & ML', description:'Football Wins Above Replacement: a soccer value metric for player valuation, league strength and tactical analysis, with a public player-explorer prototype.', tools:['Python','Sports analytics','Statistical modeling'], link:git+'FutWAR', status:'In progress', color:'#eb7d56' },
   { id:'allstar', name:'NBA All-Star Prediction', category:'Data Science & ML', description:'Explores NBA All-Star prediction, potential snubs, model disagreements and the limits of box-score statistics.', tools:['Python','Machine learning','Basketball'], link:git+'nba-all-star-prediction', color:'#b8c7f9' },
@@ -125,7 +62,7 @@ export const projects: Project[] = [
   { id:'purchase', name:'Online Purchase Prediction', category:'Data Science & ML', description:'STAT 380 final project: predicting online purchase intention and finding shopper segments with logistic regression, KNN and K-means in R.', tools:['R','Classification','Clustering'], link:git+'online-purchase-prediction', color:'#b0a5ff' },
   { id:'letterboxd', name:'Letterboxd Analyzer', category:'Data Science & ML', description:'An interactive Streamlit app for analyzing Letterboxd viewing habits, ratings and movie taste.', tools:['Python','Data analysis','Movies'], link:git+'letterboxd-analyzer', color:'#ff9cab' },
   { id:'kaggle', name:'DS 310 Kaggle Regression', category:'Data Science & ML', description:'Regression for a Penn State Kaggle competition with feature engineering, weighted ridge regression and model ensembles. Ranked 1st on the private leaderboard.', tools:['Python','Ensemble methods','Regression'], link:git+'DS-310-Project-1', color:'#a8e2a8' },
-  { id:'stocks', name:'DS 310 Stock Classification', category:'Data Science & ML', description:'Predicts whether a stock should be bought at the start of the year from financial data, using tree ensembles and the pretrained TabICL classifier. 3rd on the private leaderboard; public ROC AUC 0.73972.', tools:['Python','LightGBM','CatBoost','TabICL'], link:git+'DS-310-Project-2', status:'Kaggle · 3rd private', color:'#9fc6e8' },
+  { id:'ds310project2', name:'DS 310 Stock Classification', category:'Data Science & ML', description:'Predicts whether a stock should be bought at the start of the year from financial data, using tree ensembles and the pretrained TabICL classifier. 3rd on the private leaderboard; public ROC AUC 0.73972.', tools:['Python','LightGBM','CatBoost','TabICL'], link:git+'DS-310-Project-2', status:'Kaggle · 3rd private', color:'#9fc6e8' },
   { id:'nbawins', name:'NBA Team Winning Factors', category:'Data Science & ML', description:'STAT 184 group project in R: do player age, three-point attempt rate and pace factor explain how many regular-season games NBA teams win?', tools:['R','Data wrangling','Basketball'], link:git+'nba-team-winning-factors', status:'Group project', color:'#e9b3e0' },
   { id:'singapore', name:'Singapore Development Model', category:'Data Science & ML', description:'SODA 308 research project in R comparing Singapore’s development model with ten other economies on state intervention, economic performance, living standards and social outcomes.', tools:['R','Panel regression','Public data'], link:git+'singapore-development-model', status:'Research in progress', color:'#ef6f6c' },
   { id:'rag', name:'Basketball RAG Assistant', category:'Software & AI', description:'An end-to-end basketball RAG application using FastAPI, PostgreSQL/pgvector, Ollama and Docker.', tools:['Python','FastAPI','PostgreSQL','Docker'], link:git+'basketball-rag-assistant', color:'#80daef' },
@@ -136,9 +73,6 @@ export const projects: Project[] = [
   { id:'engineering', name:'Engineering Portfolio', category:'Engineering', description:'A collection of earlier CAD and mechanical-design work, including a Formula SAE nose cone, bearing, carabiner, Zen Garden table, and 3D-printed mechanisms.', tools:['CAD','SolidWorks','Fusion 360','3D printing'], status:'Collection', color:'#d9c2a4' },
 ];
 
-export const categories: Array<'All' | Category> = ['All','Data Science & ML','Software & AI','Hardware','Engineering'];
-
-/** Individual works grouped inside the single Engineering Portfolio book. */
 export const engineeringWorks = [
   'Project TARMO · RC car chassis',
   'Formula SAE nose cone',
@@ -151,7 +85,7 @@ export const engineeringWorks = [
 ];
 
 /** Book pages, keyed by project id. Wording is condensed from each repository's README; numbers are quoted exactly. */
-export const books: Record<string, ProjectBook> = {
+export const projectDetails: Record<string, ProjectDetails> = {
   futwar: {
     kicker:'Under construction · active research',
     tagline:'A soccer value metric inspired by baseball’s WAR.',
@@ -829,7 +763,7 @@ export const books: Record<string, ProjectBook> = {
     credit:'Group project with Abigail Brown (communication) and Abigail Weinstein (documentation); my part was data wrangling. This is my fork of the course repository.',
   },
 
-  stocks: {
+  ds310project2: {
     kicker:'Penn State DS 310 · Fall 2026',
     tagline:'Should this stock be bought at the start of the year?',
     overview:[
@@ -997,7 +931,7 @@ export const books: Record<string, ProjectBook> = {
 
   engineering: {
     kicker:'A collection of earlier work',
-    tagline:'CAD and mechanical design, gathered into one volume.',
+    tagline:'CAD and mechanical design, gathered into one collection.',
     overview:[
       'A collection of earlier CAD and mechanical-design work, including a Formula SAE nose cone, bearing, carabiner, Zen Garden table and 3D-printed mechanisms.',
     ],
@@ -1009,8 +943,8 @@ export const books: Record<string, ProjectBook> = {
     stats:[{label:'Works',value:String(engineeringWorks.length)},{label:'Focus',value:'CAD & 3D printing'}],
     tools:['CAD','SolidWorks','Fusion 360','3D printing'],
     titles:{results:'The works'},
-    chart:{kind:'shelf',title:'On the shelf',items:engineeringWorks,note:'Eight works, listed on the facing page.'},
+    chart:{kind:'shelf',title:'Engineering work',items:engineeringWorks,note:'Eight CAD and fabrication projects.'},
     findings:[],
-    repoNote:'This volume groups earlier CAD and fabrication work. There is no single verified public repository to link to.',
+    repoNote:'This collection groups eight CAD and fabrication projects.',
   },
 };
