@@ -696,6 +696,109 @@ function sailfish():Built {
   return swimmer(parts,3.4,.10);
 }
 
+function oceanSunfish():Built{
+  const root=new THREE.Group();
+  const silver=col('#cbdce1'), back=col('#677c8e'), finColor=col('#8599a9');
+  const skin=(x:number,y:number,z:number,f:number)=>{
+    const color=mix(silver,back,smooth(-.60,.77,y)*.88);
+    const mottling=Math.sin(x*13+z*16)*Math.cos(y*19-x*6);
+    return shade(color.multiplyScalar(1+mottling*.055),f,.11,32);
+  };
+  const finSkin=(x:number,y:number,_z:number,f:number)=>
+    shade(finColor,f,.12,9).multiplyScalar(.93+.09*Math.cos((x+.21*y)*41));
+
+  // The body ends in a short, scalloped clavus.
+  const rear:V3[]=[[-.77,.69,0]];
+  for(let i=0;i<=24;i++){
+    const angle=Math.PI*i/24;
+    rear.push([-.80-Math.sin(angle)*(.28+.024*Math.sin(i*Math.PI/2)),
+      .69*Math.cos(angle),0]);
+  }
+  rear.push([-.67,-.57,0],[-.65,.48,0]);
+  const parts:Geo[]=[
+    loft([[1.06,0,0,.03],[1.01,.15,.13,.03],[.88,.37,.23,.045],
+      [.66,.56,.33,.035],[.37,.69,.39,.01],[.05,.75,.41,0],
+      [-.26,.76,.39,0],[-.54,.72,.31,-.005],[-.76,.65,.20,-.005],
+      [-.88,.54,.10,0],[-.94,0,0,0]],skin,22),
+    sculptFin(rear,[0,0,1],.11,finSkin),
+    blob({s:[.044,.036,.085],p:[1.048,.015,0],top:'#273d4d',detail:2}),
+  ];
+  for(const side of [-1,1]){
+    parts.push(
+      blob({s:[.073,.072,.036],p:[.78,.21,side*.234],top:'#9aaeb9',detail:2}),
+      blob({s:[.045,.047,.023],p:[.791,.215,side*.259],top:'#142b3b',detail:2}),
+      blob({s:[.015,.014,.008],p:[.805,.23,side*.28],top:'#ecf7f6',detail:1}),
+      blob({s:[.034,.111,.014],p:[.36,.025,side*.384],r:[0,0,-.24],top:'#465d6b',detail:2}),
+      sculptFin([[.30,.04,side*.37],[.21,.13,side*.42],[.07,.11,side*.49],
+        [-.046,.015,side*.50],[.036,-.089,side*.46],[.19,-.077,side*.40]],
+      [0,0,side],.027,finSkin),
+    );
+  }
+  root.add(piece(parts));
+  const tallFin=(side:number)=>flap(root,[sculptFin([
+    [.25,-.15*side,0],[.08,.19*side,0],[-.11,.49*side,0],
+    [-.32,.80*side,0],[-.40,.86*side,0],[-.46,.72*side,0],
+    [-.48,.42*side,0],[-.51,.15*side,0],[-.63,-.15*side,0],
+  ],[0,0,1],.077,finSkin)],[-.13,.65*side,0]);
+  const dorsal=tallFin(1), anal=tallFin(-1);
+  return {root,anim(t){
+    const stroke=Math.sin(t*2.25);
+    dorsal.rotation.x=.48*stroke;
+    anal.rotation.x=-.48*stroke;
+    root.rotation.x=.055*Math.sin(t*2.25-.45);
+  }};
+}
+
+function bluefinTuna():Built{
+  const navy=col('#253b58'), steel=col('#789caf'), silver=col('#d7e2e7');
+  const skin=(_x:number,y:number,z:number,f:number)=>{
+    const color=mix(silver,steel,smooth(-.37,.18,y));
+    color.lerp(navy,smooth(.10,.35,y-.11*Math.abs(z)));
+    return shade(color,f,.14,19);
+  };
+  const finBlue=finPaint('#354d69');
+  const parts:Geo[]=[
+    loft([[1.62,0,0,-.085],[1.52,.11,.106,-.05],[1.34,.24,.18,0],
+      [1.06,.41,.27,.018],[.74,.54,.35,.023],[.37,.58,.39,.012],
+      [-.06,.54,.38,0],[-.48,.46,.32,.003],[-.88,.33,.23,.022],
+      [-1.20,.21,.155,.03],[-1.47,.122,.092,.034],[-1.68,.058,.064,.031],
+      [-1.84,.054,.047,.029],[-1.93,0,0,.028]],skin,18),
+    blob({s:[.12,.023,.10],p:[1.512,-.099,0],top:'#23303d',detail:2}),
+    sculptFin([[.71,.51,0],[.51,.83,0],[.39,.96,0],[.29,.81,0],
+      [.14,.67,0],[-.17,.54,0],[-.31,.47,0]], [0,0,1],.048,finBlue),
+    fin([-.54,.38,0],[-.82,.68,0],[-1.07,.26,0],'#546a7b',.032),
+    fin([-.47,-.41,0],[-.91,-.64,0],[-1.10,-.22,0],'#647f93',.037),
+    sculptFin([[-1.75,.07,0],[-1.93,.19,0],[-2.15,.59,0],[-2.37,.78,0],
+      [-2.28,.53,0],[-2.14,.25,0],[-2.06,.024,0],[-2.16,-.26,0],
+      [-2.29,-.53,0],[-2.38,-.70,0],[-2.16,-.54,0],[-1.91,-.16,0],[-1.75,-.035,0]],
+    [0,0,1],.055,finBlue),
+  ];
+  for(const side of [-1,1]){
+    parts.push(
+      blob({s:[.062,.062,.034],p:[1.32,.093,side*.168],top:'#bfc9a5',detail:2}),
+      blob({s:[.041,.043,.021],p:[1.33,.098,side*.192],top:'#152539',detail:2}),
+      blob({s:[.012,.012,.007],p:[1.345,.112,side*.21],top:'#f2f9f8',detail:1}),
+      sculptFin([[.98,.33,side*.176],[.90,.19,side*.275],[.85,-.02,side*.307],
+        [.87,-.24,side*.235],[.83,-.31,side*.185],[.80,-.23,side*.245],
+        [.82,-.02,side*.318],[.87,.20,side*.282]],
+      [0,0,side],.009,finPaint('#415967')),
+      sculptFin([[.69,-.06,side*.30],[.52,-.10,side*.43],[.21,-.23,side*.54],
+        [-.22,-.30,side*.57],[.07,-.31,side*.43],[.45,-.22,side*.30]],
+      [0,1,0],.043,finBlue),
+      fin([.23,-.45,side*.13],[-.18,-.68,side*.27],[-.19,-.43,side*.14],'#48647e',.027),
+    );
+  }
+  const finlets=[[-1.02,.29],[-1.15,.24],[-1.28,.19],[-1.41,.143],[-1.53,.114],[-1.65,.085]];
+  for(const [x,height] of finlets){
+    for(const side of [-1,1]){
+      const y=.03+side*height;
+      parts.push(fin([x+.065,y,0],[x-.035,y+side*.086,0],[x-.095,y-side*.058,0],
+        '#b4a866',.014));
+    }
+  }
+  return swimmer(parts,4.8,.13);
+}
+
 function napoleonWrasse():Built{
   const cobalt=col('#376e9e'), teal=col('#469b97'), pale=col('#8dc1be'), ink=col('#245b70');
   const body=loft([[1.66,.095,.16,-.25],[1.51,.25,.29,-.18],[1.34,.36,.36,-.096],
@@ -940,10 +1043,10 @@ function rockWarp(sd:number){return (v:THREE.Vector3)=>{const k=.82+.36*hash(Mat
 export function buildAquarium(){
   const scene=new THREE.Scene();
   scene.background=gradientTexture([[0,'#40b9cf'],[.27,'#248eaa'],[.55,'#165e84'],[.83,'#164d70'],[1,'#164d70']]);
-  scene.fog=new THREE.Fog('#164d70',72,158);
-  scene.add(new THREE.HemisphereLight('#bdf0ff','#2a6fae',1.15));
-  const sun=new THREE.DirectionalLight('#f2fcff',1.35);sun.position.set(-8,22,10);scene.add(sun);
-  const fill=new THREE.DirectionalLight('#7fc4ff',.45);fill.position.set(12,4,-10);scene.add(fill);
+  scene.fog=new THREE.Fog('#164d70',89,172);
+  scene.add(new THREE.HemisphereLight('#c9f0ff','#3c78a2',1.25));
+  const sun=new THREE.DirectionalLight('#fff3dd',1.55);sun.position.set(-8,22,10);scene.add(sun);
+  const fill=new THREE.DirectionalLight('#a7daff',.55);fill.position.set(12,4,-10);scene.add(fill);
 
   const occluders:THREE.Object3D[]=[];
   const hits:HitTarget[]=[];
@@ -1577,6 +1680,8 @@ export function buildAquarium(){
     ['gas', mantaRay, 2.8, orbit(16.4,10.7,.22,2.55,{bob:2.7})],
     ['kaggle', jelly, 0.65, jellyDrift],
     ['ds310project2', sailfish, 2.7, orbit(20.0,13.8,-.29,3.25,{bob:2.4})],
+    ['lineup', oceanSunfish, 1.95, orbit(22.8,11.8,.135,1.02,{bob:1.6,wobble:.028,clearWreck:true})],
+    ['shotmake', bluefinTuna, 2.1, orbit(21.8,8.1,-.245,.18,{bob:1.45,wobble:.035,clearWreck:true})],
     ['purchase', squid, 0.85, squidJets],
     ['allstar', mahi, 1.35, orbit(18.8,10.5,.32,5.2,{bob:1.9})],
     ['letterboxd', dumbo, 0.48, patrol(-19,5,21,3.5,2.5,1.2,.26,1.25)],
@@ -1591,7 +1696,7 @@ export function buildAquarium(){
 
   // Eight sardines share the same route with fixed offsets in the school's frame.
   const bio=submarine();
-  add('submarine',bio,1.42,'About me',patrol(29,10,12,4.3,5,1.1,.32,.8));
+  add('submarine',bio,1.42,'About me',patrol(-29,9,-22,4.3,5,1.1,.32,.8));
 
   const school = orbit(18.1,4.7,-.25,2.12,{bob:1.6,clearWreck:true});
   for (let i = 0; i < 8; i++) {

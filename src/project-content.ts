@@ -55,7 +55,9 @@ export type ProjectDetails={
 
 const git = 'https://github.com/shephmic77/';
 export const projects: Project[] = [
+  { id:'shotmake', name:'NBA Shot Make Probability Model', category:'Data Science & ML', description:'Predicts NBA shot make probability and measures how much players score above expectation from the field.', tools:['Python','Gradient boosting','NBA shot logs'], link:git+'nba-shot-make-model', color:'#a7c9f1' },
   { id:'futwar', name:'FutWAR', category:'Data Science & ML', description:'Football Wins Above Replacement: a soccer value metric for player valuation, league strength and tactical analysis, with a public player-explorer prototype.', tools:['Python','Sports analytics','Statistical modeling'], link:git+'FutWAR', status:'In progress', color:'#eb7d56' },
+  { id:'lineup', name:'Lineup Impact Explorer', category:'Software & AI', description:'An interactive dashboard for comparing how NBA player combinations score, defend, and rebound.', tools:['Django REST Framework','PostgreSQL','Angular'], link:git+'nba-lineup-explorer', color:'#c0dfed' },
   { id:'allstar', name:'NBA All-Star Prediction', category:'Data Science & ML', description:'Explores NBA All-Star prediction, potential snubs, model disagreements and the limits of box-score statistics.', tools:['Python','Machine learning','Basketball'], link:git+'nba-all-star-prediction', color:'#b8c7f9' },
   { id:'moneyball', name:'NBA Moneyball', category:'Data Science & ML', description:'Uses machine learning to compare player production with salary, find underpaid and overpaid players, and look for market inefficiencies.', tools:['Python','Regression','Basketball'], link:git+'nba-moneyball', color:'#ffcf7d' },
   { id:'archetypes', name:'NBA Player Archetypes', category:'Data Science & ML', description:'Uses K-Means clustering to move from the five traditional positions to data-driven player archetypes.', tools:['Python','Clustering','Basketball'], link:git+'nba-player-archetypes', color:'#8dd9d1' },
@@ -819,6 +821,125 @@ export const projectDetails: Record<string, ProjectDetails> = {
       {path:'results/ · submissions/',text:'validation records, score history, licenses and the scored v7 predictions'},
     ],
     credit:'TabICL license and checkpoint details are kept in results/. As the README states, AI assistance was used for coding, comparisons, verification and report drafting.',
+  },
+
+  shotmake: {
+    kicker:'NBA shot analytics',
+    tagline:'How likely was that shot to go in?',
+    overview:[
+      'This project estimates a make probability from the shot’s location, type, game situation, and player and opponent history.',
+      'A separate model uses shot details alone to estimate how a typical shooter would do. The project compares those expectations with actual field-goal points to see who scored the most above expectation.',
+      'Two players can finish with the same shooting percentage even if one took mostly open-looking shots near the basket and the other took more difficult attempts. The project gives each attempt its own baseline so those players can be compared in the context of the shots they took.',
+      'For example, suppose a player makes one of two three-pointers and the model gives the attempts make probabilities of 20% and 40%. That is 1.8 expected points across the two shots. The player scored three, or 1.2 above expectation. The leaderboard adds up those differences over the season.',
+    ],
+    question:'How well can shot location, game context, and prior performance estimate the chance of an NBA field goal?',
+    data:[
+      'About 1.09 million NBA shots across five seasons. Each record describes a field-goal attempt and whether it went in.',
+      'The 2023–24 and 2024–25 seasons were used to compare models and choose settings. The 2025–26 season was held out for the final test.',
+    ],
+    stats:[{label:'Shots',value:'1.09M'},{label:'Test log loss',value:'0.6337'},{label:'Baseline improvement',value:'8.4%'},{label:'Test ROC AUC',value:'0.670'}],
+    method:[
+      {title:'Describe the shot',text:'Use distance, court position, shot type and game situation to describe the attempt.'},
+      {title:'Build prior history',text:'Compute player and opponent features using only games played on earlier dates.'},
+      {title:'Validate in time order',text:'Compare models across two validation seasons, then score the final model on the held-out 2025–26 season.'},
+      {title:'Measure shot making',text:'Use the shot-details model to estimate expected field-goal points, then subtract that estimate from the points each player actually scored.'},
+    ],
+    details:[
+      {term:'Feature checks',text:'A new feature group had to improve log loss in both validation seasons before it was kept.'},
+      {term:'History without leakage',text:'The model can use games already played in the test season. Same-day games and later results are excluded from history features.'},
+      {term:'Expected points',text:'Multiply the make probability by the value of the attempt. A three-pointer with a 40% make probability is worth 1.2 expected points.'},
+      {term:'What the baseline does',text:'The constant model gives every attempt the same probability. Logistic regression and gradient boosting can adjust the estimate for each shot, which makes the comparison a test of whether shot-level information helps.'},
+      {term:'Two jobs for two models',text:'The full model uses prior shooter and opponent performance to improve prediction. The shot-details model leaves those histories out so it can provide a common benchmark for the leaderboard.'},
+      {term:'Keeping games together',text:'The uncertainty check resamples entire games. Attempts from the same game share context, so this keeps them together when estimating how much the model improved.'},
+    ],
+    chart:{kind:'bars',title:'Log loss on the held-out 2025–26 season',max:.72,items:[
+      {label:'League-average baseline',value:.6915,text:'0.6915'},
+      {label:'Logistic regression',value:.6442,text:'0.6442'},
+      {label:'Final gradient boosting model',value:.6337,text:'0.6337'},
+    ],note:'Lower is better. Log loss rewards accurate probabilities and penalizes confident mistakes.'},
+    extra:{kind:'bars',title:'Predicted and actual make rates',max:100,items:[
+      {label:'Average predicted',value:47.3,text:'47.3%'},
+      {label:'Actual',value:47.1,text:'47.1%'},
+    ],note:'Season-wide averages can agree even when the model is off for specific shot types or players.'},
+    findings:[
+      'Shot type and location provided most of the predictive signal. Game situation and prior player and opponent results improved the score further.',
+      'Kevin Durant led the shot-making comparison with about 266 field-goal points above expectation.',
+      'Nikola Jokić stood out on efficiency at about 21 points above expectation per 100 shots. The total measures how much extra scoring a player accumulated. The per-100 figure makes it easier to compare players with different shot volumes.',
+      'Shot details alone reached 0.6367 log loss. Adding game situation brought it to 0.6362, and adding player and opponent history brought it to 0.6337. Most of the gain over the league-average baseline came from describing the attempt itself.',
+    ],
+    limits:[
+      'Public shot logs lack defender distance. An open look can show up as above-expectation shot making when the model cannot see the nearest defender.',
+      'Shot type is recorded after the attempt. The model is best suited to reviewing shots that already happened.',
+      'The shot-making leaderboard covers field goals. Season totals favor players with more attempts, so the repository also reports points above expectation per 100 shots.',
+    ],
+    learned:['A useful make-probability model needs to assign reasonable probabilities across many attempts. Ranking the easiest shots correctly is only part of the job when those probabilities are also used to estimate points.'],
+    next:[
+      'Test how well shot-making results carry across seasons and add play-by-play context such as score margin or shot-clock estimates.',
+      'Compare a history feature that weights recent games more heavily with the current season-to-date history.',
+    ],
+    files:[
+      {path:'src/features.py',text:'Builds shot, game situation, and prior-history features.'},
+      {path:'src/train.py',text:'Trains the models and produces season-by-season comparisons.'},
+      {path:'tests/test_features.py',text:'Checks that history features exclude future games.'},
+      {path:'results/shot_makers_2025_26.csv',text:'Ranks players with 500 or more attempts by field-goal points above expectation.'},
+    ],
+  },
+
+  lineup: {
+    kicker:'NBA analytics dashboard',
+    tagline:'See what happens when players share the court.',
+    overview:[
+      'Explore groups of one to five players from the 2025–26 NBA regular season. Filter by team, search for a player, or set a minimum possession count before comparing groups.',
+      'The dashboard turns play-by-play into on-court lineups so you can look beyond individual box scores and see how combinations performed together.',
+      'Start by picking a team and a group size. For a rotation question, search for a player and compare the two- or three-player groups they appear in. Then switch to five-player lineups to see the full units the team put on the floor.',
+      'The rankings can tell different stories depending on the metric. A group that scores efficiently might still give up enough points to finish with an ordinary net rating. Sorting by offense, defense, and rebounding helps show where the overall rating comes from.',
+    ],
+    question:'Which player combinations produced the strongest offense, defense, or rebounding, and how many possessions support each result?',
+    data:[
+      'Public NBA play-by-play from all 1,230 games in the 2025–26 regular season, reconstructed into 246,653 possessions.',
+      'The pipeline checks that every possession has five players per team. Its season totals match the separate shot log for field-goal attempts and come within one point of the official final scores.',
+    ],
+    stats:[{label:'Season',value:'2025–26'},{label:'Games',value:'1,230'},{label:'Possessions',value:'246,653'},{label:'Group sizes',value:'1–5 players'}],
+    method:[
+      {title:'Reconstruct lineups',text:'Use substitutions and logged actions to infer who started each period and track who was on the floor.'},
+      {title:'Aggregate possessions',text:'Total possessions by five-player unit, then break those units into smaller player combinations.'},
+      {title:'Compare performance',text:'Rank groups by scoring efficiency, defensive rating, rebounding or turnover rates.'},
+      {title:'Serve the dashboard',text:'Django reads the season from PostgreSQL and keeps it in memory for later requests. Angular displays the rankings and filters.'},
+    ],
+    details:[
+      {term:'Period starters',text:'A player who records an action or is subbed out before being subbed in must have started the period. Players with no logged action can carry over from the previous period.'},
+      {term:'Smaller combinations',text:'A two-player result combines possessions from every five-player unit that included both players. The other three teammates can vary.'},
+      {term:'Possession minimum',text:'Use the sample filter to see which combinations hold up over more playing time.'},
+      {term:'How a group gets credit',text:'Suppose a five-player unit plays 20 offensive possessions together. Those 20 possessions count toward each two-player pair inside that unit. When a pair appears in another unit, the dashboard adds the new possessions to its totals before calculating the rate.'},
+      {term:'Compare on the same scale',text:'A lineup that scores 60 points in 50 offensive possessions has an offensive rating of 120. If it gives up 55 points in 50 defensive possessions, its defensive rating is 110 and its net rating is +10.'},
+      {term:'Effective field-goal percentage',text:'This shooting metric gives a made three-pointer extra weight to account for the additional point. Rebounding and turnover rates use their own opportunities or possessions as the denominator.'},
+    ],
+    chart:{kind:'bars',title:'Net rating for three leading five-player units',max:30,items:[
+      {label:'Thunder · 567 possessions',value:27.3,text:'+27.3'},
+      {label:'Pistons · 764 possessions',value:26.5,text:'+26.5'},
+      {label:'Hornets · 2,098 possessions',value:22,text:'+22.0'},
+    ],note:'Net rating is point differential per 100 possessions. These units each logged at least 500 possessions.'},
+    extra:{kind:'cards',title:'How to read the rankings',items:[
+      {title:'Offensive rating',text:'Points the team scored per 100 possessions with the group on the floor.'},
+      {title:'Defensive rating',text:'Points the team allowed per 100 possessions with the group on the floor.'},
+      {title:'Net rating',text:'Offensive rating minus defensive rating. Check the possession count alongside it.'},
+    ]},
+    findings:[
+      'Among five-player units with at least 500 possessions, the leading Thunder group posted a +27.3 net rating across 567 possessions.',
+      'The highlighted Hornets unit posted a +22.0 net rating across 2,098 possessions, giving it the largest sample of the three units shown.',
+      'The Pistons unit was close to the Thunder at +26.5 and logged 764 possessions. That combination of rating and sample size is the reason the chart shows both numbers. A single rank hides the difference between a short run and a unit that played together more often.',
+    ],
+    limits:[
+      'These are regular-season results for one NBA season. Opponents, game situations, and sample size all affect comparisons.',
+      'Smaller player groups share possessions with different teammates. Their ratings describe the team’s performance while the group was on the floor.',
+      'Groups can overlap. If two pairs share a player and often play together, many of the same possessions may appear in both results.',
+    ],
+    learned:['The lineup reconstruction is the foundation of the dashboard. A mistake about who started a period can affect several smaller combinations at once, which is why the pipeline checks player counts and compares scoring and shot totals against separate records.'],
+    files:[
+      {path:'backend/scripts/build_season_data.py',text:'Reconstructs on-court lineups and possessions from play-by-play.'},
+      {path:'backend/app/helpers/lineups.py',text:'Aggregates full lineups and calculates results for smaller player combinations.'},
+      {path:'GET /api/v1/lineups',text:'Returns filtered rankings by group size, team, possession minimum, or metric.'},
+    ],
   },
 
   singapore: {

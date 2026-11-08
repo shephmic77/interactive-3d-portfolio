@@ -1,5 +1,13 @@
 // Plain-language summaries and workflows drawn from the project write-ups.
 export const projectBriefs: Record<string, { summary: string; flow: string[] }> = {
+  shotmake: {
+    summary: 'Estimate how likely an NBA shot was to go in, then compare what players scored with what their shots were expected to produce.',
+    flow: ['Collect shot logs', 'Describe each shot', 'Train on earlier seasons', 'Test on a later season'],
+  },
+  lineup: {
+    summary: 'Compare how NBA player combinations score, defend, and rebound when they share the court.',
+    flow: ['Read play-by-play', 'Rebuild on-court lineups', 'Group possessions', 'Compare player combinations'],
+  },
   futwar: {
     summary: 'FutWAR asks how much a footballer adds compared with a realistic replacement. The current prototype lets you explore several definitions of replacement while the research tests which comparisons hold up.',
     flow: ['Audit player and match data', 'Compare replacement baselines', 'Test what changes across roles'],

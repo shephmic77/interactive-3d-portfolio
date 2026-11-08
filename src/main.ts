@@ -59,7 +59,7 @@ function start() {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.20;
   host.append(renderer.domElement);
 
   const camera = new THREE.PerspectiveCamera(43, 1, .15, 220);
@@ -72,7 +72,7 @@ function start() {
   controls.minPolarAngle = .38;
   controls.maxPolarAngle = Math.PI * .485;
   function home() {
-    camera.position.set(76, 62, 47).lerp(new THREE.Vector3(0, 15, 0), camera.aspect < .85 ? -.23 : .10);
+    camera.position.set(76, 60, 49).lerp(new THREE.Vector3(0, 15, 0), camera.aspect < .85 ? -.23 : .21);
     controls.target.set(0, 15, 0);
     controls.update();
   }
