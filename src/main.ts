@@ -72,7 +72,7 @@ function start() {
   controls.minPolarAngle = .38;
   controls.maxPolarAngle = Math.PI * .485;
   function home() {
-    camera.position.set(76, 60, 49).lerp(new THREE.Vector3(0, 15, 0), camera.aspect < .85 ? -.23 : .21);
+    camera.position.set(76, 60, 49).lerp(new THREE.Vector3(0, 15, 0), camera.aspect < .85 ? -.23 : .16);
     controls.target.set(0, 15, 0);
     controls.update();
   }
