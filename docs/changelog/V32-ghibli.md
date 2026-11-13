@@ -1,4 +1,4 @@
-# VTEST22 — Ghibli / Porco Rosso surroundings
+# V32: Ghibli / Porco Rosso surroundings
 
 Goal: move the world around the building toward the Studio Ghibli look (Porco Rosso as the north star) without touching the building, its interiors, the five nav interactions or the personal items.
 
@@ -12,7 +12,7 @@ Goal: move the world around the building toward the Studio Ghibli look (Porco Ro
 - One switch, `GHIBLI_SURROUNDINGS`, turns the whole pass off.
 
 ## `src/main.ts`
-No change this iteration (shadow-map changes were VTEST21).
+No change this iteration (shadow-map changes were V31).
 
 ## Verification (honest status)
 - Stub-typed `tsc` passes. A real `npm run build` / Vercel deploy has **not** been run.

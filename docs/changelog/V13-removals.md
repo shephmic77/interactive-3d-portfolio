@@ -1,4 +1,4 @@
-# vtest3: cleared the circled items, and the decor / missing-items lists
+# V13: cleared the circled items, and the decor / missing-items lists
 
 Changed file: `src/world.ts` only.
 

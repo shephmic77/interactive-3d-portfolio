@@ -1,6 +1,6 @@
-# VTEST26 — the concept massing (W1), then a smaller ground floor
+# V36: the concept massing (W1), then a smaller ground floor
 
-Feedback: the VTEST25 retrofit was "not like the mock-up", so the building was rebuilt to match the chosen W1 concept; then "too big, more compact and smaller, start with the first floor".
+Feedback: the V35 retrofit was "not like the mock-up", so the building was rebuilt to match the chosen W1 concept; then "too big, more compact and smaller, start with the first floor".
 
 ## New massing (`MASSING`, `src/world.ts`)
 - A narrower, gabled upper block (teal tile roof, timber frame, chimney) stacked on the ground floor, with a round plaster tower beside it capped by a blunt teal cone and weathervane.
@@ -23,5 +23,5 @@ Feedback: the VTEST25 retrofit was "not like the mock-up", so the building was r
 ## Verification (honest status)
 - Stub-typed `tsc` passes (it checks syntax and scope, not three.js API use). A real `npm run build` / Vercel deploy has **not** been run.
 - Software renders at home, right, left, back, all five section views and a phone-width portrait.
-- Hover test from 7 cameras: every target that was reachable in VTEST25 still is; the corkboard from the home camera was briefly blocked and is fixed. Performance counters: 1,150 draw calls, 103k triangles, 12 point lights (VTEST25: about 1,152 / 105k / 12).
+- Hover test from 7 cameras: every target that was reachable in V35 still is; the corkboard from the home camera was briefly blocked and is fixed. Performance counters: 1,150 draw calls, 103k triangles, 12 point lights (V35: about 1,152 / 105k / 12).
 - Not verified: real GPU framerate, phone performance, and whether the 20% plan squash makes text and posters look stretched on a real screen (they looked fine in renders).

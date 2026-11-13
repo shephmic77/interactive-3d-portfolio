@@ -1,4 +1,4 @@
-# vtest8: a cosier courtyard
+# V18: a cosier courtyard
 
 Changed files: `src/world.ts` (one new "COZY PASS" block, plus small edits to the paving, name sign and dark windows).
 

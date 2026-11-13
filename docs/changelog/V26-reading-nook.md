@@ -1,4 +1,4 @@
-# vtest16: counter and back-wall poster removed, 80s reading nook
+# V26: counter and back-wall poster removed, 80s reading nook
 
 Changed file: `src/world.ts`.
 

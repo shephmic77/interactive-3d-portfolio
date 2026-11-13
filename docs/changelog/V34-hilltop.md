@@ -1,4 +1,4 @@
-# VTEST24 — a hilltop, and a fuller exterior and interior
+# V34: a hilltop, and a fuller exterior and interior
 
 Goal: push toward the stacked hilltop house from the reference ("small and compact, but looks full"), outside and in, without moving or removing anything that was already there.
 

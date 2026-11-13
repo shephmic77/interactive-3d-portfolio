@@ -1,4 +1,4 @@
-# vtest19: sparser climbing wall, more hold types, a V4-5 problem
+# V29: sparser climbing wall, more hold types, a V4-5 problem
 
 Changed file: `src/world.ts`.
 

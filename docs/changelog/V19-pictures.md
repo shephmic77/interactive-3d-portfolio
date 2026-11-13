@@ -1,4 +1,4 @@
-# vtest9: three supplied pictures
+# V19: three supplied pictures
 
 Changed files: `src/world.ts`, `public/albums/skydive.jpg`, `public/albums/red-pool.jpg`, `public/posters/desert-poster.jpg`.
 

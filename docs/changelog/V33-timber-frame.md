@@ -1,4 +1,4 @@
-# VTEST23 — the building itself: timber frame, tile roofs, chimney
+# V33: the building itself: timber frame, tile roofs, chimney
 
 Goal: move the building toward the stacked timber-frame hilltop house from the reference picture ("small and compact, but looks full") without removing or moving anything that was already on it.
 

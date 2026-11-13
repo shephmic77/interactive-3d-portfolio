@@ -1,4 +1,4 @@
-# vtest: boulder wall to the roof, signs removed, title raised, END GAME props
+# V11: boulder wall to the roof, signs removed, title raised, END GAME props
 
 Changed files: `src/world.ts`, `src/style.css`. `main.ts`, `ui.ts`, `content.ts`, `index.html`, `package.json` and
 `tsconfig.json` are unchanged from V10.

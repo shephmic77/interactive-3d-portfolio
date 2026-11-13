@@ -1,4 +1,4 @@
-# vtest12: stair to the second floor, courtyard and indoor additions, terrace fixes
+# V22: stair to the second floor, courtyard and indoor additions, terrace fixes
 
 Changed files: `src/world.ts`, `src/ui.ts`, and four new pictures in `public/posters/`
 (`kafka.jpg`, `battlefront2.jpg`, `xbalanque.jpg`, `joker.jpg`, all supplied by you).
@@ -13,7 +13,7 @@ Changed files: `src/world.ts`, `src/ui.ts`, and four new pictures in `public/pos
 
 **Lights (fake lights only: halo + floor/wall decals, no new PointLights)**
 - Two lantern posts on the roof terrace (back-left near the climbers' exit, and behind the water tank), one lantern post at the left end of the first terrace, and a wall lamp at the back end of the upper right-hand wall.
-- The corner lamp from vtest10 moved up to the blank second-floor wall you circled.
+- The corner lamp from V20 moved up to the blank second-floor wall you circled.
 
 **Outside**
 - A brown **tufted couch** on slim metal legs with a plain low-poly **raccoon** sitting on it and a **blue jay** perched on the backrest. Placed with its back against the right wall under the corkboard, facing out.

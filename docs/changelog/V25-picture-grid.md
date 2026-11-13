@@ -1,4 +1,4 @@
-# vtest15: left wall as a 2 x 2 picture grid with a little table underneath
+# V25: left wall as a 2 x 2 picture grid with a little table underneath
 
 Changed files: `src/world.ts`, and one new picture `public/posters/kafka-8bit.jpg` (the pixel-art Franz Kafka you supplied, resized to 512 x 768).
 

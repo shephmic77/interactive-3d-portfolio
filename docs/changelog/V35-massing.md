@@ -1,9 +1,9 @@
-# VTEST25 — a building with real massing, a calmer background, stylised interiors
+# V35: a building with real massing, a calmer background, stylised interiors
 
-Feedback from VTEST24: the hill and stair were too much; the building should have the irregular, stepped shape of the hilltop-house reference (the red-marked volumes), not stacked boxes; and the inside should be more stylised.
+Feedback from V34: the hill and stair were too much; the building should have the irregular, stepped shape of the hilltop-house reference (the red-marked volumes), not stacked boxes; and the inside should be more stylised.
 
 ## Background scaled back (`src/world.ts`)
-- `KNOLL=false`: the stone-walled plateau, the 12-step stair, the rocks and the long path are off (the flat meadow, sky, hills and fireflies from VTEST22 stay). The two big extra trees behind the building are removed.
+- `KNOLL=false`: the stone-walled plateau, the 12-step stair, the rocks and the long path are off (the flat meadow, sky, hills and fireflies from V32 stay). The two big extra trees behind the building are removed.
 
 ## New building volumes (`MASSING`, all in `world.ts`, none of the existing items moved)
 - **Right: tile porch roof.** A deep tile roof over the back half of the side terrace, sloping down from the upper wall to timber posts with knee braces, a plank soffit, rafters, a stone foot per post and two hanging lamps. It replaces the small door hood. The bench, side table, chair and the terrace door now sit under it.
@@ -18,5 +18,5 @@ Feedback from VTEST24: the hill and stair were too much; the building should hav
 
 ## Verification (honest status)
 - Stub-typed `tsc` passes (the stub types make three.js classes `any`, so it checks syntax and scope, not three.js API use). A real `npm run build` / Vercel deploy has **not** been run.
-- Software renders at home, front, left, right, back, top, close-ups and phone width. Hover and click were tested against every interactive object from several cameras (see the table in the chat) and compared with VTEST24.
+- Software renders at home, front, left, right, back, top, close-ups and phone width. Hover and click were tested against every interactive object from several cameras (see the table in the chat) and compared with V34.
 - Not verified: real GPU framerate and phone performance.

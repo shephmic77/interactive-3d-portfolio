@@ -1,6 +1,6 @@
-# vtest2: flag, monkey and TV fixed, plus a second round of END GAME items
+# V12: flag, monkey and TV fixed, plus a second round of END GAME items
 
-Changed file: `src/world.ts` only. Everything else is identical to `vtest`.
+Changed file: `src/world.ts` only. Everything else is identical to `V11`.
 
 ## Honest status
 Checked the same way as before: the real `world.ts` was rendered with real three.js r180 in headless Chromium (software GL),

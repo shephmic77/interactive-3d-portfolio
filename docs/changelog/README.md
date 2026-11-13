@@ -1,34 +1,34 @@
-# Changelog notes
+# Changelog
 
-One file per iteration, newest last. Earlier iterations (V1–V6 and the two living-room prototypes) are kept locally and are not part of this repository.
+One file per version, oldest first. Earlier versions (V1–V6 and the two living-room prototypes) are kept locally and are not part of this repository.
 
-- [V7](V7_CHANGES.md)
-- [V8](V8_CHANGES.md)
-- [V9](V9_CHANGES.md)
-- [V10](V10_CHANGES.md)
-- [VTEST](VTEST_CHANGES.md)
-- [VTEST2](VTEST2_CHANGES.md)
-- [VTEST3](VTEST3_CHANGES.md)
-- [VTEST4](VTEST4_CHANGES.md)
-- [VTEST5](VTEST5_CHANGES.md)
-- [VTEST6](VTEST6_CHANGES.md)
-- [VTEST7](VTEST7_CHANGES.md)
-- [VTEST8](VTEST8_CHANGES.md)
-- [VTEST9](VTEST9_CHANGES.md)
-- [VTEST10](VTEST10_CHANGES.md)
-- [VTEST11](VTEST11_CHANGES.md)
-- [VTEST12](VTEST12_CHANGES.md)
-- [VTEST13](VTEST13_CHANGES.md)
-- [VTEST14](VTEST14_CHANGES.md)
-- [VTEST15](VTEST15_CHANGES.md)
-- [VTEST16](VTEST16_CHANGES.md)
-- [VTEST17](VTEST17_CHANGES.md)
-- [VTEST18](VTEST18_CHANGES.md)
-- [VTEST19](VTEST19_CHANGES.md)
-- [VTEST20](VTEST20_CHANGES.md)
-- [VTEST21](VTEST21_CHANGES.md)
-- [VTEST22](VTEST22_CHANGES.md)
-- [VTEST23](VTEST23_CHANGES.md)
-- [VTEST24](VTEST24_CHANGES.md)
-- [VTEST25](VTEST25_CHANGES.md)
-- [VTEST26](VTEST26_CHANGES.md) (latest)
+- [V7](V7-lighting.md) — lighting
+- [V8](V8-polish.md) — polish
+- [V9](V9-compact-building.md) — compact building
+- [V10](V10-seating.md) — seating
+- [V11](V11-boulder-wall.md) — boulder wall
+- [V12](V12-fixes.md) — fixes
+- [V13](V13-removals.md) — removals
+- [V14](V14-kei-truck.md) — kei truck
+- [V15](V15-project-book.md) — project book
+- [V16](V16-bookshelf.md) — bookshelf
+- [V17](V17-resume.md) — resume
+- [V18](V18-courtyard.md) — courtyard
+- [V19](V19-pictures.md) — pictures
+- [V20](V20-tidy-up.md) — tidy up
+- [V21](V21-gaming-corner.md) — gaming corner
+- [V22](V22-spiral-stair.md) — spiral stair
+- [V23](V23-bookcase.md) — bookcase
+- [V24](V24-8bit-posters.md) — 8bit posters
+- [V25](V25-picture-grid.md) — picture grid
+- [V26](V26-reading-nook.md) — reading nook
+- [V27](V27-nook-restyle.md) — nook restyle
+- [V28](V28-climbing-wall.md) — climbing wall
+- [V29](V29-hard-problem.md) — hard problem
+- [V30](V30-fewer-holds.md) — fewer holds
+- [V31](V31-performance.md) — performance
+- [V32](V32-ghibli.md) — ghibli
+- [V33](V33-timber-frame.md) — timber frame
+- [V34](V34-hilltop.md) — hilltop
+- [V35](V35-massing.md) — massing
+- [V36](V36-ground-floor.md) — ground floor (latest)

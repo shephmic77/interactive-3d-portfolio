@@ -1,4 +1,4 @@
-# vtest5: the open book for Projects
+# V15: the open book for Projects
 
 Changed files: `src/book.ts` (new), `src/content.ts`, `src/ui.ts`, `src/style.css`.
 

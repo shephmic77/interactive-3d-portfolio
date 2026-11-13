@@ -1,4 +1,4 @@
-# vtest14: three left-wall posters swapped for your 8-bit artwork, 20% smaller
+# V24: three left-wall posters swapped for your 8-bit artwork, 20% smaller
 
 Changed files: `src/world.ts`, and the three pictures in `public/posters/` (`battlefront2.jpg`, `xbalanque.jpg`, `joker.jpg`, replaced with the pixel-art versions you supplied, resized to 512 x 768).
 

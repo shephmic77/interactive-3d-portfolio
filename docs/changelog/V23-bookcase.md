@@ -1,4 +1,4 @@
-# vtest13: book cart rebuilt as a wooden bookcase with rounded spines
+# V23: book cart rebuilt as a wooden bookcase with rounded spines
 
 Changed file: `src/world.ts` (the `bookCart` function and a few small helpers next to it).
 

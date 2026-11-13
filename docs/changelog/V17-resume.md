@@ -1,4 +1,4 @@
-# vtest7: the real resume, as a one-page sheet
+# V17: the real resume, as a one-page sheet
 
 Changed files: `public/Michael_Shepherd_Resume.pdf` (new), `src/content.ts`, `src/ui.ts`, `src/style.css`.
 

@@ -1,4 +1,4 @@
-# vtest20: about half as many holds, none over the wall's edge
+# V30: about half as many holds, none over the wall's edge
 
 Changed file: `src/world.ts`.
 

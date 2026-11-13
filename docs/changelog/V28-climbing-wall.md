@@ -1,4 +1,4 @@
-# vtest18: poster shimmer fix, more detailed climbing wall
+# V28: poster shimmer fix, more detailed climbing wall
 
 Changed file: `src/world.ts`.
 

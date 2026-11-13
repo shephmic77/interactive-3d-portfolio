@@ -1,4 +1,4 @@
-# vtest6: a bookshelf, and one book per project
+# V16: a bookshelf, and one book per project
 
 Changed files: `index.html`, `src/main.ts`, `src/content.ts`, `src/book.ts` (rewritten), `src/style.css` (book block replaced).
 
