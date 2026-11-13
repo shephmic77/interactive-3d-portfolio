@@ -1,7 +1,14 @@
 # Changelog
 
-One file per version, oldest first. Earlier versions (V1–V6 and the two living-room prototypes) are kept locally and are not part of this repository.
+One file per version, oldest first: the living-room prototypes (V0), the book shop and studio building (V1–V36), the aquarium draft (V37) and Project Reef (V38).
 
+- [V0](V0-living-room.md) — living room
+- [V1](V1-book-shop.md) — book shop
+- [V2](V2-polish.md) — polish
+- [V3](V3-stepped-building.md) — stepped building
+- [V4](V4-exterior.md) — exterior
+- [V5](V5-brighter.md) — brighter
+- [V6](V6-two-sided-signs.md) — two sided signs
 - [V7](V7-lighting.md) — lighting
 - [V8](V8-polish.md) — polish
 - [V9](V9-compact-building.md) — compact building
@@ -31,4 +38,6 @@ One file per version, oldest first. Earlier versions (V1–V6 and the two living
 - [V33](V33-timber-frame.md) — timber frame
 - [V34](V34-hilltop.md) — hilltop
 - [V35](V35-massing.md) — massing
-- [V36](V36-ground-floor.md) — ground floor (latest)
+- [V36](V36-ground-floor.md) — ground floor
+- [V37](V37-aquarium.md) — aquarium
+- [V38](V38-project-reef.md) — project reef (latest)
